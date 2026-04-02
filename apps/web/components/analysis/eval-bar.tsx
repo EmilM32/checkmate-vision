@@ -1,19 +1,10 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
-
+// TODO: Pasek ewaluacji pozycji
+// - Dynamiczny gradient bialy/czarny — proporcja sterowana przez EngineContext.evaluation (cp/mate)
+// - Wyswietlanie wartosci liczbowej ewaluacji (+1.2, -0.5, M3)
+// - Animacja zmiany przy kazdym ruchu (framer-motion)
+// - CSS var --eval-pct ustawiany dynamicznie (0% = czarny wygrywa, 100% = bialy)
 export function EvalBarPlaceholder() {
   return (
-    <Card size="sm" className="h-full min-h-24">
-      <CardHeader>
-        <CardTitle>Eval Bar</CardTitle>
-      </CardHeader>
-      <CardContent className="h-full">
-        <div className="h-full min-h-16 rounded-xl border border-border/70 bg-gradient-to-b from-emerald-400/50 via-emerald-500/25 to-slate-900/70" />
-      </CardContent>
-    </Card>
+    <div className="eval-bar-gradient flex w-7 shrink-0 flex-col overflow-hidden rounded-l-lg" />
   )
 }

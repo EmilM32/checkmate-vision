@@ -1,27 +1,20 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
-
+// TODO: Principal Variations — top 3 linie analizy silnika
+// - Dane z EngineContext.pvLines (tablica {moves: string[], score: number}[])
+// - Kazda linia pokazuje: score (np. +1.2) + ciag ruchow w notacji algebraicznej
+// - Klikniecie na linie -> podswietlenie ruchow na szachownicy (strzalki)
+// - Aktualizacja w real-time z Stockfish web worker (useEngineWorker hook)
 export function PVLinesPlaceholder() {
   return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>PV Lines (Top 3)</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <div className="rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground">
-          1. e2e4 ...
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs font-medium text-muted-foreground">Engine Lines</p>
+      {["1. e2e4 ...", "2. d2d4 ...", "3. g1f3 ..."].map((line) => (
+        <div
+          key={line}
+          className="rounded-md bg-muted/50 px-3 py-1.5 font-mono text-xs text-muted-foreground"
+        >
+          {line}
         </div>
-        <div className="rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground">
-          2. d2d4 ...
-        </div>
-        <div className="rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground">
-          3. g1f3 ...
-        </div>
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   )
 }

@@ -134,15 +134,29 @@
 
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--cv-accent) 12%, transparent), transparent 28%), radial-gradient(circle at 90% 100%, color-mix(in oklab, var(--cv-surface-2) 80%, black), transparent 40%);
+    background-image: radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--cv-accent) 6%, transparent), transparent 28%), radial-gradient(circle at 90% 100%, color-mix(in oklab, var(--cv-surface-2) 60%, black), transparent 40%);
   }
 }
 
 @layer components {
-  .cv-shell {
-    background: linear-gradient(180deg, color-mix(in oklab, var(--cv-surface-2) 85%, black), color-mix(in oklab, var(--cv-surface) 88%, black));
-    border: 1px solid color-mix(in oklab, var(--cv-border) 80%, transparent);
-    border-radius: 1.75rem;
+  .eval-bar-gradient {
+    background: linear-gradient(
+      to bottom,
+      oklch(0.97 0 0) 0%,
+      oklch(0.97 0 0) 50%,
+      oklch(0.25 0 0) 50%,
+      oklch(0.25 0 0) 100%
+    );
+  }
+
+  :is(.dark) .eval-bar-gradient {
+    background: linear-gradient(
+      to bottom,
+      oklch(0.90 0 0) 0%,
+      oklch(0.90 0 0) 50%,
+      oklch(0.20 0 0) 50%,
+      oklch(0.20 0 0) 100%
+    );
   }
 
   .board-overlay {

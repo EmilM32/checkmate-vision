@@ -1,20 +1,14 @@
 import { Input } from "@workspace/ui/components/input"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
 
+// TODO: Input pozycji FEN
+// - Wyswietla aktualny FEN z GameContext.fen
+// - Edytowalny: wklejenie nowego FEN -> validateFen() -> GameContext.setPosition()
+// - Przycisk kopiowania aktualnego FEN do schowka
 export function FENInputPlaceholder() {
   return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>FEN Input</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Input value="startpos" readOnly />
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-1">
+      <label className="text-xs text-muted-foreground">FEN</label>
+      <Input value="startpos" readOnly className="font-mono text-xs" />
+    </div>
   )
 }
