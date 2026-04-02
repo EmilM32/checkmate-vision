@@ -83,6 +83,10 @@
     --sidebar-accent-foreground: oklch(0.218 0.008 223.9);
     --sidebar-border: oklch(0.925 0.005 214.3);
     --sidebar-ring: oklch(0.723 0.014 214.4);
+    --cv-surface: oklch(0.96 0.01 230);
+    --cv-surface-2: oklch(0.92 0.015 230);
+    --cv-accent: oklch(0.74 0.17 160);
+    --cv-border: oklch(0.86 0.02 230);
 }
 
 .dark {
@@ -117,13 +121,46 @@
     --sidebar-accent-foreground: oklch(0.987 0.002 197.1);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.56 0.021 213.5);
+    --cv-surface: #0f172a;
+    --cv-surface-2: #1e293b;
+    --cv-accent: #10b981;
+    --cv-border: #374151;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
+
   body {
     @apply bg-background text-foreground;
-    }
+    background-image: radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--cv-accent) 12%, transparent), transparent 28%), radial-gradient(circle at 90% 100%, color-mix(in oklab, var(--cv-surface-2) 80%, black), transparent 40%);
+  }
+}
+
+@layer components {
+  .cv-shell {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--cv-surface-2) 85%, black), color-mix(in oklab, var(--cv-surface) 88%, black));
+    border: 1px solid color-mix(in oklab, var(--cv-border) 80%, transparent);
+    border-radius: 1.75rem;
+  }
+
+  .board-overlay {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 1rem;
+  }
+
+  .board-overlay-heatmap {
+    z-index: 10;
+    background: linear-gradient(45deg, color-mix(in oklab, #22c55e 12%, transparent), color-mix(in oklab, #ef4444 10%, transparent));
+  }
+
+  .board-overlay-arrows {
+    z-index: 20;
+    border: 1px dashed color-mix(in oklab, var(--cv-accent) 40%, transparent);
+  }
 }
