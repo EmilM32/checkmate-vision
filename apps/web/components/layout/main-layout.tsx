@@ -11,7 +11,7 @@ import { EvalBarPlaceholder } from "@/components/analysis/eval-bar"
 import { EvalChartPlaceholder } from "@/components/analysis/eval-chart"
 import { AnalysisPanelPlaceholder } from "@/components/layout/analysis-panel"
 import { BoardPanelPlaceholder } from "@/components/layout/board-panel"
-import { NavigationControlsPlaceholder } from "@/components/navigation/navigation-controls"
+import { NavigationControls } from "@/components/navigation/navigation-controls"
 import { ToolbarPlaceholder } from "@/components/layout/toolbar"
 import { PlayerBarPlaceholder } from "@/components/board/player-bar"
 
@@ -47,7 +47,7 @@ export function MainLayoutPlaceholder() {
               - Sleuth: tryb zgadywania najlepszego ruchu
               - Export: zapis pozycji/partii jako PNG (html-to-image) */}
           <div className="flex w-full items-center justify-between px-1 py-1">
-            <NavigationControlsPlaceholder />
+            <NavigationControls />
             <ToolbarPlaceholder />
           </div>
 

@@ -1,4 +1,4 @@
-import { ChessboardPlaceholder } from "@/components/board/chessboard"
+import { InteractiveChessboard } from "@/components/board/chessboard"
 import { ArrowOverlayPlaceholder } from "@/components/board/arrow-overlay"
 import { HeatmapOverlayPlaceholder } from "@/components/board/heatmap-overlay"
 import { MoveClassificationBadgePlaceholder } from "@/components/board/move-classification-badge"
@@ -8,7 +8,7 @@ import { MoveClassificationBadgePlaceholder } from "@/components/board/move-clas
 export function BoardPanelPlaceholder() {
   return (
     <section className="relative overflow-hidden">
-      <ChessboardPlaceholder />
+      <InteractiveChessboard />
       <div className="pointer-events-none absolute inset-0">
         {/* TODO: Heatmapa kontroli pol — kolorowanie pol wg buildHeatmap() (lib/chess/heatmap.ts) */}
         <HeatmapOverlayPlaceholder />

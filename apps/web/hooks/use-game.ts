@@ -3,5 +3,6 @@
 import { useGameContext } from "@/context"
 
 export function useGame() {
-  return useGameContext()
+  const { state, makeMove, undo, goToMove, newGame } = useGameContext()
+  return { state, makeMove, undo, goToMove, newGame }
 }

@@ -7,7 +7,7 @@ import {
 
 import { FENInputPlaceholder } from "@/components/inputs/fen-input"
 import { PGNInputPlaceholder } from "@/components/inputs/pgn-input"
-import { MoveListPlaceholder } from "@/components/analysis/move-list"
+import { MoveList } from "@/components/analysis/move-list"
 import { PVLinesPlaceholder } from "@/components/analysis/pv-lines"
 
 // Panel analizy — prawy sidebar na desktop, zakladki na mobile.
@@ -29,7 +29,7 @@ export function AnalysisPanelPlaceholder() {
             — klikniecie na ruch -> GameContext.goToMove(index)
             — kolorowanie ruchow wg klasyfikacji (blunder=czerwony, brilliant=cyjan, itp.) */}
         <div className="min-h-32 flex-1 overflow-hidden px-4 py-3">
-          <MoveListPlaceholder />
+          <MoveList />
         </div>
 
         {/* TODO: Inputy importu partii
