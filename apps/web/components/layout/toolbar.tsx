@@ -1,11 +1,9 @@
+"use client"
+
 import { Button } from "@workspace/ui/components/button"
-import {
-  FlipVertical,
-  Layers,
-  MoveRight,
-  Search,
-  Download,
-} from "lucide-react"
+import { FlipVertical, Layers, MoveRight, Search, Download } from "lucide-react"
+
+import { useUI } from "@/hooks/use-ui"
 
 // TODO: Przyciski narzedzi
 // - Heatmap: toggle UIContext.showHeatmap — wlacza/wylacza nakladke kontroli pol
@@ -22,16 +20,27 @@ const TOOLBAR_ITEMS = [
 ] as const
 
 export function ToolbarPlaceholder() {
+  const { state: uiState, dispatch } = useUI()
+
   return (
     <div className="flex items-center gap-1">
       {TOOLBAR_ITEMS.map(({ label, icon: Icon }) => (
         <Button
           key={label}
-          variant="ghost"
+          variant={
+            label === "Arrows" && uiState.showArrows ? "secondary" : "ghost"
+          }
           size="icon"
           className="size-8"
-          disabled
+          disabled={label !== "Arrows"}
           title={label}
+          onClick={
+            label === "Arrows"
+              ? () => {
+                  dispatch({ type: "UI_TOGGLE_ARROWS" })
+                }
+              : undefined
+          }
         >
           <Icon className="size-4" />
         </Button>

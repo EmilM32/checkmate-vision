@@ -1,5 +1,5 @@
 import { InteractiveChessboard } from "@/components/board/chessboard"
-import { ArrowOverlayPlaceholder } from "@/components/board/arrow-overlay"
+import { ArrowOverlay } from "@/components/board/arrow-overlay"
 import { HeatmapOverlayPlaceholder } from "@/components/board/heatmap-overlay"
 import { MoveClassificationBadgePlaceholder } from "@/components/board/move-classification-badge"
 
@@ -13,7 +13,7 @@ export function BoardPanelPlaceholder() {
         {/* TODO: Heatmapa kontroli pol — kolorowanie pol wg buildHeatmap() (lib/chess/heatmap.ts) */}
         <HeatmapOverlayPlaceholder />
         {/* TODO: Strzalki najlepszych ruchow silnika — rysowane na Canvas/SVG z danych EngineContext.bestMove/pvLines */}
-        <ArrowOverlayPlaceholder />
+        <ArrowOverlay />
         {/* TODO: Badge klasyfikacji ruchu (brilliant/great/best/good/inaccuracy/mistake/blunder)
             — wyswietlany po kazdym ruchu, dane z classifyMove() (lib/chess/classification.ts) */}
         <MoveClassificationBadgePlaceholder />

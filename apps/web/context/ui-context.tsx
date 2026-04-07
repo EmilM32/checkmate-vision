@@ -1,6 +1,12 @@
 "use client"
 
-import { createContext, useContext, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useReducer,
+  type Dispatch,
+  type ReactNode,
+} from "react"
 
 export type UIState = {
   showHeatmap: boolean
@@ -16,15 +22,49 @@ export const initialUIState: UIState = {
   boardFlipped: false,
 }
 
+export type UIAction =
+  | { type: "UI_TOGGLE_ARROWS" }
+  | { type: "UI_TOGGLE_HEATMAP" }
+  | { type: "UI_TOGGLE_SLEUTH_MODE" }
+  | { type: "UI_TOGGLE_BOARD_FLIPPED" }
+
+function uiReducer(state: UIState, action: UIAction): UIState {
+  switch (action.type) {
+    case "UI_TOGGLE_ARROWS":
+      return {
+        ...state,
+        showArrows: !state.showArrows,
+      }
+    case "UI_TOGGLE_HEATMAP":
+      return {
+        ...state,
+        showHeatmap: !state.showHeatmap,
+      }
+    case "UI_TOGGLE_SLEUTH_MODE":
+      return {
+        ...state,
+        sleuthMode: !state.sleuthMode,
+      }
+    case "UI_TOGGLE_BOARD_FLIPPED":
+      return {
+        ...state,
+        boardFlipped: !state.boardFlipped,
+      }
+  }
+}
+
 type UIContextValue = {
   state: UIState
+  dispatch: Dispatch<UIAction>
 }
 
 const UIContext = createContext<UIContextValue | null>(null)
 
 export function UIProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(uiReducer, initialUIState)
+
   return (
-    <UIContext.Provider value={{ state: initialUIState }}>
+    <UIContext.Provider value={{ state, dispatch }}>
       {children}
     </UIContext.Provider>
   )
