@@ -10,12 +10,25 @@ import {
   type ReactNode,
 } from "react"
 import { Chess, DEFAULT_POSITION } from "chess.js"
+import type { EngineScore } from "@/context/engine-context"
+import type { MoveClassification } from "@/lib/chess/classification"
 
 // ── Types ──
 
 export type MoveEntry = {
   san: string
   fen: string
+  scoreBefore: EngineScore
+  scoreAfter: EngineScore
+  delta: number | null
+  classification: MoveClassification | null
+}
+
+export type MoveAnalysisPatch = {
+  scoreBefore: EngineScore
+  scoreAfter: EngineScore
+  delta: number | null
+  classification: MoveClassification | null
 }
 
 export type GameState = {
@@ -59,7 +72,7 @@ function replayMoves(chess: Chess, moves: MoveEntry[], upTo: number) {
 function deriveState(
   chess: Chess,
   history: MoveEntry[],
-  currentMoveIndex: number,
+  currentMoveIndex: number
 ): GameState {
   return {
     fen: chess.fen(),
@@ -76,6 +89,7 @@ function deriveState(
 type GameContextValue = {
   state: GameState
   makeMove: (from: string, to: string, promotion?: string) => boolean
+  annotateMove: (index: number, patch: MoveAnalysisPatch) => void
   undo: () => void
   goToMove: (index: number) => void
   newGame: () => void
@@ -102,7 +116,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const move = chess.move({ from, to, promotion })
         const newHistory = [
           ...history,
-          { san: move.san, fen: move.after },
+          {
+            san: move.san,
+            fen: move.after,
+            scoreBefore: null,
+            scoreAfter: null,
+            delta: null,
+            classification: null,
+          },
         ]
         const newIndex = newHistory.length
         dispatch({
@@ -114,7 +135,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return false
       }
     },
-    [state],
+    [state]
+  )
+
+  const annotateMove = useCallback(
+    (index: number, patch: MoveAnalysisPatch) => {
+      const { history, currentMoveIndex } = state
+      if (index < 1 || index > history.length) return
+
+      const historyIndex = index - 1
+      const move = history[historyIndex]
+      if (!move) return
+
+      const nextHistory = [...history]
+      nextHistory[historyIndex] = {
+        ...move,
+        ...patch,
+      }
+
+      dispatch({
+        type: "SET_STATE",
+        payload: {
+          ...state,
+          history: nextHistory,
+          currentMoveIndex,
+        },
+      })
+    },
+    [state]
   )
 
   const goToMove = useCallback(
@@ -130,7 +178,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         payload: deriveState(chess, history, clamped),
       })
     },
-    [state],
+    [state]
   )
 
   const undo = useCallback(() => {
@@ -144,8 +192,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<GameContextValue>(
-    () => ({ state, makeMove, undo, goToMove, newGame }),
-    [state, makeMove, undo, goToMove, newGame],
+    () => ({ state, makeMove, annotateMove, undo, goToMove, newGame }),
+    [state, makeMove, annotateMove, undo, goToMove, newGame]
   )
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

@@ -34,7 +34,7 @@ export default function RootLayout({
         outfit.variable
       )}
     >
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>

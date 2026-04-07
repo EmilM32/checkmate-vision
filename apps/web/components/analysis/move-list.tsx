@@ -6,6 +6,7 @@ import { ScrollArea } from "@workspace/ui/components/scroll-area"
 
 import { useGame } from "@/hooks/use-game"
 import type { MoveEntry } from "@/context/game-context"
+import { CLASSIFICATION_COLORS } from "@/lib/chess/classification"
 
 type MovePair = {
   moveNumber: number
@@ -64,6 +65,13 @@ export function MoveList() {
                     ? "bg-accent text-accent-foreground"
                     : "text-foreground hover:bg-muted"
                 }`}
+                style={
+                  pair.white.classification && !isWhiteActive
+                    ? {
+                        color: CLASSIFICATION_COLORS[pair.white.classification],
+                      }
+                    : undefined
+                }
               >
                 {pair.white.san}
               </button>
@@ -76,6 +84,14 @@ export function MoveList() {
                       ? "bg-accent text-accent-foreground"
                       : "text-foreground hover:bg-muted"
                   }`}
+                  style={
+                    pair.black.classification && !isBlackActive
+                      ? {
+                          color:
+                            CLASSIFICATION_COLORS[pair.black.classification],
+                        }
+                      : undefined
+                  }
                 >
                   {pair.black.san}
                 </button>
