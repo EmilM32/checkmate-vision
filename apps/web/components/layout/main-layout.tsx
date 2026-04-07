@@ -7,7 +7,7 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs"
 
-import { EvalBarPlaceholder } from "@/components/analysis/eval-bar"
+import { EvalBar } from "@/components/analysis/eval-bar"
 import { EvalChartPlaceholder } from "@/components/analysis/eval-chart"
 import { AnalysisPanelPlaceholder } from "@/components/layout/analysis-panel"
 import { BoardPanelPlaceholder } from "@/components/layout/board-panel"
@@ -31,7 +31,7 @@ export function MainLayoutPlaceholder() {
               - EvalBar: dynamiczny gradient bialy/czarny sterowany przez EngineContext (cp/mate)
               - Board: react-chessboard z chess.js, ruchy drag&drop, podswietlanie pol */}
           <div className="flex w-[min(92vw,calc(100svh-20rem))] items-stretch lg:w-[min(56vw,calc(100svh-16rem))] lg:max-w-170">
-            <EvalBarPlaceholder />
+            <EvalBar />
             <BoardPanelPlaceholder />
           </div>
 

@@ -140,23 +140,31 @@
 
 @layer components {
   .eval-bar-gradient {
+    --eval-pct: 50%;
     background: linear-gradient(
       to bottom,
       oklch(0.97 0 0) 0%,
-      oklch(0.97 0 0) 50%,
-      oklch(0.25 0 0) 50%,
+      oklch(0.97 0 0) var(--eval-pct),
+      oklch(0.25 0 0) var(--eval-pct),
       oklch(0.25 0 0) 100%
     );
+    transition: --eval-pct 0.3s ease;
   }
 
   :is(.dark) .eval-bar-gradient {
     background: linear-gradient(
       to bottom,
       oklch(0.90 0 0) 0%,
-      oklch(0.90 0 0) 50%,
-      oklch(0.20 0 0) 50%,
+      oklch(0.90 0 0) var(--eval-pct),
+      oklch(0.20 0 0) var(--eval-pct),
       oklch(0.20 0 0) 100%
     );
+  }
+
+  @property --eval-pct {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 50%;
   }
 
   .board-overlay {

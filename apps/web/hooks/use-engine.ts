@@ -3,5 +3,6 @@
 import { useEngineContext } from "@/context"
 
 export function useEngine() {
-  return useEngineContext()
+  const { state } = useEngineContext()
+  return { state }
 }

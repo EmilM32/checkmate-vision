@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "cp node_modules/stockfish.js/stockfish.wasm.js node_modules/stockfish.js/stockfish.wasm node_modules/stockfish.js/stockfish.js public/stockfish/"
   },
   "dependencies": {
     "@workspace/ui": "workspace:*",
@@ -33,6 +34,7 @@
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
     "eslint": "^9.39.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3"
   }
 }

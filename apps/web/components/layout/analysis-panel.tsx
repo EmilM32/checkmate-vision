@@ -8,7 +8,7 @@ import {
 import { FENInputPlaceholder } from "@/components/inputs/fen-input"
 import { PGNInputPlaceholder } from "@/components/inputs/pgn-input"
 import { MoveList } from "@/components/analysis/move-list"
-import { PVLinesPlaceholder } from "@/components/analysis/pv-lines"
+import { PVLines } from "@/components/analysis/pv-lines"
 
 // Panel analizy — prawy sidebar na desktop, zakladki na mobile.
 // Zawiera wszystkie narzedzia analizy partii w jednym Card.
@@ -22,7 +22,7 @@ export function AnalysisPanelPlaceholder() {
         {/* TODO: Top 3 linie silnika (Principal Variations)
             — dane z EngineContext.pvLines, aktualizowane w real-time przez Stockfish worker */}
         <div className="border-b border-border/50 px-4 py-3">
-          <PVLinesPlaceholder />
+          <PVLines />
         </div>
 
         {/* TODO: Lista ruchow partii (scrollowalna)
