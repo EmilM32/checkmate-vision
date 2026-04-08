@@ -20,6 +20,7 @@ import { ToolbarPlaceholder } from "@/components/layout/toolbar"
 import { NavigationControls } from "@/components/navigation/navigation-controls"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import { exportBoardToPng } from "@/lib/export/board-export"
 import { clearPersistedSession } from "@/lib/persistence/session-storage"
@@ -27,6 +28,8 @@ import { clearPersistedSession } from "@/lib/persistence/session-storage"
 type MobileTab = "analysis" | "moves" | "chart"
 
 function MobileTabContent({ activeTab }: { activeTab: MobileTab }) {
+  const { t } = useI18n()
+
   if (activeTab === "analysis") {
     return <AnalysisPanelPlaceholder />
   }
@@ -35,7 +38,7 @@ function MobileTabContent({ activeTab }: { activeTab: MobileTab }) {
     return (
       <Card className="h-90 overflow-hidden">
         <CardHeader className="border-b border-border/50">
-          <CardTitle>Moves</CardTitle>
+          <CardTitle>{t("common.moves")}</CardTitle>
         </CardHeader>
         <CardContent className="h-[calc(100%-4rem)] p-3">
           <MoveList />
@@ -48,6 +51,7 @@ function MobileTabContent({ activeTab }: { activeTab: MobileTab }) {
 }
 
 export function MainLayoutPlaceholder() {
+  const { t } = useI18n()
   const [mobileTab, setMobileTab] = useState<MobileTab>("analysis")
   const boardExportRef = useRef<HTMLElement>(null)
 
@@ -119,9 +123,9 @@ export function MainLayoutPlaceholder() {
           className="w-full"
         >
           <TabsList className="w-full">
-            <TabsTrigger value="analysis">Analiza</TabsTrigger>
-            <TabsTrigger value="moves">Ruchy</TabsTrigger>
-            <TabsTrigger value="chart">Wykres</TabsTrigger>
+            <TabsTrigger value="analysis">{t("common.analysis")}</TabsTrigger>
+            <TabsTrigger value="moves">{t("common.moves")}</TabsTrigger>
+            <TabsTrigger value="chart">{t("common.chart")}</TabsTrigger>
           </TabsList>
         </Tabs>
 

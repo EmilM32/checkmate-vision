@@ -13,14 +13,15 @@ import {
 } from "recharts"
 import { useGame } from "@/hooks/use-game"
 import { useEngine } from "@/hooks/use-engine"
+import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import {
   buildEvalChartData,
   type EvalChartPoint,
 } from "@/lib/chess/eval-history"
 import {
+  CLASSIFICATION_LABEL_KEYS,
   CLASSIFICATION_COLORS,
-  CLASSIFICATION_LABELS,
 } from "@/lib/chess/classification"
 import { formatEval } from "@/lib/engine/eval"
 
@@ -41,6 +42,7 @@ function EvalDot(
 }
 
 export function EvalChartPlaceholder() {
+  const { t } = useI18n()
   const { state, goToMove } = useGame()
   const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
@@ -99,13 +101,17 @@ export function EvalChartPlaceholder() {
 
     const evalLabel = point.rawScore ? formatEval(point.rawScore) : "0.0"
     const classificationLabel = point.classification
-      ? CLASSIFICATION_LABELS[point.classification]
-      : "No classification"
+      ? t(CLASSIFICATION_LABEL_KEYS[point.classification])
+      : t("analysis.noClassification")
 
     return (
       <div className="rounded border border-border/70 bg-background/95 px-2 py-1 text-xs shadow-sm">
-        <div className="text-muted-foreground">Move {label}</div>
-        <div className="font-medium">Eval: {evalLabel}</div>
+        <div className="text-muted-foreground">
+          {t("analysis.move")} {label}
+        </div>
+        <div className="font-medium">
+          {t("analysis.eval")}: {evalLabel}
+        </div>
         <div className="text-muted-foreground">{classificationLabel}</div>
       </div>
     )
@@ -118,7 +124,7 @@ export function EvalChartPlaceholder() {
     >
       {!analysisVisible ? (
         <div className="flex h-full items-center justify-center rounded-md bg-muted/40 text-xs text-muted-foreground">
-          Sleuth mode active. Reveal analysis to inspect evaluation chart.
+          {t("analysis.sleuthEvalHidden")}
         </div>
       ) : null}
       {containerSize.width > 0 && containerSize.height > 0 ? (

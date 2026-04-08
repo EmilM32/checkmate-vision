@@ -6,6 +6,7 @@ import { ScrollArea } from "@workspace/ui/components/scroll-area"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import type { MoveEntry } from "@/context/game-context"
 import { CLASSIFICATION_COLORS } from "@/lib/chess/classification"
@@ -17,6 +18,7 @@ type MovePair = {
 }
 
 export function MoveList() {
+  const { t } = useI18n()
   const { state, goToMove } = useGame()
   const { state: engineState, cancelBatchAnalysis } = useEngine()
   const { state: uiState } = useUI()
@@ -30,7 +32,7 @@ export function MoveList() {
   if (state.history.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-        No moves yet
+        {t("analysis.noMovesYet")}
       </div>
     )
   }

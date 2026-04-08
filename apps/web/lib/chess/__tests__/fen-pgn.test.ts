@@ -15,7 +15,7 @@ describe("fen-pgn helpers", () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain("FEN")
+      expect(result.error).toBe("errors.fenInvalid")
     }
   })
 
@@ -31,7 +31,7 @@ describe("fen-pgn helpers", () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain("PGN")
+      expect(result.error).toBe("errors.pgnInvalid")
     }
   })
 

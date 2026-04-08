@@ -1,0 +1,15 @@
+{
+  "i18n-ally.localesPaths": [
+    "apps/web/i18n/dictionaries"
+  ],
+  "i18n-ally.pathMatcher": "{locale}.json",
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.namespace": false,
+  "i18n-ally.annotations": true,
+  "i18n-ally.enabledFrameworks": [
+    "custom"
+  ],
+  "i18n-ally.regex.key": ".*?",
+  "i18n-ally.sourceLanguage": "pl",
+  "i18n-ally.displayLanguage": "pl"
+}

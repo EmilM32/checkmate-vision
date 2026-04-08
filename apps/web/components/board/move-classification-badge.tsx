@@ -5,13 +5,15 @@ import { Badge } from "@workspace/ui/components/badge"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import {
+  CLASSIFICATION_LABEL_KEYS,
   CLASSIFICATION_COLORS,
-  CLASSIFICATION_LABELS,
 } from "@/lib/chess/classification"
 
 export function MoveClassificationBadgePlaceholder() {
+  const { t } = useI18n()
   const { state } = useGame()
   const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
@@ -43,7 +45,7 @@ export function MoveClassificationBadgePlaceholder() {
               backgroundColor: CLASSIFICATION_COLORS[classification],
             }}
           >
-            {CLASSIFICATION_LABELS[classification]}
+            {t(CLASSIFICATION_LABEL_KEYS[classification])}
           </Badge>
         </motion.div>
       ) : null}

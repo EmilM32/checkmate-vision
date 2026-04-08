@@ -8,13 +8,13 @@ export type MoveClassification =
   | "mistake"
   | "blunder"
 
-export const CLASSIFICATION_LABELS: Record<MoveClassification, string> = {
-  brilliant: "Brilliant",
-  great: "Great",
-  best: "Best",
-  good: "Good",
-  mistake: "Mistake",
-  blunder: "Blunder",
+export const CLASSIFICATION_LABEL_KEYS: Record<MoveClassification, string> = {
+  brilliant: "classification.brilliant",
+  great: "classification.great",
+  best: "classification.best",
+  good: "classification.good",
+  mistake: "classification.mistake",
+  blunder: "classification.blunder",
 }
 
 export const CLASSIFICATION_COLORS: Record<MoveClassification, string> = {

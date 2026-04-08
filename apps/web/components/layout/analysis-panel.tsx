@@ -10,10 +10,12 @@ import { PGNInput } from "@/components/inputs/pgn-input"
 import { MoveList } from "@/components/analysis/move-list"
 import { PVLines } from "@/components/analysis/pv-lines"
 import { useEngine } from "@/hooks/use-engine"
+import { useI18n } from "@/hooks/use-i18n"
 
 // Panel analizy — prawy sidebar na desktop, zakladki na mobile.
 // Zawiera wszystkie narzedzia analizy partii w jednym Card.
 export function AnalysisPanelPlaceholder() {
+  const { t } = useI18n()
   const { state: engineState } = useEngine()
   const batch = engineState.batch
   const progressPercent =
@@ -22,7 +24,7 @@ export function AnalysisPanelPlaceholder() {
   return (
     <Card className="flex h-full flex-col overflow-hidden">
       <CardHeader className="border-b border-border/50">
-        <CardTitle>Analysis</CardTitle>
+        <CardTitle>{t("common.analysis")}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-0 overflow-hidden p-0">
         {/* TODO: Top 3 linie silnika (Principal Variations)
@@ -35,14 +37,17 @@ export function AnalysisPanelPlaceholder() {
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>
               {batch.status === "running"
-                ? `Analizuje... ${batch.completed}/${batch.total}`
+                ? t("analysis.batchRunning", {
+                    completed: batch.completed,
+                    total: batch.total,
+                  })
                 : batch.status === "done"
-                  ? "Analiza zakonczona"
+                  ? t("analysis.batchDone")
                   : batch.status === "cancelled"
-                    ? "Analiza przerwana"
+                    ? t("analysis.batchCancelled")
                     : batch.status === "error"
-                      ? "Blad analizy"
-                      : "Analiza batch nieaktywna"}
+                      ? t("analysis.batchError")
+                      : t("analysis.batchIdle")}
             </span>
             <span>{progressPercent}%</span>
           </div>

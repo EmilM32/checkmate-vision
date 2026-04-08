@@ -1,0 +1,66 @@
+{
+  "common": {
+    "fen": "FEN",
+    "pgn": "PGN",
+    "moves": "Moves",
+    "analysis": "Analysis",
+    "chart": "Chart",
+    "white": "White",
+    "black": "Black",
+    "reveal": "Reveal",
+    "new": "New"
+  },
+  "toolbar": {
+    "heatmap": "Heatmap",
+    "arrows": "Arrows",
+    "sleuth": "Sleuth",
+    "export": "Export",
+    "flip": "Flip"
+  },
+  "inputs": {
+    "pastePgn": "Paste PGN...",
+    "loadPgn": "Load PGN",
+    "analyzeGame": "Analyze game",
+    "setFen": "Set FEN",
+    "firstLoadPgn": "Load a PGN with moves first"
+  },
+  "analysis": {
+    "noMovesYet": "No moves yet",
+    "sleuthEvalHidden": "Sleuth mode active. Reveal analysis to inspect evaluation chart.",
+    "sleuthLinesHidden": "Sleuth mode active. Reveal analysis to view engine lines.",
+    "engineLines": "Engine Lines",
+    "analyzing": "Analyzing...",
+    "noAnalysis": "No analysis",
+    "noClassification": "No classification",
+    "move": "Move",
+    "eval": "Eval",
+    "batchRunning": "Analyzing... {{completed}}/{{total}}",
+    "batchDone": "Analysis done",
+    "batchCancelled": "Analysis cancelled",
+    "batchError": "Analysis error",
+    "batchIdle": "Batch analysis inactive"
+  },
+  "errors": {
+    "fenEmpty": "FEN cannot be empty.",
+    "fenInvalid": "Invalid FEN format.",
+    "pgnEmpty": "PGN cannot be empty.",
+    "pgnNoMoves": "PGN contains no moves.",
+    "pgnInvalid": "Invalid PGN format.",
+    "pgnParseFailed": "Could not parse PGN.",
+    "fenSetFailed": "Could not set FEN position.",
+    "gameLoadFailed": "Could not load game."
+  },
+  "classification": {
+    "brilliant": "Brilliant",
+    "great": "Great",
+    "best": "Best",
+    "good": "Good",
+    "mistake": "Mistake",
+    "blunder": "Blunder"
+  },
+  "language": {
+    "label": "Language",
+    "pl": "PL",
+    "en": "EN"
+  }
+}

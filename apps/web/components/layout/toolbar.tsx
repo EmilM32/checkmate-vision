@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import { useEngine } from "@/hooks/use-engine"
+import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 
 type ToolbarPlaceholderProps = {
@@ -26,17 +27,18 @@ type ToolbarPlaceholderProps = {
 // - Export: html-to-image -> zapis aktualnej pozycji jako PNG
 // - Flip: toggle UIContext.boardFlipped — odwraca szachownice (bialy/czarny na dole)
 const TOOLBAR_ITEMS = [
-  { label: "Heatmap", icon: Layers },
-  { label: "Arrows", icon: MoveRight },
-  { label: "Sleuth", icon: Search },
-  { label: "Export", icon: Download },
-  { label: "Flip", icon: FlipVertical },
+  { key: "heatmap", icon: Layers },
+  { key: "arrows", icon: MoveRight },
+  { key: "sleuth", icon: Search },
+  { key: "export", icon: Download },
+  { key: "flip", icon: FlipVertical },
 ] as const
 
 export function ToolbarPlaceholder({
   onExport,
   onNewAnalysis,
 }: ToolbarPlaceholderProps) {
+  const { locale, setLocale, isSwitchingLocale, t } = useI18n()
   const { state: uiState, dispatch } = useUI()
   const { state: engineState, revealAnalysis, concealAnalysis } = useEngine()
 
@@ -44,46 +46,46 @@ export function ToolbarPlaceholder({
 
   return (
     <div className="flex items-center gap-1.5">
-      {TOOLBAR_ITEMS.map(({ label, icon: Icon }) => (
+      {TOOLBAR_ITEMS.map(({ key, icon: Icon }) => (
         <Button
-          key={label}
+          key={key}
           variant={
-            label === "Heatmap" && uiState.showHeatmap
+            key === "heatmap" && uiState.showHeatmap
               ? "secondary"
-              : label === "Arrows" && uiState.showArrows
+              : key === "arrows" && uiState.showArrows
                 ? "secondary"
-                : label === "Sleuth" && uiState.sleuthMode
+                : key === "sleuth" && uiState.sleuthMode
                   ? "secondary"
-                  : label === "Flip" && uiState.boardFlipped
+                  : key === "flip" && uiState.boardFlipped
                     ? "secondary"
                     : "ghost"
           }
           size="icon"
           className="size-8"
-          title={label}
+          title={t(`toolbar.${key}`)}
           onClick={() => {
-            if (label === "Heatmap") {
+            if (key === "heatmap") {
               dispatch({ type: "UI_TOGGLE_HEATMAP" })
               return
             }
 
-            if (label === "Arrows") {
+            if (key === "arrows") {
               dispatch({ type: "UI_TOGGLE_ARROWS" })
               return
             }
 
-            if (label === "Sleuth") {
+            if (key === "sleuth") {
               concealAnalysis()
               dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
               return
             }
 
-            if (label === "Export") {
+            if (key === "export") {
               onExport()
               return
             }
 
-            if (label === "Flip") {
+            if (key === "flip") {
               dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
             }
           }}
@@ -100,7 +102,7 @@ export function ToolbarPlaceholder({
         onClick={revealAnalysis}
       >
         <Eye className="mr-1 size-4" />
-        Reveal
+        {t("common.reveal")}
       </Button>
 
       <Button
@@ -110,8 +112,31 @@ export function ToolbarPlaceholder({
         onClick={onNewAnalysis}
       >
         <RotateCcw className="mr-1 size-4" />
-        New
+        {t("common.new")}
       </Button>
+
+      <div className="ml-1 flex items-center gap-1">
+        <Button
+          variant={locale === "pl" ? "secondary" : "ghost"}
+          size="sm"
+          className="h-8 px-2"
+          onClick={() => setLocale("pl")}
+          disabled={isSwitchingLocale}
+          aria-label={t("language.label")}
+        >
+          {t("language.pl")}
+        </Button>
+        <Button
+          variant={locale === "en" ? "secondary" : "ghost"}
+          size="sm"
+          className="h-8 px-2"
+          onClick={() => setLocale("en")}
+          disabled={isSwitchingLocale}
+          aria-label={t("language.label")}
+        >
+          {t("language.en")}
+        </Button>
+      </div>
     </div>
   )
 }

@@ -5,9 +5,11 @@ import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useI18n } from "@/hooks/use-i18n"
 import { parsePgn } from "@/lib/chess/fen-pgn"
 
 export function PGNInput() {
+  const { t } = useI18n()
   const { state, loadPgnGame } = useGame()
   const {
     state: engineState,
@@ -28,13 +30,13 @@ export function PGNInput() {
     setError(null)
     const parsed = parsePgn(value)
     if (!parsed.ok) {
-      setError(parsed.error)
+      setError(t(parsed.error))
       return
     }
 
     const ok = loadPgnGame(parsed.data)
     if (!ok) {
-      setError("Nie udalo sie zaladowac partii.")
+      setError(t("errors.gameLoadFailed"))
       return
     }
 
@@ -45,7 +47,7 @@ export function PGNInput() {
   function handleAnalyzeBatch() {
     setError(null)
     if (state.history.length === 0) {
-      setError("Najpierw wczytaj PGN z ruchami.")
+      setError(t("inputs.firstLoadPgn"))
       return
     }
 
@@ -64,9 +66,9 @@ export function PGNInput() {
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-muted-foreground">PGN</label>
+      <label className="text-xs text-muted-foreground">{t("common.pgn")}</label>
       <Textarea
-        placeholder="Wklej PGN..."
+        placeholder={t("inputs.pastePgn")}
         className="min-h-20 font-mono text-xs"
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -76,7 +78,7 @@ export function PGNInput() {
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={handleLoadPgn} disabled={isBatchRunning}>
-          Wczytaj PGN
+          {t("inputs.loadPgn")}
         </Button>
         <Button
           size="sm"
@@ -84,7 +86,7 @@ export function PGNInput() {
           onClick={handleAnalyzeBatch}
           disabled={!canAnalyze}
         >
-          Analizuj partie
+          {t("inputs.analyzeGame")}
         </Button>
       </div>
     </div>

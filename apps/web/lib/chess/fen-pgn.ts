@@ -29,7 +29,7 @@ function normalizeInput(input: string): string {
 export function validateFen(fen: string): ValidationResult {
   const normalizedFen = normalizeInput(fen)
   if (!normalizedFen) {
-    return { ok: false, error: "FEN nie moze byc pusty." }
+    return { ok: false, error: "errors.fenEmpty" }
   }
 
   try {
@@ -37,14 +37,14 @@ export function validateFen(fen: string): ValidationResult {
     chess.load(normalizedFen)
     return { ok: true }
   } catch {
-    return { ok: false, error: "Nieprawidlowy format FEN." }
+    return { ok: false, error: "errors.fenInvalid" }
   }
 }
 
 export function validatePgn(pgn: string): ValidationResult {
   const normalizedPgn = normalizeInput(pgn)
   if (!normalizedPgn) {
-    return { ok: false, error: "PGN nie moze byc pusty." }
+    return { ok: false, error: "errors.pgnEmpty" }
   }
 
   try {
@@ -52,11 +52,11 @@ export function validatePgn(pgn: string): ValidationResult {
     chess.loadPgn(normalizedPgn)
     const hasMoves = chess.history().length > 0
     if (!hasMoves) {
-      return { ok: false, error: "PGN nie zawiera ruchow." }
+      return { ok: false, error: "errors.pgnNoMoves" }
     }
     return { ok: true }
   } catch {
-    return { ok: false, error: "Nieprawidlowy format PGN." }
+    return { ok: false, error: "errors.pgnInvalid" }
   }
 }
 
@@ -89,6 +89,6 @@ export function parsePgn(pgn: string): ParsePgnResult {
       },
     }
   } catch {
-    return { ok: false, error: "Nie udalo sie sparsowac PGN." }
+    return { ok: false, error: "errors.pgnParseFailed" }
   }
 }

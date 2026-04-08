@@ -5,6 +5,7 @@ import { Chess } from "chess.js"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import type { EngineScore } from "@/context/engine-context"
 
@@ -45,6 +46,7 @@ function scoreColorClass(score: EngineScore | null): string {
 }
 
 export function PVLines() {
+  const { t } = useI18n()
   const { state: engineState } = useEngine()
   const { state: gameState } = useGame()
   const { state: uiState } = useUI()
@@ -60,7 +62,7 @@ export function PVLines() {
   if (!analysisVisible) {
     return (
       <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-        Sleuth mode active. Reveal analysis to view engine lines.
+        {t("analysis.sleuthLinesHidden")}
       </div>
     )
   }
@@ -69,7 +71,7 @@ export function PVLines() {
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between">
         <p className="text-xs font-medium text-muted-foreground">
-          Engine Lines
+          {t("analysis.engineLines")}
         </p>
         {engineState.depth > 0 && (
           <p className="text-[10px] text-muted-foreground">
@@ -81,7 +83,9 @@ export function PVLines() {
       </div>
       {linesWithSan.length === 0 ? (
         <div className="rounded-md bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
-          {engineState.isAnalyzing ? "Analyzing…" : "No analysis"}
+          {engineState.isAnalyzing
+            ? t("analysis.analyzing")
+            : t("analysis.noAnalysis")}
         </div>
       ) : (
         linesWithSan.map((line) => (

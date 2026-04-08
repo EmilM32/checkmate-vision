@@ -1,0 +1,66 @@
+{
+  "common": {
+    "fen": "FEN",
+    "pgn": "PGN",
+    "moves": "Ruchy",
+    "analysis": "Analiza",
+    "chart": "Wykres",
+    "white": "Biale",
+    "black": "Czarne",
+    "reveal": "Odkryj",
+    "new": "Nowa"
+  },
+  "toolbar": {
+    "heatmap": "Heatmapa",
+    "arrows": "Strzalki",
+    "sleuth": "Sleuth",
+    "export": "Eksport",
+    "flip": "Obroc"
+  },
+  "inputs": {
+    "pastePgn": "Wklej PGN...",
+    "loadPgn": "Wczytaj PGN",
+    "analyzeGame": "Analizuj partie",
+    "setFen": "Ustaw FEN",
+    "firstLoadPgn": "Najpierw wczytaj PGN z ruchami"
+  },
+  "analysis": {
+    "noMovesYet": "Brak ruchow",
+    "sleuthEvalHidden": "Tryb Sleuth aktywny. Odkryj analize, aby zobaczyc wykres oceny.",
+    "sleuthLinesHidden": "Tryb Sleuth aktywny. Odkryj analize, aby zobaczyc linie silnika.",
+    "engineLines": "Linie silnika",
+    "analyzing": "Analizowanie...",
+    "noAnalysis": "Brak analizy",
+    "noClassification": "Brak klasyfikacji",
+    "move": "Ruch",
+    "eval": "Ocena",
+    "batchRunning": "Analizowanie... {{completed}}/{{total}}",
+    "batchDone": "Analiza zakonczona",
+    "batchCancelled": "Analiza przerwana",
+    "batchError": "Blad analizy",
+    "batchIdle": "Analiza batch nieaktywna"
+  },
+  "errors": {
+    "fenEmpty": "FEN nie moze byc pusty.",
+    "fenInvalid": "Nieprawidlowy format FEN.",
+    "pgnEmpty": "PGN nie moze byc pusty.",
+    "pgnNoMoves": "PGN nie zawiera ruchow.",
+    "pgnInvalid": "Nieprawidlowy format PGN.",
+    "pgnParseFailed": "Nie udalo sie sparsowac PGN.",
+    "fenSetFailed": "Nie udalo sie ustawic pozycji FEN.",
+    "gameLoadFailed": "Nie udalo sie zaladowac partii."
+  },
+  "classification": {
+    "brilliant": "Genialny",
+    "great": "Swietny",
+    "best": "Najlepszy",
+    "good": "Dobry",
+    "mistake": "Pomylka",
+    "blunder": "Blunder"
+  },
+  "language": {
+    "label": "Jezyk",
+    "pl": "PL",
+    "en": "EN"
+  }
+}
