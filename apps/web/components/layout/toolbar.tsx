@@ -60,9 +60,9 @@ export function ToolbarPlaceholder({
                   ? "secondary"
                   : key === "chart" && uiState.showEvalChart
                     ? "secondary"
-                  : key === "flip" && uiState.boardFlipped
-                    ? "secondary"
-                    : "ghost"
+                    : key === "flip" && uiState.boardFlipped
+                      ? "secondary"
+                      : "ghost"
           }
           size="icon"
           className="size-8"

@@ -138,7 +138,9 @@ export function MainLayoutPlaceholder() {
               className="flex h-full w-full flex-col"
             >
               <TabsList className="w-full shrink-0">
-                <TabsTrigger value="analysis">{t("common.analysis")}</TabsTrigger>
+                <TabsTrigger value="analysis">
+                  {t("common.analysis")}
+                </TabsTrigger>
                 <TabsTrigger value="moves">{t("common.moves")}</TabsTrigger>
                 <TabsTrigger value="chart">{t("common.chart")}</TabsTrigger>
               </TabsList>
