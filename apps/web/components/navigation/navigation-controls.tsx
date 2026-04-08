@@ -23,27 +23,18 @@ export function NavigationControls() {
     cancelBatchAnalysis()
     goToMove(0)
   }, [cancelBatchAnalysis, goToMove])
-  const goPrev = useCallback(
-    () => {
-      cancelBatchAnalysis()
-      goToMove(state.currentMoveIndex - 1)
-    },
-    [cancelBatchAnalysis, goToMove, state.currentMoveIndex],
-  )
-  const goNext = useCallback(
-    () => {
-      cancelBatchAnalysis()
-      goToMove(state.currentMoveIndex + 1)
-    },
-    [cancelBatchAnalysis, goToMove, state.currentMoveIndex],
-  )
-  const goLast = useCallback(
-    () => {
-      cancelBatchAnalysis()
-      goToMove(state.history.length)
-    },
-    [cancelBatchAnalysis, goToMove, state.history.length],
-  )
+  const goPrev = useCallback(() => {
+    cancelBatchAnalysis()
+    goToMove(state.currentMoveIndex - 1)
+  }, [cancelBatchAnalysis, goToMove, state.currentMoveIndex])
+  const goNext = useCallback(() => {
+    cancelBatchAnalysis()
+    goToMove(state.currentMoveIndex + 1)
+  }, [cancelBatchAnalysis, goToMove, state.currentMoveIndex])
+  const goLast = useCallback(() => {
+    cancelBatchAnalysis()
+    goToMove(state.history.length)
+  }, [cancelBatchAnalysis, goToMove, state.history.length])
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {

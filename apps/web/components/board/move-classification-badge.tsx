@@ -1,5 +1,9 @@
+"use client"
+
 import { Badge } from "@workspace/ui/components/badge"
+import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useUI } from "@/hooks/use-ui"
 import {
   CLASSIFICATION_COLORS,
   CLASSIFICATION_LABELS,
@@ -7,6 +11,9 @@ import {
 
 export function MoveClassificationBadgePlaceholder() {
   const { state } = useGame()
+  const { state: engineState } = useEngine()
+  const { state: uiState } = useUI()
+  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
   const currentMove =
     state.currentMoveIndex > 0
       ? state.history[state.currentMoveIndex - 1]
@@ -14,7 +21,7 @@ export function MoveClassificationBadgePlaceholder() {
 
   const classification = currentMove?.classification
 
-  if (!classification) {
+  if (!analysisVisible || !classification) {
     return null
   }
 

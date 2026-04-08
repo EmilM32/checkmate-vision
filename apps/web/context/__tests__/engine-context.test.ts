@@ -71,4 +71,26 @@ describe("engineReducer batch analysis", () => {
     expect(cancelled.batch.status).toBe("cancelled")
     expect(cancelled.batch.cancelRequested).toBe(false)
   })
+
+  it("reveals and conceals analysis explicitly", () => {
+    const revealed = engineReducer(initialEngineState, {
+      type: "REVEAL_ANALYSIS",
+    })
+    expect(revealed.sleuthRevealed).toBe(true)
+
+    const concealed = engineReducer(revealed, {
+      type: "ENGINE_CONCEAL_ANALYSIS",
+    })
+    expect(concealed.sleuthRevealed).toBe(false)
+  })
+
+  it("resets revealed state when starting a fresh analysis", () => {
+    const revealed = engineReducer(initialEngineState, {
+      type: "REVEAL_ANALYSIS",
+    })
+    expect(revealed.sleuthRevealed).toBe(true)
+
+    const restarted = engineReducer(revealed, { type: "ENGINE_START_ANALYSIS" })
+    expect(restarted.sleuthRevealed).toBe(false)
+  })
 })

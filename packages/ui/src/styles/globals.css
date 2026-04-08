@@ -178,11 +178,9 @@
 
   .board-overlay-heatmap {
     z-index: 10;
-    background: linear-gradient(45deg, color-mix(in oklab, #22c55e 12%, transparent), color-mix(in oklab, #ef4444 10%, transparent));
   }
 
   .board-overlay-arrows {
     z-index: 20;
-    border: 1px dashed color-mix(in oklab, var(--cv-accent) 40%, transparent);
   }
 }

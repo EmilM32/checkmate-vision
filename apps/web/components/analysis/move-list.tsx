@@ -6,6 +6,7 @@ import { ScrollArea } from "@workspace/ui/components/scroll-area"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useUI } from "@/hooks/use-ui"
 import type { MoveEntry } from "@/context/game-context"
 import { CLASSIFICATION_COLORS } from "@/lib/chess/classification"
 
@@ -17,7 +18,9 @@ type MovePair = {
 
 export function MoveList() {
   const { state, goToMove } = useGame()
-  const { cancelBatchAnalysis } = useEngine()
+  const { state: engineState, cancelBatchAnalysis } = useEngine()
+  const { state: uiState } = useUI()
+  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
   const activeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -71,7 +74,7 @@ export function MoveList() {
                     : "text-foreground hover:bg-muted"
                 }`}
                 style={
-                  pair.white.classification && !isWhiteActive
+                  analysisVisible && pair.white.classification && !isWhiteActive
                     ? {
                         color: CLASSIFICATION_COLORS[pair.white.classification],
                       }
@@ -93,7 +96,9 @@ export function MoveList() {
                       : "text-foreground hover:bg-muted"
                   }`}
                   style={
-                    pair.black.classification && !isBlackActive
+                    analysisVisible &&
+                    pair.black.classification &&
+                    !isBlackActive
                       ? {
                           color:
                             CLASSIFICATION_COLORS[pair.black.classification],

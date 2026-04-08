@@ -11,10 +11,7 @@ import {
 } from "@/lib/chess/classification"
 import { parseInfoLine, parseBestMoveLine } from "@/lib/engine/parser"
 import { serializeCommand } from "@/lib/engine/worker"
-import type {
-  BatchAnalysisItem,
-  EngineScore,
-} from "@/context/engine-context"
+import type { BatchAnalysisItem, EngineScore } from "@/context/engine-context"
 
 export type EngineWorkerStatus = "idle" | "initializing" | "ready" | "analyzing"
 
@@ -278,7 +275,10 @@ export function useEngineWorker() {
           const batch = batchRunRef.current
           const item = batch.queue[batch.currentIndex]
           const scoreAfter = pvScoresRef.current[1]
-          const pvGapCp = getPvGapCp(pvScoresRef.current[1], pvScoresRef.current[2])
+          const pvGapCp = getPvGapCp(
+            pvScoresRef.current[1],
+            pvScoresRef.current[2]
+          )
 
           if (item) {
             if (item.moveIndex === 0) {
@@ -504,6 +504,10 @@ export function useEngineWorker() {
 
     previousGameRef.current = gameState
   }, [gameState])
+
+  useEffect(() => {
+    dispatch({ type: "ENGINE_CONCEAL_ANALYSIS" })
+  }, [gameState.fen, dispatch])
 
   useEffect(() => {
     if (workerRef.current) {

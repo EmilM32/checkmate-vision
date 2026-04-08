@@ -83,7 +83,13 @@ export type EngineAction =
   | { type: "ENGINE_START_ANALYSIS" }
   | { type: "ENGINE_OUTPUT"; info: ParsedInfoLine }
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
-  | { type: "ENGINE_BATCH_REQUEST"; requestId: number; queue: BatchAnalysisItem[] }
+  | { type: "REVEAL_ANALYSIS" }
+  | { type: "ENGINE_CONCEAL_ANALYSIS" }
+  | {
+      type: "ENGINE_BATCH_REQUEST"
+      requestId: number
+      queue: BatchAnalysisItem[]
+    }
   | {
       type: "ENGINE_BATCH_PROGRESS"
       completed: number
@@ -112,13 +118,18 @@ export function engineReducer(
         pvLines: [],
         evaluation: null,
         bestMove: null,
+        sleuthRevealed: false,
       }
 
     case "ENGINE_OUTPUT": {
       const { info } = action
       const newLines = [...state.pvLines]
       const lineIndex = newLines.findIndex((l) => l.id === info.multipv)
-      const newLine: EngineLine = { id: info.multipv, score: info.score, pv: info.pv }
+      const newLine: EngineLine = {
+        id: info.multipv,
+        score: info.score,
+        pv: info.pv,
+      }
 
       if (lineIndex >= 0) {
         newLines[lineIndex] = newLine
@@ -142,6 +153,18 @@ export function engineReducer(
         ...state,
         bestMove: action.bestMove.move,
         isAnalyzing: false,
+      }
+
+    case "REVEAL_ANALYSIS":
+      return {
+        ...state,
+        sleuthRevealed: true,
+      }
+
+    case "ENGINE_CONCEAL_ANALYSIS":
+      return {
+        ...state,
+        sleuthRevealed: false,
       }
 
     case "ENGINE_BATCH_REQUEST":

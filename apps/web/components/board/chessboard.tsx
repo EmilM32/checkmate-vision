@@ -15,7 +15,7 @@ const Chessboard = dynamic(
   {
     ssr: false,
     loading: () => <Skeleton className="size-full" />,
-  },
+  }
 )
 
 const HIGHLIGHT_STYLE: React.CSSProperties = {
@@ -27,16 +27,24 @@ export function InteractiveChessboard() {
   const { state, makeMove } = useGame()
   const { state: uiState } = useUI()
   const { state: engineState } = useEngine()
+  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
 
   const bestMoveUci =
     engineState.pvLines[0]?.pv[0] ?? engineState.bestMove ?? null
 
   const squareStyles = useMemo<Record<string, React.CSSProperties>>(() => {
-    if (!uiState.showArrows || !bestMoveUci || bestMoveUci.length < 4) return {}
+    if (
+      !analysisVisible ||
+      !uiState.showArrows ||
+      !bestMoveUci ||
+      bestMoveUci.length < 4
+    ) {
+      return {}
+    }
     const from = bestMoveUci.slice(0, 2)
     const to = bestMoveUci.slice(2, 4)
     return { [from]: HIGHLIGHT_STYLE, [to]: HIGHLIGHT_STYLE }
-  }, [bestMoveUci, uiState.showArrows])
+  }, [analysisVisible, bestMoveUci, uiState.showArrows])
 
   const handlePieceDrop = useCallback(
     ({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs): boolean => {
@@ -49,10 +57,10 @@ export function InteractiveChessboard() {
       return makeMove(
         sourceSquare,
         targetSquare,
-        isPawnPromotion ? "q" : undefined,
+        isPawnPromotion ? "q" : undefined
       )
     },
-    [makeMove],
+    [makeMove]
   )
 
   return (

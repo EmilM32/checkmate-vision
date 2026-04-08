@@ -23,10 +23,20 @@ export function useEngine() {
     dispatch({ type: "ENGINE_BATCH_CLEAR" })
   }
 
+  const revealAnalysis = () => {
+    dispatch({ type: "REVEAL_ANALYSIS" })
+  }
+
+  const concealAnalysis = () => {
+    dispatch({ type: "ENGINE_CONCEAL_ANALYSIS" })
+  }
+
   return {
     state,
     requestBatchAnalysis,
     cancelBatchAnalysis,
     clearBatchAnalysis,
+    revealAnalysis,
+    concealAnalysis,
   }
 }

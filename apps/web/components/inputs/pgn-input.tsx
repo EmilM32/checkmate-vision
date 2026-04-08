@@ -9,8 +9,11 @@ import { parsePgn } from "@/lib/chess/fen-pgn"
 
 export function PGNInput() {
   const { state, loadPgnGame } = useGame()
-  const { state: engineState, requestBatchAnalysis, clearBatchAnalysis } =
-    useEngine()
+  const {
+    state: engineState,
+    requestBatchAnalysis,
+    clearBatchAnalysis,
+  } = useEngine()
 
   const [value, setValue] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -51,7 +54,8 @@ export function PGNInput() {
       ...state.history.map((move, index) => ({
         moveIndex: index + 1,
         fen: move.fen,
-        fenBefore: index === 0 ? state.initialFen : state.history[index - 1]!.fen,
+        fenBefore:
+          index === 0 ? state.initialFen : state.history[index - 1]!.fen,
       })),
     ]
 

@@ -19,6 +19,7 @@ const ARROW_STYLES: Record<1 | 2 | 3, { color: string; opacity: number }> = {
 export function ArrowOverlay() {
   const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
+  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
 
   const arrows = useMemo(
     () => buildMultiPvArrows(engineState.pvLines),
@@ -35,7 +36,11 @@ export function ArrowOverlay() {
     })
   }, [arrows, uiState.boardFlipped])
 
-  if (!uiState.showArrows || positionedArrows.length === 0) {
+  if (
+    !analysisVisible ||
+    !uiState.showArrows ||
+    positionedArrows.length === 0
+  ) {
     return null
   }
 

@@ -1,8 +1,16 @@
 "use client"
 
 import { Button } from "@workspace/ui/components/button"
-import { FlipVertical, Layers, MoveRight, Search, Download } from "lucide-react"
+import {
+  Download,
+  Eye,
+  FlipVertical,
+  Layers,
+  MoveRight,
+  Search,
+} from "lucide-react"
 
+import { useEngine } from "@/hooks/use-engine"
 import { useUI } from "@/hooks/use-ui"
 
 // TODO: Przyciski narzedzi
@@ -21,30 +29,66 @@ const TOOLBAR_ITEMS = [
 
 export function ToolbarPlaceholder() {
   const { state: uiState, dispatch } = useUI()
+  const { state: engineState, revealAnalysis, concealAnalysis } = useEngine()
+
+  const isRevealAvailable = uiState.sleuthMode && !engineState.sleuthRevealed
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       {TOOLBAR_ITEMS.map(({ label, icon: Icon }) => (
         <Button
           key={label}
           variant={
-            label === "Arrows" && uiState.showArrows ? "secondary" : "ghost"
+            label === "Heatmap" && uiState.showHeatmap
+              ? "secondary"
+              : label === "Arrows" && uiState.showArrows
+                ? "secondary"
+                : label === "Sleuth" && uiState.sleuthMode
+                  ? "secondary"
+                  : label === "Flip" && uiState.boardFlipped
+                    ? "secondary"
+                    : "ghost"
           }
           size="icon"
           className="size-8"
-          disabled={label !== "Arrows"}
+          disabled={label === "Export"}
           title={label}
-          onClick={
-            label === "Arrows"
-              ? () => {
-                  dispatch({ type: "UI_TOGGLE_ARROWS" })
-                }
-              : undefined
-          }
+          onClick={() => {
+            if (label === "Heatmap") {
+              dispatch({ type: "UI_TOGGLE_HEATMAP" })
+              return
+            }
+
+            if (label === "Arrows") {
+              dispatch({ type: "UI_TOGGLE_ARROWS" })
+              return
+            }
+
+            if (label === "Sleuth") {
+              concealAnalysis()
+              dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
+              return
+            }
+
+            if (label === "Flip") {
+              dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
+            }
+          }}
         >
           <Icon className="size-4" />
         </Button>
       ))}
+
+      <Button
+        variant={engineState.sleuthRevealed ? "secondary" : "outline"}
+        size="sm"
+        className="h-8"
+        disabled={!isRevealAvailable}
+        onClick={revealAnalysis}
+      >
+        <Eye className="mr-1 size-4" />
+        Reveal
+      </Button>
     </div>
   )
 }

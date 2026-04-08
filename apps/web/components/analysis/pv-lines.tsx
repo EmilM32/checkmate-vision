@@ -5,6 +5,7 @@ import { Chess } from "chess.js"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useUI } from "@/hooks/use-ui"
 import type { EngineScore } from "@/context/engine-context"
 
 function uciToSan(fen: string, uciMoves: string[]): string[] {
@@ -36,7 +37,8 @@ function formatScore(score: EngineScore | null): string {
 
 function scoreColorClass(score: EngineScore | null): string {
   if (!score) return "text-muted-foreground"
-  if (score.type === "mate") return score.value > 0 ? "text-emerald-500" : "text-red-500"
+  if (score.type === "mate")
+    return score.value > 0 ? "text-emerald-500" : "text-red-500"
   if (score.value > 50) return "text-emerald-500"
   if (score.value < -50) return "text-red-500"
   return "text-muted-foreground"
@@ -45,6 +47,8 @@ function scoreColorClass(score: EngineScore | null): string {
 export function PVLines() {
   const { state: engineState } = useEngine()
   const { state: gameState } = useGame()
+  const { state: uiState } = useUI()
+  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
 
   const linesWithSan = useMemo(() => {
     return engineState.pvLines.map((line) => ({
@@ -53,14 +57,25 @@ export function PVLines() {
     }))
   }, [engineState.pvLines, gameState.fen])
 
+  if (!analysisVisible) {
+    return (
+      <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+        Sleuth mode active. Reveal analysis to view engine lines.
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between">
-        <p className="text-xs font-medium text-muted-foreground">Engine Lines</p>
+        <p className="text-xs font-medium text-muted-foreground">
+          Engine Lines
+        </p>
         {engineState.depth > 0 && (
           <p className="text-[10px] text-muted-foreground">
             d{engineState.depth}
-            {engineState.nps > 0 && ` · ${(engineState.nps / 1000).toFixed(0)}kn/s`}
+            {engineState.nps > 0 &&
+              ` · ${(engineState.nps / 1000).toFixed(0)}kn/s`}
           </p>
         )}
       </div>
@@ -74,7 +89,9 @@ export function PVLines() {
             key={line.id}
             className="flex items-baseline gap-2 rounded-md bg-muted/50 px-3 py-1.5 font-mono text-xs"
           >
-            <span className={`shrink-0 font-bold ${scoreColorClass(line.score)}`}>
+            <span
+              className={`shrink-0 font-bold ${scoreColorClass(line.score)}`}
+            >
               {formatScore(line.score)}
             </span>
             <span className="truncate text-foreground/80">
