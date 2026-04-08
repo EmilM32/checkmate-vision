@@ -114,6 +114,10 @@ export type EngineAction =
   | { type: "ENGINE_RESTORE_STATE"; payload: PersistableEngineState }
   | { type: "ENGINE_RESET" }
 
+// ── Constants ──
+
+const MIN_EVAL_DISPLAY_DEPTH = 8
+
 // ── Reducer ──
 
 export function engineReducer(
@@ -128,7 +132,6 @@ export function engineReducer(
         depth: 0,
         nps: 0,
         pvLines: [],
-        evaluation: null,
         bestMove: null,
         sleuthRevealed: false,
       }
@@ -150,12 +153,16 @@ export function engineReducer(
         newLines.sort((a, b) => a.id - b.id)
       }
 
+      const shouldUpdateEval =
+        info.multipv === 1 &&
+        info.score &&
+        info.depth >= MIN_EVAL_DISPLAY_DEPTH
+
       return {
         ...state,
         depth: info.depth,
         nps: info.nps,
-        evaluation:
-          info.multipv === 1 && info.score ? info.score : state.evaluation,
+        evaluation: shouldUpdateEval ? info.score : state.evaluation,
         pvLines: newLines,
       }
     }

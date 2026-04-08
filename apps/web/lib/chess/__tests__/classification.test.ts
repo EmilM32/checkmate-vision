@@ -89,6 +89,50 @@ describe("classifyMove", () => {
     expect(result).toBe("good")
   })
 
+  it("softens early opening swings near equality", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "cp", value: 20 },
+      scoreAfter: { type: "cp", value: -40 },
+      playedBy: "white",
+      plyIndex: 1,
+    })
+
+    expect(result).toBe("good")
+  })
+
+  it("softens early opening swings near equality for black", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "cp", value: -10 },
+      scoreAfter: { type: "cp", value: 60 },
+      playedBy: "black",
+      plyIndex: 2,
+    })
+
+    expect(result).toBe("good")
+  })
+
+  it("keeps larger opening losses as mistakes", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "cp", value: 30 },
+      scoreAfter: { type: "cp", value: -130 },
+      playedBy: "white",
+      plyIndex: 1,
+    })
+
+    expect(result).toBe("mistake")
+  })
+
+  it("does not apply opening leniency later in the game", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "cp", value: 20 },
+      scoreAfter: { type: "cp", value: -40 },
+      playedBy: "white",
+      plyIndex: 10,
+    })
+
+    expect(result).toBe("mistake")
+  })
+
   it("returns mistake for medium loss", () => {
     const result = classifyMove({
       scoreBefore: { type: "cp", value: 260 },

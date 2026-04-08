@@ -30,6 +30,7 @@ export type ClassificationInput = {
   scoreBefore: EngineScore
   scoreAfter: EngineScore
   playedBy: "white" | "black"
+  plyIndex?: number
   pvGapCp?: number | null
   isOnlyLegalMove?: boolean
   isMaterialSacrifice?: boolean
@@ -38,6 +39,20 @@ export type ClassificationInput = {
 }
 
 const BRILLIANT_NEAR_BEST_CP = 30
+const OPENING_LENIENCY_PLY_LIMIT = 8
+const OPENING_LENIENCY_SCORE_CAP_CP = 120
+
+const DEFAULT_THRESHOLDS = {
+  best: 10,
+  good: 50,
+  mistake: 200,
+} as const
+
+const OPENING_THRESHOLDS = {
+  best: 15,
+  good: 100,
+  mistake: 250,
+} as const
 
 function normalizeCpDelta(
   scoreBefore: EngineScore,
@@ -84,6 +99,35 @@ function toLossInCp(
   return (beforeCp - afterCp) * direction
 }
 
+function getThresholds(
+  scoreBefore: EngineScore,
+  scoreAfter: EngineScore,
+  plyIndex?: number
+) {
+  if (
+    typeof plyIndex !== "number" ||
+    plyIndex < 1 ||
+    plyIndex > OPENING_LENIENCY_PLY_LIMIT
+  ) {
+    return DEFAULT_THRESHOLDS
+  }
+
+  if (scoreBefore?.type !== "cp" || scoreAfter?.type !== "cp") {
+    return DEFAULT_THRESHOLDS
+  }
+
+  const maxAbsScore = Math.max(
+    Math.abs(scoreBefore.value),
+    Math.abs(scoreAfter.value)
+  )
+
+  if (maxAbsScore > OPENING_LENIENCY_SCORE_CAP_CP) {
+    return DEFAULT_THRESHOLDS
+  }
+
+  return OPENING_THRESHOLDS
+}
+
 export function computeMoveDelta(
   scoreBefore: EngineScore,
   scoreAfter: EngineScore,
@@ -103,6 +147,7 @@ export function classifyMove(input: ClassificationInput): MoveClassification {
     scoreBefore,
     scoreAfter,
     playedBy,
+    plyIndex,
     pvGapCp,
     isOnlyLegalMove,
     isMaterialSacrifice,
@@ -115,6 +160,7 @@ export function classifyMove(input: ClassificationInput): MoveClassification {
   }
 
   const deltaLoss = toLossInCp(scoreBefore, scoreAfter, playedBy)
+  const thresholds = getThresholds(scoreBefore, scoreAfter, plyIndex)
 
   const nearBest = isNearBest ?? Math.abs(deltaLoss) <= BRILLIANT_NEAR_BEST_CP
 
@@ -126,15 +172,15 @@ export function classifyMove(input: ClassificationInput): MoveClassification {
     return "great"
   }
 
-  if (deltaLoss <= 10) {
+  if (deltaLoss <= thresholds.best) {
     return "best"
   }
 
-  if (deltaLoss <= 50) {
+  if (deltaLoss <= thresholds.good) {
     return "good"
   }
 
-  if (deltaLoss <= 200) {
+  if (deltaLoss <= thresholds.mistake) {
     return "mistake"
   }
 

@@ -38,14 +38,14 @@ export function EvalBar() {
           key="eval-visible"
           className="eval-bar-gradient relative flex w-7 shrink-0 flex-col overflow-hidden rounded-l-lg"
           animate={{ "--eval-pct": `${pct}%` } as Record<string, string>}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
         >
           <motion.span
-            key={`${label}-${isWhiteBetter ? "white" : "black"}`}
-            initial={{ opacity: 0, y: isWhiteBetter ? -2 : 2 }}
+            key={isWhiteBetter ? "white" : "black"}
+            initial={{ opacity: 0, y: isWhiteBetter ? -4 : 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: isWhiteBetter ? 2 : -2 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            exit={{ opacity: 0, y: isWhiteBetter ? 4 : -4 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
             className={`absolute left-1/2 -translate-x-1/2 text-[10px] leading-none font-bold ${
               isWhiteBetter
                 ? "bottom-1.5 text-zinc-100"

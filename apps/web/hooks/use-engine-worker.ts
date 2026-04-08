@@ -296,6 +296,7 @@ export function useEngineWorker() {
                 scoreBefore,
                 scoreAfter,
                 playedBy,
+                plyIndex: item.moveIndex,
                 pvGapCp,
                 isOnlyLegalMove: countLegalMoves(item.fenBefore) === 1,
                 isMaterialSacrifice: isMaterialSacrifice(
@@ -369,6 +370,7 @@ export function useEngineWorker() {
             scoreBefore: pendingMove.scoreBefore,
             scoreAfter,
             playedBy: pendingMove.playedBy,
+            plyIndex: pendingMove.moveIndex,
             pvGapCp,
             isOnlyLegalMove: pendingMove.isOnlyLegalMove,
             isMaterialSacrifice: pendingMove.isMaterialSacrifice,

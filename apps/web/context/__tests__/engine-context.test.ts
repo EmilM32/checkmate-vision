@@ -94,6 +94,72 @@ describe("engineReducer batch analysis", () => {
     expect(restarted.sleuthRevealed).toBe(false)
   })
 
+  it("preserves evaluation when starting fresh analysis", () => {
+    const withEval = engineReducer(initialEngineState, {
+      type: "ENGINE_RESTORE_STATE",
+      payload: {
+        evaluation: { type: "cp", value: 150 },
+        depth: 20,
+        nps: 1000000,
+        bestMove: "e2e4",
+        pvLines: [],
+        sleuthRevealed: false,
+        batch: initialEngineState.batch,
+      },
+    })
+
+    const restarted = engineReducer(withEval, { type: "ENGINE_START_ANALYSIS" })
+    expect(restarted.evaluation).toEqual({ type: "cp", value: 150 })
+    expect(restarted.isAnalyzing).toBe(true)
+    expect(restarted.depth).toBe(0)
+    expect(restarted.pvLines).toEqual([])
+  })
+
+  it("ignores low-depth evaluation updates", () => {
+    const withEval = engineReducer(initialEngineState, {
+      type: "ENGINE_RESTORE_STATE",
+      payload: {
+        evaluation: { type: "cp", value: 150 },
+        depth: 20,
+        nps: 0,
+        bestMove: null,
+        pvLines: [],
+        sleuthRevealed: false,
+        batch: initialEngineState.batch,
+      },
+    })
+
+    const afterLowDepth = engineReducer(withEval, {
+      type: "ENGINE_OUTPUT",
+      info: {
+        depth: 3,
+        nps: 50000,
+        multipv: 1 as const,
+        score: { type: "cp", value: -200 },
+        pv: ["d2d4"],
+      },
+    })
+
+    expect(afterLowDepth.evaluation).toEqual({ type: "cp", value: 150 })
+    expect(afterLowDepth.depth).toBe(3)
+    expect(afterLowDepth.pvLines).toHaveLength(1)
+  })
+
+  it("updates evaluation at sufficient depth", () => {
+    const afterHighDepth = engineReducer(initialEngineState, {
+      type: "ENGINE_OUTPUT",
+      info: {
+        depth: 10,
+        nps: 500000,
+        multipv: 1 as const,
+        score: { type: "cp", value: 80 },
+        pv: ["e2e4", "e7e5"],
+      },
+    })
+
+    expect(afterHighDepth.evaluation).toEqual({ type: "cp", value: 80 })
+  })
+
   it("restores persisted engine snapshot", () => {
     const restored = engineReducer(initialEngineState, {
       type: "ENGINE_RESTORE_STATE",

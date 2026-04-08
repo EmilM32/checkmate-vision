@@ -148,7 +148,6 @@
       oklch(0.25 0 0) var(--eval-pct),
       oklch(0.25 0 0) 100%
     );
-    transition: --eval-pct 0.3s ease;
   }
 
   :is(.dark) .eval-bar-gradient {
