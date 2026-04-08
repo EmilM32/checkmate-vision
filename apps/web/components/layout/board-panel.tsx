@@ -3,7 +3,6 @@ import type { RefObject } from "react"
 import { InteractiveChessboard } from "@/components/board/chessboard"
 import { ArrowOverlay } from "@/components/board/arrow-overlay"
 import { HeatmapOverlay } from "@/components/board/heatmap-overlay"
-import { MoveClassificationBadgePlaceholder } from "@/components/board/move-classification-badge"
 
 type BoardPanelPlaceholderProps = {
   exportRef?: RefObject<HTMLElement | null>
@@ -22,9 +21,6 @@ export function BoardPanelPlaceholder({
         <HeatmapOverlay />
         {/* TODO: Strzalki najlepszych ruchow silnika — rysowane na Canvas/SVG z danych EngineContext.bestMove/pvLines */}
         <ArrowOverlay />
-        {/* TODO: Badge klasyfikacji ruchu (brilliant/great/best/good/inaccuracy/mistake/blunder)
-            — wyswietlany po kazdym ruchu, dane z classifyMove() (lib/chess/classification.ts) */}
-        <MoveClassificationBadgePlaceholder />
       </div>
     </section>
   )
