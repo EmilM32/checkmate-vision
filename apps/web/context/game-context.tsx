@@ -12,6 +12,7 @@ import {
 import { Chess, DEFAULT_POSITION } from "chess.js"
 import type { EngineScore } from "@/context/engine-context"
 import type { MoveClassification } from "@/lib/chess/classification"
+import type { ParsedGame } from "@/lib/chess/fen-pgn"
 
 // ── Types ──
 
@@ -32,6 +33,7 @@ export type MoveAnalysisPatch = {
 }
 
 export type GameState = {
+  initialFen: string
   fen: string
   pgn: string
   history: MoveEntry[]
@@ -41,6 +43,7 @@ export type GameState = {
 }
 
 export const initialGameState: GameState = {
+  initialFen: DEFAULT_POSITION,
   fen: DEFAULT_POSITION,
   pgn: "",
   history: [],
@@ -62,8 +65,13 @@ function gameReducer(_state: GameState, action: GameAction): GameState {
 
 // ── Helpers ──
 
-function replayMoves(chess: Chess, moves: MoveEntry[], upTo: number) {
-  chess.reset()
+function replayMoves(
+  chess: Chess,
+  moves: MoveEntry[],
+  upTo: number,
+  initialFen: string
+) {
+  chess.load(initialFen)
   for (let i = 0; i < upTo; i++) {
     chess.move(moves[i]!.san)
   }
@@ -72,9 +80,11 @@ function replayMoves(chess: Chess, moves: MoveEntry[], upTo: number) {
 function deriveState(
   chess: Chess,
   history: MoveEntry[],
-  currentMoveIndex: number
+  currentMoveIndex: number,
+  initialFen: string
 ): GameState {
   return {
+    initialFen,
     fen: chess.fen(),
     pgn: chess.pgn(),
     history,
@@ -90,6 +100,8 @@ type GameContextValue = {
   state: GameState
   makeMove: (from: string, to: string, promotion?: string) => boolean
   annotateMove: (index: number, patch: MoveAnalysisPatch) => void
+  setPositionFromFen: (fen: string) => boolean
+  loadPgnGame: (parsed: ParsedGame) => boolean
   undo: () => void
   goToMove: (index: number) => void
   newGame: () => void
@@ -109,7 +121,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // If navigated back, truncate future moves and rebuild chess state
       if (currentMoveIndex < history.length) {
         history = history.slice(0, currentMoveIndex)
-        replayMoves(chess, history, currentMoveIndex)
+        replayMoves(chess, history, currentMoveIndex, state.initialFen)
       }
 
       try {
@@ -128,7 +140,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const newIndex = newHistory.length
         dispatch({
           type: "SET_STATE",
-          payload: deriveState(chess, newHistory, newIndex),
+          payload: deriveState(chess, newHistory, newIndex, state.initialFen),
         })
         return true
       } catch {
@@ -165,6 +177,45 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [state]
   )
 
+  const setPositionFromFen = useCallback((fen: string): boolean => {
+    const chess = chessRef.current
+    try {
+      chess.load(fen)
+      dispatch({
+        type: "SET_STATE",
+        payload: deriveState(chess, [], 0, fen),
+      })
+      return true
+    } catch {
+      return false
+    }
+  }, [])
+
+  const loadPgnGame = useCallback((parsed: ParsedGame): boolean => {
+    const chess = chessRef.current
+
+    try {
+      chess.loadPgn(parsed.pgn)
+
+      const history: MoveEntry[] = parsed.moves.map((move) => ({
+        san: move.san,
+        fen: move.fen,
+        scoreBefore: null,
+        scoreAfter: null,
+        delta: null,
+        classification: null,
+      }))
+
+      dispatch({
+        type: "SET_STATE",
+        payload: deriveState(chess, history, history.length, parsed.initialFen),
+      })
+      return true
+    } catch {
+      return false
+    }
+  }, [])
+
   const goToMove = useCallback(
     (index: number) => {
       const { history } = state
@@ -172,10 +223,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (clamped === state.currentMoveIndex) return
 
       const chess = chessRef.current
-      replayMoves(chess, history, clamped)
+      replayMoves(chess, history, clamped, state.initialFen)
       dispatch({
         type: "SET_STATE",
-        payload: deriveState(chess, history, clamped),
+        payload: deriveState(chess, history, clamped, state.initialFen),
       })
     },
     [state]
@@ -192,8 +243,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<GameContextValue>(
-    () => ({ state, makeMove, annotateMove, undo, goToMove, newGame }),
-    [state, makeMove, annotateMove, undo, goToMove, newGame]
+    () => ({
+      state,
+      makeMove,
+      annotateMove,
+      setPositionFromFen,
+      loadPgnGame,
+      undo,
+      goToMove,
+      newGame,
+    }),
+    [
+      state,
+      makeMove,
+      annotateMove,
+      setPositionFromFen,
+      loadPgnGame,
+      undo,
+      goToMove,
+      newGame,
+    ]
   )
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

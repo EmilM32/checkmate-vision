@@ -1,8 +1,32 @@
 "use client"
 
 import { useEngineContext } from "@/context"
+import type { BatchAnalysisItem } from "@/context/engine-context"
 
 export function useEngine() {
-  const { state } = useEngineContext()
-  return { state }
+  const { state, dispatch } = useEngineContext()
+
+  const requestBatchAnalysis = (queue: BatchAnalysisItem[]) => {
+    dispatch({
+      type: "ENGINE_BATCH_REQUEST",
+      requestId: Date.now(),
+      queue,
+    })
+  }
+
+  const cancelBatchAnalysis = () => {
+    if (state.batch.status !== "running") return
+    dispatch({ type: "ENGINE_BATCH_CANCEL_REQUEST" })
+  }
+
+  const clearBatchAnalysis = () => {
+    dispatch({ type: "ENGINE_BATCH_CLEAR" })
+  }
+
+  return {
+    state,
+    requestBatchAnalysis,
+    cancelBatchAnalysis,
+    clearBatchAnalysis,
+  }
 }

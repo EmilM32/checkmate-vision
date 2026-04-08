@@ -11,7 +11,10 @@ import {
 } from "@/lib/chess/classification"
 import { parseInfoLine, parseBestMoveLine } from "@/lib/engine/parser"
 import { serializeCommand } from "@/lib/engine/worker"
-import type { EngineScore } from "@/context/engine-context"
+import type {
+  BatchAnalysisItem,
+  EngineScore,
+} from "@/context/engine-context"
 
 export type EngineWorkerStatus = "idle" | "initializing" | "ready" | "analyzing"
 
@@ -34,6 +37,16 @@ type PendingMoveClassification = {
   scoreBefore: EngineScore
   isOnlyLegalMove: boolean
   isMaterialSacrifice: boolean
+}
+
+type BatchRuntime = {
+  requestId: number
+  queue: BatchAnalysisItem[]
+  currentIndex: number
+  completed: number
+  previousScore: EngineScore
+  running: boolean
+  cancelled: boolean
 }
 
 function countLegalMoves(fen: string): number {
@@ -102,7 +115,7 @@ function getPvGapCp(first: EngineScore, second: EngineScore): number | null {
 }
 
 export function useEngineWorker() {
-  const { dispatch } = useEngineContext()
+  const { state: engineState, dispatch } = useEngineContext()
   const { state: gameState, annotateMove } = useGameContext()
 
   const [status, setStatus] = useState<EngineWorkerStatus>("idle")
@@ -122,13 +135,27 @@ export function useEngineWorker() {
   }>({ 1: null, 2: null, 3: null })
   const pendingMoveRef = useRef<PendingMoveClassification | null>(null)
   const previousGameRef = useRef(gameState)
+  const batchRunRef = useRef<BatchRuntime>({
+    requestId: 0,
+    queue: [],
+    currentIndex: 0,
+    completed: 0,
+    previousScore: null,
+    running: false,
+    cancelled: false,
+  })
+  const queuedBatchRef = useRef<{
+    requestId: number
+    queue: BatchAnalysisItem[]
+  } | null>(null)
+  const seenBatchRequestIdRef = useRef(0)
 
   useEffect(() => {
     annotateMoveRef.current = annotateMove
   }, [annotateMove])
 
   const startAnalysis = useCallback(
-    (fen: string) => {
+    (fen: string, depth = ANALYSIS_DEPTH) => {
       const worker = workerRef.current
       if (!worker) return
 
@@ -142,12 +169,54 @@ export function useEngineWorker() {
       worker.postMessage(
         serializeCommand({
           type: "go",
-          depth: ANALYSIS_DEPTH,
+          depth,
           multipv: MULTI_PV,
         })
       )
     },
     [dispatch]
+  )
+
+  const startBatchAtIndex = useCallback(
+    (index: number) => {
+      const batch = batchRunRef.current
+      const item = batch.queue[index]
+      if (!item) {
+        batch.running = false
+        dispatch({ type: "ENGINE_BATCH_DONE" })
+        return
+      }
+
+      batch.currentIndex = index
+      startAnalysis(item.fen, ANALYSIS_DEPTH)
+    },
+    [dispatch, startAnalysis]
+  )
+
+  const beginBatch = useCallback(
+    (requestId: number, queue: BatchAnalysisItem[]) => {
+      if (queue.length === 0) {
+        dispatch({ type: "ENGINE_BATCH_DONE" })
+        return
+      }
+
+      pendingFenRef.current = null
+      waitingForStopRef.current = false
+      pendingMoveRef.current = null
+
+      batchRunRef.current = {
+        requestId,
+        queue,
+        currentIndex: 0,
+        completed: 0,
+        previousScore: null,
+        running: true,
+        cancelled: false,
+      }
+
+      startBatchAtIndex(0)
+    },
+    [dispatch, startBatchAtIndex]
   )
 
   const requestAnalysis = useCallback(
@@ -197,6 +266,86 @@ export function useEngineWorker() {
       if (bestMove) {
         isAnalyzingRef.current = false
         dispatch({ type: "ENGINE_BESTMOVE", bestMove })
+
+        if (queuedBatchRef.current) {
+          const queuedBatch = queuedBatchRef.current
+          queuedBatchRef.current = null
+          beginBatch(queuedBatch.requestId, queuedBatch.queue)
+          return
+        }
+
+        if (batchRunRef.current.running) {
+          const batch = batchRunRef.current
+          const item = batch.queue[batch.currentIndex]
+          const scoreAfter = pvScoresRef.current[1]
+          const pvGapCp = getPvGapCp(pvScoresRef.current[1], pvScoresRef.current[2])
+
+          if (item) {
+            if (item.moveIndex === 0) {
+              batch.previousScore = scoreAfter
+            } else {
+              const playedBy: "white" | "black" =
+                item.moveIndex % 2 === 1 ? "white" : "black"
+              const scoreBefore = batch.previousScore
+              const isOnlyWinningMoveInLosingPosition =
+                isLosingScore(scoreBefore, playedBy) &&
+                isWinningScore(scoreAfter, playedBy)
+
+              const delta = computeMoveDelta(scoreBefore, scoreAfter, playedBy)
+              const input: ClassificationInput = {
+                scoreBefore,
+                scoreAfter,
+                playedBy,
+                pvGapCp,
+                isOnlyLegalMove: countLegalMoves(item.fenBefore) === 1,
+                isMaterialSacrifice: isMaterialSacrifice(
+                  item.fenBefore,
+                  item.fen,
+                  playedBy
+                ),
+                isOnlyWinningMoveInLosingPosition,
+              }
+
+              const classification =
+                scoreBefore && scoreAfter ? classifyMove(input) : null
+
+              annotateMoveRef.current(item.moveIndex, {
+                scoreBefore,
+                scoreAfter,
+                delta,
+                classification,
+              })
+
+              batch.previousScore = scoreAfter
+            }
+
+            batch.completed += 1
+            dispatch({
+              type: "ENGINE_BATCH_PROGRESS",
+              completed: batch.completed,
+              currentMoveIndex: item.moveIndex,
+            })
+          }
+
+          if (batch.cancelled) {
+            batch.running = false
+            dispatch({ type: "ENGINE_BATCH_CANCELLED" })
+            setStatus("ready")
+            statusRef.current = "ready"
+            return
+          }
+
+          const nextIndex = batch.currentIndex + 1
+          if (nextIndex < batch.queue.length) {
+            startBatchAtIndex(nextIndex)
+          } else {
+            batch.running = false
+            dispatch({ type: "ENGINE_BATCH_DONE" })
+            setStatus("ready")
+            statusRef.current = "ready"
+          }
+          return
+        }
 
         const pendingMove = pendingMoveRef.current
         const scoreAfter = pvScoresRef.current[1]
@@ -284,6 +433,16 @@ export function useEngineWorker() {
     waitingForStopRef.current = false
     pendingFenRef.current = null
     pendingMoveRef.current = null
+    queuedBatchRef.current = null
+    batchRunRef.current = {
+      requestId: 0,
+      queue: [],
+      currentIndex: 0,
+      completed: 0,
+      previousScore: null,
+      running: false,
+      cancelled: false,
+    }
     latestEvalRef.current = null
     pvScoresRef.current = { 1: null, 2: null, 3: null }
     setStatus("idle")
@@ -293,6 +452,8 @@ export function useEngineWorker() {
 
   // React to FEN changes with debounce
   useEffect(() => {
+    if (batchRunRef.current.running || queuedBatchRef.current) return
+
     if (statusRef.current !== "ready" && statusRef.current !== "analyzing")
       return
 
@@ -312,6 +473,11 @@ export function useEngineWorker() {
   }, [gameState.fen, requestAnalysis])
 
   useEffect(() => {
+    if (batchRunRef.current.running || queuedBatchRef.current) {
+      previousGameRef.current = gameState
+      return
+    }
+
     const previous = previousGameRef.current
     const isOneNewMove =
       gameState.currentMoveIndex === previous.currentMoveIndex + 1 &&
@@ -344,6 +510,53 @@ export function useEngineWorker() {
       workerRef.current.onmessage = handleMessage
     }
   }, [handleMessage])
+
+  useEffect(() => {
+    const { requestId, queue } = engineState.batch
+    if (requestId === 0 || requestId === seenBatchRequestIdRef.current) return
+
+    seenBatchRequestIdRef.current = requestId
+
+    if (!workerRef.current) {
+      dispatch({
+        type: "ENGINE_BATCH_ERROR",
+        error: "Silnik nie jest gotowy.",
+      })
+      return
+    }
+
+    if (isAnalyzingRef.current) {
+      queuedBatchRef.current = { requestId, queue }
+      pendingFenRef.current = null
+      waitingForStopRef.current = true
+      workerRef.current.postMessage(serializeCommand({ type: "stop" }))
+      return
+    }
+
+    beginBatch(requestId, queue)
+  }, [engineState.batch, dispatch, beginBatch])
+
+  useEffect(() => {
+    if (!engineState.batch.cancelRequested) return
+
+    const batch = batchRunRef.current
+    if (!batch.running) {
+      dispatch({ type: "ENGINE_BATCH_CANCELLED" })
+      return
+    }
+
+    batch.cancelled = true
+    pendingFenRef.current = null
+    queuedBatchRef.current = null
+
+    if (!isAnalyzingRef.current) {
+      batch.running = false
+      dispatch({ type: "ENGINE_BATCH_CANCELLED" })
+      return
+    }
+
+    workerRef.current?.postMessage(serializeCommand({ type: "stop" }))
+  }, [engineState.batch.cancelRequested, dispatch])
 
   // Cleanup on unmount
   useEffect(() => {

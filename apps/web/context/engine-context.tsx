@@ -22,6 +22,30 @@ export type EngineLine = {
   pv: string[]
 }
 
+export type BatchAnalysisItem = {
+  moveIndex: number
+  fen: string
+  fenBefore: string
+}
+
+export type BatchAnalysisStatus =
+  | "idle"
+  | "running"
+  | "done"
+  | "cancelled"
+  | "error"
+
+export type BatchAnalysisState = {
+  requestId: number
+  queue: BatchAnalysisItem[]
+  total: number
+  completed: number
+  currentMoveIndex: number | null
+  status: BatchAnalysisStatus
+  cancelRequested: boolean
+  lastError: string | null
+}
+
 export type EngineState = {
   evaluation: EngineScore
   depth: number
@@ -30,6 +54,7 @@ export type EngineState = {
   pvLines: EngineLine[]
   isAnalyzing: boolean
   sleuthRevealed: boolean
+  batch: BatchAnalysisState
 }
 
 export const initialEngineState: EngineState = {
@@ -40,6 +65,16 @@ export const initialEngineState: EngineState = {
   pvLines: [],
   isAnalyzing: false,
   sleuthRevealed: false,
+  batch: {
+    requestId: 0,
+    queue: [],
+    total: 0,
+    completed: 0,
+    currentMoveIndex: null,
+    status: "idle",
+    cancelRequested: false,
+    lastError: null,
+  },
 }
 
 // ── Actions ──
@@ -48,11 +83,25 @@ export type EngineAction =
   | { type: "ENGINE_START_ANALYSIS" }
   | { type: "ENGINE_OUTPUT"; info: ParsedInfoLine }
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
+  | { type: "ENGINE_BATCH_REQUEST"; requestId: number; queue: BatchAnalysisItem[] }
+  | {
+      type: "ENGINE_BATCH_PROGRESS"
+      completed: number
+      currentMoveIndex: number | null
+    }
+  | { type: "ENGINE_BATCH_DONE" }
+  | { type: "ENGINE_BATCH_CANCEL_REQUEST" }
+  | { type: "ENGINE_BATCH_CANCELLED" }
+  | { type: "ENGINE_BATCH_ERROR"; error: string }
+  | { type: "ENGINE_BATCH_CLEAR" }
   | { type: "ENGINE_RESET" }
 
 // ── Reducer ──
 
-function engineReducer(state: EngineState, action: EngineAction): EngineState {
+export function engineReducer(
+  state: EngineState,
+  action: EngineAction
+): EngineState {
   switch (action.type) {
     case "ENGINE_START_ANALYSIS":
       return {
@@ -93,6 +142,91 @@ function engineReducer(state: EngineState, action: EngineAction): EngineState {
         ...state,
         bestMove: action.bestMove.move,
         isAnalyzing: false,
+      }
+
+    case "ENGINE_BATCH_REQUEST":
+      return {
+        ...state,
+        batch: {
+          requestId: action.requestId,
+          queue: action.queue,
+          total: action.queue.length,
+          completed: 0,
+          currentMoveIndex: null,
+          status: action.queue.length > 0 ? "running" : "idle",
+          cancelRequested: false,
+          lastError: null,
+        },
+      }
+
+    case "ENGINE_BATCH_PROGRESS":
+      return {
+        ...state,
+        batch: {
+          ...state.batch,
+          completed: action.completed,
+          currentMoveIndex: action.currentMoveIndex,
+          status: "running",
+        },
+      }
+
+    case "ENGINE_BATCH_DONE":
+      return {
+        ...state,
+        batch: {
+          ...state.batch,
+          completed: state.batch.total,
+          currentMoveIndex: null,
+          status: "done",
+          cancelRequested: false,
+        },
+      }
+
+    case "ENGINE_BATCH_CANCEL_REQUEST":
+      return {
+        ...state,
+        batch: {
+          ...state.batch,
+          cancelRequested: true,
+        },
+      }
+
+    case "ENGINE_BATCH_CANCELLED":
+      return {
+        ...state,
+        batch: {
+          ...state.batch,
+          currentMoveIndex: null,
+          status: "cancelled",
+          cancelRequested: false,
+        },
+      }
+
+    case "ENGINE_BATCH_ERROR":
+      return {
+        ...state,
+        batch: {
+          ...state.batch,
+          currentMoveIndex: null,
+          status: "error",
+          cancelRequested: false,
+          lastError: action.error,
+        },
+      }
+
+    case "ENGINE_BATCH_CLEAR":
+      return {
+        ...state,
+        batch: {
+          requestId: 0,
+          queue: [],
+          total: 0,
+          completed: 0,
+          currentMoveIndex: null,
+          status: "idle",
+          cancelRequested: false,
+          lastError: null,
+        },
       }
 
     case "ENGINE_RESET":

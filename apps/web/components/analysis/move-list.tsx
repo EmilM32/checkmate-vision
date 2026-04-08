@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 
 import { ScrollArea } from "@workspace/ui/components/scroll-area"
 
+import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import type { MoveEntry } from "@/context/game-context"
 import { CLASSIFICATION_COLORS } from "@/lib/chess/classification"
@@ -16,6 +17,7 @@ type MovePair = {
 
 export function MoveList() {
   const { state, goToMove } = useGame()
+  const { cancelBatchAnalysis } = useEngine()
   const activeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -59,7 +61,10 @@ export function MoveList() {
               </span>
               <button
                 ref={isWhiteActive ? activeRef : undefined}
-                onClick={() => goToMove(whiteIndex)}
+                onClick={() => {
+                  cancelBatchAnalysis()
+                  goToMove(whiteIndex)
+                }}
                 className={`cursor-pointer rounded px-1 text-left ${
                   isWhiteActive
                     ? "bg-accent text-accent-foreground"
@@ -78,7 +83,10 @@ export function MoveList() {
               {pair.black ? (
                 <button
                   ref={isBlackActive ? activeRef : undefined}
-                  onClick={() => goToMove(blackIndex)}
+                  onClick={() => {
+                    cancelBatchAnalysis()
+                    goToMove(blackIndex)
+                  }}
                   className={`cursor-pointer rounded px-1 text-left ${
                     isBlackActive
                       ? "bg-accent text-accent-foreground"
