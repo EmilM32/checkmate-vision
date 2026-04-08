@@ -30,6 +30,7 @@ describe("UIContext", () => {
       dispatch({ type: "UI_TOGGLE_HEATMAP" })
       dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
       dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
+      dispatch({ type: "UI_TOGGLE_EVAL_CHART" })
     })
 
     const state = harness.getApi().state
@@ -37,6 +38,7 @@ describe("UIContext", () => {
     expect(state.showHeatmap).toBe(false)
     expect(state.sleuthMode).toBe(true)
     expect(state.boardFlipped).toBe(true)
+    expect(state.showEvalChart).toBe(true)
   })
 
   it("toggle twice returns to initial state", () => {
@@ -52,6 +54,8 @@ describe("UIContext", () => {
       dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
       dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
       dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
+      dispatch({ type: "UI_TOGGLE_EVAL_CHART" })
+      dispatch({ type: "UI_TOGGLE_EVAL_CHART" })
     })
 
     expect(harness.getApi().state).toEqual(initialUIState)
@@ -68,6 +72,7 @@ describe("UIContext", () => {
           showHeatmap: false,
           sleuthMode: true,
           boardFlipped: true,
+          showEvalChart: true,
         },
       })
     })
@@ -77,6 +82,7 @@ describe("UIContext", () => {
       showHeatmap: false,
       sleuthMode: true,
       boardFlipped: true,
+      showEvalChart: true,
     })
 
     act(() => {

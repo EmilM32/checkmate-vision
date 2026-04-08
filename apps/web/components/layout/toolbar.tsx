@@ -2,6 +2,7 @@
 
 import { Button } from "@workspace/ui/components/button"
 import {
+  ChartLine,
   Download,
   Eye,
   FlipVertical,
@@ -30,6 +31,7 @@ const TOOLBAR_ITEMS = [
   { key: "heatmap", icon: Layers },
   { key: "arrows", icon: MoveRight },
   { key: "sleuth", icon: Search },
+  { key: "chart", icon: ChartLine },
   { key: "export", icon: Download },
   { key: "flip", icon: FlipVertical },
 ] as const
@@ -56,6 +58,8 @@ export function ToolbarPlaceholder({
                 ? "secondary"
                 : key === "sleuth" && uiState.sleuthMode
                   ? "secondary"
+                  : key === "chart" && uiState.showEvalChart
+                    ? "secondary"
                   : key === "flip" && uiState.boardFlipped
                     ? "secondary"
                     : "ghost"
@@ -77,6 +81,11 @@ export function ToolbarPlaceholder({
             if (key === "sleuth") {
               concealAnalysis()
               dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
+              return
+            }
+
+            if (key === "chart") {
+              dispatch({ type: "UI_TOGGLE_EVAL_CHART" })
               return
             }
 

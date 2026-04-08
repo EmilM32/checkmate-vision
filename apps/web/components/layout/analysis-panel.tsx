@@ -22,11 +22,11 @@ export function AnalysisPanelPlaceholder() {
     batch.total > 0 ? Math.round((batch.completed / batch.total) * 100) : 0
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden">
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden">
       <CardHeader className="border-b border-border/50">
         <CardTitle>{t("common.analysis")}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-0 overflow-hidden p-0">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden p-0">
         {/* TODO: Top 3 linie silnika (Principal Variations)
             — dane z EngineContext.pvLines, aktualizowane w real-time przez Stockfish worker */}
         <div className="border-b border-border/50 px-4 py-3">

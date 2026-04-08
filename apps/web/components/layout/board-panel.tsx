@@ -15,7 +15,7 @@ export function BoardPanelPlaceholder({
   exportRef,
 }: BoardPanelPlaceholderProps) {
   return (
-    <section ref={exportRef} className="relative overflow-hidden">
+    <section ref={exportRef} className="relative w-full overflow-hidden">
       <InteractiveChessboard />
       <div className="pointer-events-none absolute inset-0">
         {/* TODO: Heatmapa kontroli pol — kolorowanie pol wg buildHeatmap() (lib/chess/heatmap.ts) */}

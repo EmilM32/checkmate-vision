@@ -34,13 +34,13 @@ export default async function RootLayout({
       lang={locale}
       suppressHydrationWarning
       className={cn(
-        "antialiased",
+        "h-svh overflow-hidden antialiased",
         fontMono.variable,
         "font-sans",
         outfit.variable
       )}
     >
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="h-svh overflow-hidden">
         <I18nProvider locale={locale} dictionary={dictionary}>
           <ThemeProvider>
             <TooltipProvider>{children}</TooltipProvider>
