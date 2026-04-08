@@ -27,6 +27,8 @@ export type UIAction =
   | { type: "UI_TOGGLE_HEATMAP" }
   | { type: "UI_TOGGLE_SLEUTH_MODE" }
   | { type: "UI_TOGGLE_BOARD_FLIPPED" }
+  | { type: "UI_RESTORE_STATE"; payload: UIState }
+  | { type: "UI_RESET" }
 
 function uiReducer(state: UIState, action: UIAction): UIState {
   switch (action.type) {
@@ -50,6 +52,10 @@ function uiReducer(state: UIState, action: UIAction): UIState {
         ...state,
         boardFlipped: !state.boardFlipped,
       }
+    case "UI_RESTORE_STATE":
+      return action.payload
+    case "UI_RESET":
+      return initialUIState
   }
 }
 

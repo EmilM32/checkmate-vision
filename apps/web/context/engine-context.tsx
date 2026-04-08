@@ -57,6 +57,17 @@ export type EngineState = {
   batch: BatchAnalysisState
 }
 
+export type PersistableEngineState = Pick<
+  EngineState,
+  | "evaluation"
+  | "depth"
+  | "nps"
+  | "bestMove"
+  | "pvLines"
+  | "sleuthRevealed"
+  | "batch"
+>
+
 export const initialEngineState: EngineState = {
   evaluation: null,
   depth: 0,
@@ -100,6 +111,7 @@ export type EngineAction =
   | { type: "ENGINE_BATCH_CANCELLED" }
   | { type: "ENGINE_BATCH_ERROR"; error: string }
   | { type: "ENGINE_BATCH_CLEAR" }
+  | { type: "ENGINE_RESTORE_STATE"; payload: PersistableEngineState }
   | { type: "ENGINE_RESET" }
 
 // ── Reducer ──
@@ -250,6 +262,13 @@ export function engineReducer(
           cancelRequested: false,
           lastError: null,
         },
+      }
+
+    case "ENGINE_RESTORE_STATE":
+      return {
+        ...state,
+        ...action.payload,
+        isAnalyzing: false,
       }
 
     case "ENGINE_RESET":

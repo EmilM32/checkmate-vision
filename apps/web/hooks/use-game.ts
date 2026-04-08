@@ -12,7 +12,9 @@ export function useGame() {
     undo,
     goToMove,
     newGame,
+    restoreState,
   } = useGameContext()
+
   return {
     state,
     makeMove,
@@ -22,5 +24,6 @@ export function useGame() {
     undo,
     goToMove,
     newGame,
+    restoreState,
   }
 }

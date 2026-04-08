@@ -93,4 +93,66 @@ describe("engineReducer batch analysis", () => {
     const restarted = engineReducer(revealed, { type: "ENGINE_START_ANALYSIS" })
     expect(restarted.sleuthRevealed).toBe(false)
   })
+
+  it("restores persisted engine snapshot", () => {
+    const restored = engineReducer(initialEngineState, {
+      type: "ENGINE_RESTORE_STATE",
+      payload: {
+        evaluation: { type: "cp", value: 45 },
+        depth: 16,
+        nps: 890000,
+        bestMove: "e2e4",
+        pvLines: [
+          {
+            id: 1,
+            score: { type: "cp", value: 45 },
+            pv: ["e2e4", "e7e5"],
+          },
+        ],
+        sleuthRevealed: true,
+        batch: {
+          requestId: 321,
+          queue: [],
+          total: 0,
+          completed: 0,
+          currentMoveIndex: null,
+          status: "done",
+          cancelRequested: false,
+          lastError: null,
+        },
+      },
+    })
+
+    expect(restored.depth).toBe(16)
+    expect(restored.bestMove).toBe("e2e4")
+    expect(restored.sleuthRevealed).toBe(true)
+    expect(restored.isAnalyzing).toBe(false)
+  })
+
+  it("resets full engine state", () => {
+    const dirty = engineReducer(initialEngineState, {
+      type: "ENGINE_RESTORE_STATE",
+      payload: {
+        evaluation: { type: "cp", value: 120 },
+        depth: 10,
+        nps: 1000,
+        bestMove: "d2d4",
+        pvLines: [],
+        sleuthRevealed: true,
+        batch: {
+          requestId: 2,
+          queue: [],
+          total: 0,
+          completed: 0,
+          currentMoveIndex: null,
+          status: "done",
+          cancelRequested: false,
+          lastError: null,
+        },
+      },
+    })
+
+    const reset = engineReducer(dirty, { type: "ENGINE_RESET" })
+    expect(reset).toEqual(initialEngineState)
+  })
 })

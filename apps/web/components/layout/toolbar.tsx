@@ -7,11 +7,17 @@ import {
   FlipVertical,
   Layers,
   MoveRight,
+  RotateCcw,
   Search,
 } from "lucide-react"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useUI } from "@/hooks/use-ui"
+
+type ToolbarPlaceholderProps = {
+  onExport: () => void
+  onNewAnalysis: () => void
+}
 
 // TODO: Przyciski narzedzi
 // - Heatmap: toggle UIContext.showHeatmap — wlacza/wylacza nakladke kontroli pol
@@ -27,7 +33,10 @@ const TOOLBAR_ITEMS = [
   { label: "Flip", icon: FlipVertical },
 ] as const
 
-export function ToolbarPlaceholder() {
+export function ToolbarPlaceholder({
+  onExport,
+  onNewAnalysis,
+}: ToolbarPlaceholderProps) {
   const { state: uiState, dispatch } = useUI()
   const { state: engineState, revealAnalysis, concealAnalysis } = useEngine()
 
@@ -51,7 +60,6 @@ export function ToolbarPlaceholder() {
           }
           size="icon"
           className="size-8"
-          disabled={label === "Export"}
           title={label}
           onClick={() => {
             if (label === "Heatmap") {
@@ -67,6 +75,11 @@ export function ToolbarPlaceholder() {
             if (label === "Sleuth") {
               concealAnalysis()
               dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
+              return
+            }
+
+            if (label === "Export") {
+              onExport()
               return
             }
 
@@ -88,6 +101,16 @@ export function ToolbarPlaceholder() {
       >
         <Eye className="mr-1 size-4" />
         Reveal
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8"
+        onClick={onNewAnalysis}
+      >
+        <RotateCcw className="mr-1 size-4" />
+        New
       </Button>
     </div>
   )

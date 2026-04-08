@@ -105,6 +105,7 @@ type GameContextValue = {
   undo: () => void
   goToMove: (index: number) => void
   newGame: () => void
+  restoreState: (snapshot: GameState) => boolean
 }
 
 const GameContext = createContext<GameContextValue | null>(null)
@@ -242,6 +243,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "SET_STATE", payload: initialGameState })
   }, [])
 
+  const restoreState = useCallback((snapshot: GameState): boolean => {
+    const chess = chessRef.current
+
+    try {
+      const clampedMoveIndex = Math.max(
+        0,
+        Math.min(snapshot.currentMoveIndex, snapshot.history.length)
+      )
+
+      replayMoves(
+        chess,
+        snapshot.history,
+        clampedMoveIndex,
+        snapshot.initialFen
+      )
+
+      dispatch({
+        type: "SET_STATE",
+        payload: deriveState(
+          chess,
+          snapshot.history,
+          clampedMoveIndex,
+          snapshot.initialFen
+        ),
+      })
+
+      return true
+    } catch {
+      return false
+    }
+  }, [])
+
   const value = useMemo<GameContextValue>(
     () => ({
       state,
@@ -252,6 +285,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       undo,
       goToMove,
       newGame,
+      restoreState,
     }),
     [
       state,
@@ -262,6 +296,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       undo,
       goToMove,
       newGame,
+      restoreState,
     ]
   )
 

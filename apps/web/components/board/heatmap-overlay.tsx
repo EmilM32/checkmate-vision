@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 
 import { useGame } from "@/hooks/use-game"
 import { useUI } from "@/hooks/use-ui"
@@ -45,28 +46,42 @@ export function HeatmapOverlay() {
     })
   }, [cells, uiState.boardFlipped])
 
-  if (!uiState.showHeatmap || positionedCells.length === 0) {
-    return null
-  }
+  const shouldShow = uiState.showHeatmap && positionedCells.length > 0
 
   return (
-    <svg
-      className="board-overlay board-overlay-heatmap size-full"
-      viewBox="0 0 8 8"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      {positionedCells.map((cell) => (
-        <rect
-          key={cell.key}
-          x={cell.x}
-          y={cell.y}
-          width={1}
-          height={1}
-          fill={cell.color}
-          opacity={cell.opacity}
-        />
-      ))}
-    </svg>
+    <AnimatePresence>
+      {shouldShow ? (
+        <motion.svg
+          key="heatmap-overlay"
+          className="board-overlay board-overlay-heatmap size-full"
+          viewBox="0 0 8 8"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+          {positionedCells.map((cell, index) => (
+            <motion.rect
+              key={cell.key}
+              x={cell.x}
+              y={cell.y}
+              width={1}
+              height={1}
+              fill={cell.color}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: cell.opacity }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: 0.24,
+                delay: Math.min(index * 0.006, 0.15),
+                ease: "easeOut",
+              }}
+            />
+          ))}
+        </motion.svg>
+      ) : null}
+    </AnimatePresence>
   )
 }

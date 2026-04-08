@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { motion } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useUI } from "@/hooks/use-ui"
@@ -36,62 +36,71 @@ export function ArrowOverlay() {
     })
   }, [arrows, uiState.boardFlipped])
 
-  if (
-    !analysisVisible ||
-    !uiState.showArrows ||
-    positionedArrows.length === 0
-  ) {
-    return null
-  }
+  const shouldShow =
+    analysisVisible && uiState.showArrows && positionedArrows.length > 0
 
   return (
-    <svg
-      className="board-overlay board-overlay-arrows size-full"
-      viewBox="0 0 8 8"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <defs>
-        {([1, 2, 3] as const).map((id) => {
-          const style = ARROW_STYLES[id]
-          return (
-            <marker
-              key={id}
-              id={`pv-arrow-head-${id}`}
-              markerWidth="2"
-              markerHeight="2"
-              refX="1.6"
-              refY="1"
-              orient="auto"
-              markerUnits="strokeWidth"
-            >
-              <path d="M 0 0 L 2 1 L 0 2 z" fill={style.color} />
-            </marker>
-          )
-        })}
-      </defs>
+    <AnimatePresence>
+      {shouldShow ? (
+        <motion.svg
+          key="arrow-overlay"
+          className="board-overlay board-overlay-arrows size-full"
+          viewBox="0 0 8 8"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+          <defs>
+            {([1, 2, 3] as const).map((id) => {
+              const style = ARROW_STYLES[id]
+              return (
+                <marker
+                  key={id}
+                  id={`pv-arrow-head-${id}`}
+                  markerWidth="2"
+                  markerHeight="2"
+                  refX="1.6"
+                  refY="1"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <path d="M 0 0 L 2 1 L 0 2 z" fill={style.color} />
+                </marker>
+              )
+            })}
+          </defs>
 
-      {positionedArrows.map((arrow) => {
-        const style = ARROW_STYLES[arrow.id]
+          {positionedArrows.map((arrow) => {
+            const style = ARROW_STYLES[arrow.id]
 
-        return (
-          <motion.line
-            key={`${arrow.id}-${arrow.uci}`}
-            x1={arrow.from.x}
-            y1={arrow.from.y}
-            x2={arrow.to.x}
-            y2={arrow.to.y}
-            stroke={style.color}
-            strokeWidth={6}
-            markerEnd={`url(#pv-arrow-head-${arrow.id})`}
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: style.opacity }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-          />
-        )
-      })}
-    </svg>
+            return (
+              <motion.line
+                key={`${arrow.id}-${arrow.uci}`}
+                x1={arrow.from.x}
+                y1={arrow.from.y}
+                x2={arrow.to.x}
+                y2={arrow.to.y}
+                stroke={style.color}
+                strokeWidth={6}
+                markerEnd={`url(#pv-arrow-head-${arrow.id})`}
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: style.opacity }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: 0.35,
+                  delay: (arrow.id - 1) * 0.04,
+                  ease: "easeOut",
+                }}
+              />
+            )
+          })}
+        </motion.svg>
+      ) : null}
+    </AnimatePresence>
   )
 }

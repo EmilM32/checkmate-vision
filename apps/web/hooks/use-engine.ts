@@ -1,7 +1,10 @@
 "use client"
 
 import { useEngineContext } from "@/context"
-import type { BatchAnalysisItem } from "@/context/engine-context"
+import type {
+  BatchAnalysisItem,
+  PersistableEngineState,
+} from "@/context/engine-context"
 
 export function useEngine() {
   const { state, dispatch } = useEngineContext()
@@ -31,6 +34,14 @@ export function useEngine() {
     dispatch({ type: "ENGINE_CONCEAL_ANALYSIS" })
   }
 
+  const restoreEngineState = (payload: PersistableEngineState) => {
+    dispatch({ type: "ENGINE_RESTORE_STATE", payload })
+  }
+
+  const resetEngine = () => {
+    dispatch({ type: "ENGINE_RESET" })
+  }
+
   return {
     state,
     requestBatchAnalysis,
@@ -38,5 +49,7 @@ export function useEngine() {
     clearBatchAnalysis,
     revealAnalysis,
     concealAnalysis,
+    restoreEngineState,
+    resetEngine,
   }
 }
