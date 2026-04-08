@@ -12,6 +12,8 @@ const setLocale = vi.fn()
 let uiState = {
   showHeatmap: true,
   heatmapMode: "net" as const,
+  showInfluenceTrace: true,
+  selectedInfluenceSquare: null as string | null,
   showArrows: true,
   sleuthMode: false,
   boardFlipped: false,
@@ -78,6 +80,8 @@ describe("ToolbarPlaceholder", () => {
     uiState = {
       showHeatmap: true,
       heatmapMode: "net",
+      showInfluenceTrace: true,
+      selectedInfluenceSquare: null,
       showArrows: true,
       sleuthMode: false,
       boardFlipped: false,

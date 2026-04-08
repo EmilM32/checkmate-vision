@@ -9,6 +9,21 @@ export type HeatmapCell = {
   balance: number
 }
 
+export type InfluenceContributor = {
+  fromSquare: string
+  pieceType: PieceSymbol
+  color: "white" | "black"
+}
+
+export type SquareInfluenceDetails = {
+  square: string
+  whiteContributors: InfluenceContributor[]
+  blackContributors: InfluenceContributor[]
+  whiteControl: number
+  blackControl: number
+  balance: number
+}
+
 const FILES = "abcdefgh"
 const RAY_DIRECTIONS = {
   bishop: [
@@ -32,6 +47,10 @@ function inBounds(row: number, col: number): boolean {
 function toSquare(row: number, col: number): string {
   const rank = 8 - row
   return `${FILES[col]}${rank}`
+}
+
+function isValidSquare(square: string): boolean {
+  return /^[a-h][1-8]$/.test(square)
 }
 
 function pushIfInBounds(target: string[], row: number, col: number): void {
@@ -201,4 +220,68 @@ export function buildHeatmap(fen: string): HeatmapCell[] {
   }
 
   return cells
+}
+
+export function buildSquareInfluence(
+  fen: string,
+  targetSquare: string
+): SquareInfluenceDetails | null {
+  const normalizedSquare = targetSquare.trim().toLowerCase()
+  if (!isValidSquare(normalizedSquare)) return null
+
+  const chess = new Chess()
+
+  try {
+    chess.load(fen)
+  } catch {
+    return null
+  }
+
+  const board = chess.board()
+  const whiteContributors: InfluenceContributor[] = []
+  const blackContributors: InfluenceContributor[] = []
+
+  for (let row = 0; row < 8; row += 1) {
+    for (let col = 0; col < 8; col += 1) {
+      const piece = board[row]?.[col]
+      if (!piece) continue
+
+      const targets = collectPieceAttacks(
+        board,
+        piece.type,
+        row,
+        col,
+        piece.color
+      )
+      if (!targets.includes(normalizedSquare)) continue
+
+      const contributor: InfluenceContributor = {
+        fromSquare: toSquare(row, col),
+        pieceType: piece.type,
+        color: piece.color === "w" ? "white" : "black",
+      }
+
+      if (contributor.color === "white") {
+        whiteContributors.push(contributor)
+      } else {
+        blackContributors.push(contributor)
+      }
+    }
+  }
+
+  const sortContributors = (a: InfluenceContributor, b: InfluenceContributor) =>
+    a.fromSquare.localeCompare(b.fromSquare) ||
+    a.pieceType.localeCompare(b.pieceType)
+
+  whiteContributors.sort(sortContributors)
+  blackContributors.sort(sortContributors)
+
+  return {
+    square: normalizedSquare,
+    whiteContributors,
+    blackContributors,
+    whiteControl: whiteContributors.length,
+    blackControl: blackContributors.length,
+    balance: whiteContributors.length - blackContributors.length,
+  }
 }

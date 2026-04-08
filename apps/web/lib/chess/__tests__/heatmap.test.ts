@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { buildHeatmap } from "@/lib/chess/heatmap"
+import { buildHeatmap, buildSquareInfluence } from "@/lib/chess/heatmap"
 
 describe("buildHeatmap", () => {
   it("returns exactly 64 squares", () => {
@@ -56,5 +56,47 @@ describe("buildHeatmap", () => {
       blackControl: 1,
       balance: 1,
     })
+  })
+
+  it("returns piece-level contributors for a selected square", () => {
+    const influence = buildSquareInfluence(
+      "k7/6n1/8/8/3N1N2/8/8/7K w - - 0 1",
+      "e6"
+    )
+
+    expect(influence).toMatchObject({
+      square: "e6",
+      whiteControl: 2,
+      blackControl: 1,
+      balance: 1,
+    })
+
+    expect(influence?.whiteContributors).toEqual([
+      { fromSquare: "d4", pieceType: "n", color: "white" },
+      { fromSquare: "f4", pieceType: "n", color: "white" },
+    ])
+    expect(influence?.blackContributors).toEqual([
+      { fromSquare: "g7", pieceType: "n", color: "black" },
+    ])
+  })
+
+  it("handles blocked sliders while tracing influence", () => {
+    const influence = buildSquareInfluence(
+      "k7/8/8/8/8/8/4P3/4R2K w - - 0 1",
+      "e8"
+    )
+
+    expect(influence).toMatchObject({
+      square: "e8",
+      whiteControl: 0,
+      blackControl: 0,
+      balance: 0,
+    })
+    expect(influence?.whiteContributors).toEqual([])
+  })
+
+  it("returns null for invalid square or invalid FEN", () => {
+    expect(buildSquareInfluence("not-a-fen", "e4")).toBeNull()
+    expect(buildSquareInfluence("k7/8/8/8/8/8/8/7K w - - 0 1", "z9")).toBeNull()
   })
 })

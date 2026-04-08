@@ -78,6 +78,10 @@ export function ArrowOverlay() {
             const arrowOpacity = uiState.showHeatmap
               ? style.opacity * 0.72
               : style.opacity
+            const effectiveOpacity =
+              uiState.showInfluenceTrace && uiState.selectedInfluenceSquare
+                ? arrowOpacity * 0.65
+                : arrowOpacity
 
             return (
               <motion.line
@@ -92,7 +96,7 @@ export function ArrowOverlay() {
                 strokeLinecap="round"
                 vectorEffect="non-scaling-stroke"
                 initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: arrowOpacity }}
+                animate={{ pathLength: 1, opacity: effectiveOpacity }}
                 exit={{ opacity: 0 }}
                 transition={{
                   duration: 0.35,

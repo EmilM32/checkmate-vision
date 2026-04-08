@@ -13,6 +13,8 @@ export type HeatmapMode = "net" | "split"
 export type UIState = {
   showHeatmap: boolean
   heatmapMode: HeatmapMode
+  showInfluenceTrace: boolean
+  selectedInfluenceSquare: string | null
   showArrows: boolean
   sleuthMode: boolean
   boardFlipped: boolean
@@ -22,6 +24,8 @@ export type UIState = {
 export const initialUIState: UIState = {
   showHeatmap: true,
   heatmapMode: "net",
+  showInfluenceTrace: true,
+  selectedInfluenceSquare: null,
   showArrows: true,
   sleuthMode: false,
   boardFlipped: false,
@@ -32,6 +36,9 @@ export type UIAction =
   | { type: "UI_TOGGLE_ARROWS" }
   | { type: "UI_TOGGLE_HEATMAP" }
   | { type: "UI_SET_HEATMAP_MODE"; payload: HeatmapMode }
+  | { type: "UI_TOGGLE_INFLUENCE_TRACE" }
+  | { type: "UI_SET_INFLUENCE_SQUARE"; payload: string | null }
+  | { type: "UI_CLEAR_INFLUENCE_SQUARE" }
   | { type: "UI_TOGGLE_SLEUTH_MODE" }
   | { type: "UI_TOGGLE_BOARD_FLIPPED" }
   | { type: "UI_TOGGLE_EVAL_CHART" }
@@ -49,11 +56,29 @@ function uiReducer(state: UIState, action: UIAction): UIState {
       return {
         ...state,
         showHeatmap: !state.showHeatmap,
+        selectedInfluenceSquare: state.showHeatmap
+          ? null
+          : state.selectedInfluenceSquare,
       }
     case "UI_SET_HEATMAP_MODE":
       return {
         ...state,
         heatmapMode: action.payload,
+      }
+    case "UI_TOGGLE_INFLUENCE_TRACE":
+      return {
+        ...state,
+        showInfluenceTrace: !state.showInfluenceTrace,
+      }
+    case "UI_SET_INFLUENCE_SQUARE":
+      return {
+        ...state,
+        selectedInfluenceSquare: action.payload,
+      }
+    case "UI_CLEAR_INFLUENCE_SQUARE":
+      return {
+        ...state,
+        selectedInfluenceSquare: null,
       }
     case "UI_TOGGLE_SLEUTH_MODE":
       return {
