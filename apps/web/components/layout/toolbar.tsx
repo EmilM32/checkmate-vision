@@ -45,6 +45,11 @@ export function ToolbarPlaceholder({
   const { state: engineState, revealAnalysis, concealAnalysis } = useEngine()
 
   const isRevealAvailable = uiState.sleuthMode && !engineState.sleuthRevealed
+  const nextHeatmapMode = uiState.heatmapMode === "net" ? "split" : "net"
+  const heatmapModeLabel =
+    uiState.heatmapMode === "net"
+      ? t("heatmap.modeNetShort")
+      : t("heatmap.modeSplitShort")
 
   return (
     <div className="flex items-center gap-1.5">
@@ -102,6 +107,20 @@ export function ToolbarPlaceholder({
           <Icon className="size-4" />
         </Button>
       ))}
+
+      {uiState.showHeatmap ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-2 text-[11px] font-semibold tracking-wide uppercase"
+          title={t("heatmap.modeToggle")}
+          onClick={() => {
+            dispatch({ type: "UI_SET_HEATMAP_MODE", payload: nextHeatmapMode })
+          }}
+        >
+          {heatmapModeLabel}
+        </Button>
+      ) : null}
 
       <Button
         variant={engineState.sleuthRevealed ? "secondary" : "outline"}

@@ -36,6 +36,7 @@ describe("UIContext", () => {
     const state = harness.getApi().state
     expect(state.showArrows).toBe(false)
     expect(state.showHeatmap).toBe(false)
+    expect(state.heatmapMode).toBe("net")
     expect(state.sleuthMode).toBe(true)
     expect(state.boardFlipped).toBe(true)
     expect(state.showEvalChart).toBe(true)
@@ -50,6 +51,8 @@ describe("UIContext", () => {
       dispatch({ type: "UI_TOGGLE_ARROWS" })
       dispatch({ type: "UI_TOGGLE_HEATMAP" })
       dispatch({ type: "UI_TOGGLE_HEATMAP" })
+      dispatch({ type: "UI_SET_HEATMAP_MODE", payload: "split" })
+      dispatch({ type: "UI_SET_HEATMAP_MODE", payload: "net" })
       dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
       dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
       dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
@@ -70,6 +73,7 @@ describe("UIContext", () => {
         payload: {
           showArrows: false,
           showHeatmap: false,
+          heatmapMode: "split",
           sleuthMode: true,
           boardFlipped: true,
           showEvalChart: true,
@@ -80,6 +84,7 @@ describe("UIContext", () => {
     expect(harness.getApi().state).toEqual({
       showArrows: false,
       showHeatmap: false,
+      heatmapMode: "split",
       sleuthMode: true,
       boardFlipped: true,
       showEvalChart: true,

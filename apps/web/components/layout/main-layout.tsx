@@ -14,6 +14,7 @@ import { MoveList } from "@/components/analysis/move-list"
 import { EvalBar } from "@/components/analysis/eval-bar"
 import { EvalChartPlaceholder } from "@/components/analysis/eval-chart"
 import { PlayerBarPlaceholder } from "@/components/board/player-bar"
+import { HeatmapLegend } from "@/components/board/heatmap-overlay"
 import { AnalysisPanelPlaceholder } from "@/components/layout/analysis-panel"
 import { BoardPanelPlaceholder } from "@/components/layout/board-panel"
 import { ToolbarPlaceholder } from "@/components/layout/toolbar"
@@ -88,78 +89,96 @@ export function MainLayoutPlaceholder() {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="flex h-full w-full flex-col gap-3 lg:flex-row lg:items-stretch lg:justify-center lg:gap-4"
       >
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="w-full pl-7">
-            <PlayerBarPlaceholder color="black" />
-          </div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+          <div className="flex min-h-0 min-w-0 flex-1 gap-4">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <div className="w-full pl-7">
+                <PlayerBarPlaceholder color="black" />
+              </div>
 
-          <div className="flex min-h-0 flex-1 items-center justify-center">
-            <div
-              className={`flex h-full max-h-full w-full items-stretch ${boardViewportCapClasses}`}
-            >
-              <EvalBar />
-              <div className="min-w-0 flex-1">
-                <BoardPanelPlaceholder exportRef={boardExportRef} />
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <div
+                  className={`flex h-full max-h-full w-full items-stretch ${boardViewportCapClasses}`}
+                >
+                  <EvalBar />
+                  <div className="min-w-0 flex-1">
+                    <BoardPanelPlaceholder exportRef={boardExportRef} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full pl-7">
+                <PlayerBarPlaceholder color="white" />
+              </div>
+
+              <div className="flex w-full flex-wrap items-center justify-between gap-2 px-1 py-1 lg:hidden">
+                <NavigationControls />
+                <ToolbarPlaceholder
+                  onExport={handleExport}
+                  onNewAnalysis={handleNewAnalysis}
+                />
+              </div>
+
+              <AnimatePresence initial={false}>
+                {uiState.showEvalChart ? (
+                  <motion.div
+                    key="eval-chart"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "9rem", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="w-full overflow-hidden"
+                  >
+                    <EvalChartPlaceholder />
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+
+              <div className="mt-2 max-h-[min(34svh,20rem)] overflow-hidden lg:hidden">
+                <Tabs
+                  value={mobileTab}
+                  onValueChange={(value) => setMobileTab(value as MobileTab)}
+                  className="flex h-full w-full flex-col"
+                >
+                  <TabsList className="w-full shrink-0">
+                    <TabsTrigger value="analysis">
+                      {t("common.analysis")}
+                    </TabsTrigger>
+                    <TabsTrigger value="moves">{t("common.moves")}</TabsTrigger>
+                    <TabsTrigger value="chart">{t("common.chart")}</TabsTrigger>
+                  </TabsList>
+
+                  <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.div
+                        key={mobileTab}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.22, ease: "easeOut" }}
+                        className="h-full"
+                      >
+                        <MobileTabContent activeTab={mobileTab} />
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </Tabs>
+              </div>
+            </div>
+
+            <div className="hidden w-85 shrink-0 flex-col gap-3 lg:flex">
+              <div className="flex-1 overflow-hidden">
+                <HeatmapLegend />
               </div>
             </div>
           </div>
 
-          <div className="w-full pl-7">
-            <PlayerBarPlaceholder color="white" />
-          </div>
-
-          <div className="flex w-full flex-wrap items-center justify-between gap-2 px-1 py-1">
+          <div className="hidden w-full flex-wrap items-center justify-between gap-2 px-1 py-1 lg:flex">
             <NavigationControls />
             <ToolbarPlaceholder
               onExport={handleExport}
               onNewAnalysis={handleNewAnalysis}
             />
-          </div>
-
-          <AnimatePresence initial={false}>
-            {uiState.showEvalChart ? (
-              <motion.div
-                key="eval-chart"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "9rem", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="w-full overflow-hidden"
-              >
-                <EvalChartPlaceholder />
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-
-          <div className="mt-2 max-h-[min(34svh,20rem)] overflow-hidden lg:hidden">
-            <Tabs
-              value={mobileTab}
-              onValueChange={(value) => setMobileTab(value as MobileTab)}
-              className="flex h-full w-full flex-col"
-            >
-              <TabsList className="w-full shrink-0">
-                <TabsTrigger value="analysis">
-                  {t("common.analysis")}
-                </TabsTrigger>
-                <TabsTrigger value="moves">{t("common.moves")}</TabsTrigger>
-                <TabsTrigger value="chart">{t("common.chart")}</TabsTrigger>
-              </TabsList>
-
-              <div className="mt-3 min-h-0 flex-1 overflow-hidden">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={mobileTab}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.22, ease: "easeOut" }}
-                    className="h-full"
-                  >
-                    <MobileTabContent activeTab={mobileTab} />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </Tabs>
           </div>
         </div>
 

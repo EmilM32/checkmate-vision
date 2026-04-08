@@ -8,8 +8,11 @@ import {
   type ReactNode,
 } from "react"
 
+export type HeatmapMode = "net" | "split"
+
 export type UIState = {
   showHeatmap: boolean
+  heatmapMode: HeatmapMode
   showArrows: boolean
   sleuthMode: boolean
   boardFlipped: boolean
@@ -18,6 +21,7 @@ export type UIState = {
 
 export const initialUIState: UIState = {
   showHeatmap: true,
+  heatmapMode: "net",
   showArrows: true,
   sleuthMode: false,
   boardFlipped: false,
@@ -27,6 +31,7 @@ export const initialUIState: UIState = {
 export type UIAction =
   | { type: "UI_TOGGLE_ARROWS" }
   | { type: "UI_TOGGLE_HEATMAP" }
+  | { type: "UI_SET_HEATMAP_MODE"; payload: HeatmapMode }
   | { type: "UI_TOGGLE_SLEUTH_MODE" }
   | { type: "UI_TOGGLE_BOARD_FLIPPED" }
   | { type: "UI_TOGGLE_EVAL_CHART" }
@@ -44,6 +49,11 @@ function uiReducer(state: UIState, action: UIAction): UIState {
       return {
         ...state,
         showHeatmap: !state.showHeatmap,
+      }
+    case "UI_SET_HEATMAP_MODE":
+      return {
+        ...state,
+        heatmapMode: action.payload,
       }
     case "UI_TOGGLE_SLEUTH_MODE":
       return {

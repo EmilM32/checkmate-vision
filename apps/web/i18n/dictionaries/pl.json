@@ -18,6 +18,23 @@
     "export": "Eksport",
     "flip": "Obroc"
   },
+  "heatmap": {
+    "modeNet": "Kontrola netto",
+    "modeSplit": "Kontrola osobno",
+    "modeNetShort": "NET",
+    "modeSplitShort": "SPLIT",
+    "modeToggle": "Przelacz tryb heatmapy",
+    "netHint": "Etykieta z plusem lub minusem pokazuje przewage kontroli pola.",
+    "splitHint": "Etykiety pokazuja liczbe naciskow bialych i czarnych w formacie biale:czarne.",
+    "valueGuideTitle": "Jak czytac wartosci",
+    "valueGuideBody": "Wartosci nie sa ocena silnika. Pokazuja roznice liczby figur kontrolujacych dane pole.",
+    "valuePlusExample": "biale maja o 4 wiecej atakujacych to pole niz czarne.",
+    "valueMinusExample": "czarne maja o 5 wiecej atakujacych to pole niz biale.",
+    "netExample": "W trybie NET dodatnia liczba to presja bialych, ujemna to presja czarnych.",
+    "splitExample": "W trybie SPLIT etykieta 3:1 znaczy: 3 ataki bialych i 1 atak czarnych.",
+    "whitePressure": "Presja bialych",
+    "blackPressure": "Presja czarnych"
+  },
   "inputs": {
     "pastePgn": "Wklej PGN...",
     "loadPgn": "Wczytaj PGN",

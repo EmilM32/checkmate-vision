@@ -4,6 +4,9 @@ export type HeatmapCell = {
   square: string
   intensity: number
   side: "white" | "black" | "neutral"
+  whiteControl: number
+  blackControl: number
+  balance: number
 }
 
 const FILES = "abcdefgh"
@@ -133,6 +136,9 @@ function neutralBoard(): HeatmapCell[] {
         square: `${file}${rank}`,
         intensity: 0,
         side: "neutral",
+        whiteControl: 0,
+        blackControl: 0,
+        balance: 0,
       })
     }
   }
@@ -187,6 +193,9 @@ export function buildHeatmap(fen: string): HeatmapCell[] {
         square,
         intensity,
         side: balance > 0 ? "white" : balance < 0 ? "black" : "neutral",
+        whiteControl: white,
+        blackControl: black,
+        balance,
       })
     }
   }

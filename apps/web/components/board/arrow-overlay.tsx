@@ -75,6 +75,9 @@ export function ArrowOverlay() {
 
           {positionedArrows.map((arrow) => {
             const style = ARROW_STYLES[arrow.id]
+            const arrowOpacity = uiState.showHeatmap
+              ? style.opacity * 0.72
+              : style.opacity
 
             return (
               <motion.line
@@ -89,7 +92,7 @@ export function ArrowOverlay() {
                 strokeLinecap="round"
                 vectorEffect="non-scaling-stroke"
                 initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: style.opacity }}
+                animate={{ pathLength: 1, opacity: arrowOpacity }}
                 exit={{ opacity: 0 }}
                 transition={{
                   duration: 0.35,

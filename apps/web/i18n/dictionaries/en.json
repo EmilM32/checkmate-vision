@@ -18,6 +18,23 @@
     "export": "Export",
     "flip": "Flip"
   },
+  "heatmap": {
+    "modeNet": "Net control",
+    "modeSplit": "Split control",
+    "modeNetShort": "NET",
+    "modeSplitShort": "SPLIT",
+    "modeToggle": "Switch heatmap mode",
+    "netHint": "Signed labels show who controls the square more strongly.",
+    "splitHint": "Labels show white:black control counts for contested squares.",
+    "valueGuideTitle": "How to read values",
+    "valueGuideBody": "These numbers are not engine eval. They show the control difference on a square.",
+    "valuePlusExample": "white has 4 more attackers on that square than black.",
+    "valueMinusExample": "black has 5 more attackers on that square than white.",
+    "netExample": "In NET mode, positive means white pressure and negative means black pressure.",
+    "splitExample": "In SPLIT mode, a 3:1 label means 3 white attacks and 1 black attack.",
+    "whitePressure": "White pressure",
+    "blackPressure": "Black pressure"
+  },
   "inputs": {
     "pastePgn": "Paste PGN...",
     "loadPgn": "Load PGN",
