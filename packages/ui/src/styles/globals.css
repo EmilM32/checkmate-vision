@@ -142,7 +142,7 @@
   .eval-bar-gradient {
     --eval-pct: 50%;
     background: linear-gradient(
-      to bottom,
+      var(--eval-dir, 180deg),
       oklch(0.97 0 0) 0%,
       oklch(0.97 0 0) var(--eval-pct),
       oklch(0.25 0 0) var(--eval-pct),
@@ -152,7 +152,7 @@
 
   :is(.dark) .eval-bar-gradient {
     background: linear-gradient(
-      to bottom,
+      var(--eval-dir, 180deg),
       oklch(0.90 0 0) 0%,
       oklch(0.90 0 0) var(--eval-pct),
       oklch(0.20 0 0) var(--eval-pct),
