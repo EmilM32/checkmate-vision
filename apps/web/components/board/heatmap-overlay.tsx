@@ -21,6 +21,12 @@ const HEATMAP_COLORS = {
   labelStroke: "rgba(15, 23, 42, 0.78)",
 } as const
 
+const CONTRIBUTOR_HIGHLIGHT = {
+  white: "rgba(74, 222, 128, 0.92)",
+  black: "rgba(248, 113, 113, 0.92)",
+  outline: "rgba(15, 23, 42, 0.6)",
+} as const
+
 type PositionedCell = {
   key: string
   x: number
@@ -34,6 +40,13 @@ type PositionedCell = {
   tintOpacity: number
   markerWeight: number
   label: string | null
+}
+
+type PositionedContributor = {
+  key: string
+  cx: number
+  cy: number
+  strokeColor: string
 }
 
 type PositionedInfluenceRay = {
@@ -226,6 +239,49 @@ export function HeatmapOverlay() {
     uiState.showHeatmap,
   ])
 
+  const positionedContributors = useMemo<PositionedContributor[]>(() => {
+    if (
+      !uiState.showHeatmap ||
+      !uiState.selectedInfluenceSquare ||
+      !influenceDetails
+    ) {
+      return []
+    }
+
+    const whites = influenceDetails.whiteContributors.flatMap((entry) => {
+      const center = squareCenterUnits(entry.fromSquare, uiState.boardFlipped)
+      if (!center) return []
+      return [
+        {
+          key: `cw-${entry.fromSquare}`,
+          cx: center.x,
+          cy: center.y,
+          strokeColor: CONTRIBUTOR_HIGHLIGHT.white,
+        },
+      ]
+    })
+
+    const blacks = influenceDetails.blackContributors.flatMap((entry) => {
+      const center = squareCenterUnits(entry.fromSquare, uiState.boardFlipped)
+      if (!center) return []
+      return [
+        {
+          key: `cb-${entry.fromSquare}`,
+          cx: center.x,
+          cy: center.y,
+          strokeColor: CONTRIBUTOR_HIGHLIGHT.black,
+        },
+      ]
+    })
+
+    return [...whites, ...blacks]
+  }, [
+    influenceDetails,
+    uiState.boardFlipped,
+    uiState.selectedInfluenceSquare,
+    uiState.showHeatmap,
+  ])
+
   return (
     <AnimatePresence>
       {shouldShow ? (
@@ -329,6 +385,45 @@ export function HeatmapOverlay() {
               </motion.g>
             )
           })}
+
+          {positionedContributors.map((source) => (
+            <motion.g
+              key={source.key}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+            >
+              <rect
+                x={source.cx - 0.5}
+                y={source.cy - 0.5}
+                width={1}
+                height={1}
+                fill="none"
+                stroke={CONTRIBUTOR_HIGHLIGHT.outline}
+                strokeWidth={0.12}
+              />
+              <rect
+                x={source.cx - 0.5}
+                y={source.cy - 0.5}
+                width={1}
+                height={1}
+                fill="none"
+                stroke={source.strokeColor}
+                strokeWidth={0.07}
+                strokeDasharray="0.22 0.08"
+              />
+              <rect
+                x={source.cx + 0.32 - 0.07}
+                y={source.cy - 0.32 - 0.07}
+                width={0.14}
+                height={0.14}
+                fill={source.strokeColor}
+                opacity={0.85}
+                transform={`rotate(45, ${source.cx + 0.32}, ${source.cy - 0.32})`}
+              />
+            </motion.g>
+          ))}
 
           {selectedTargetPoint ? (
             <motion.g
