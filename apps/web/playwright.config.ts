@@ -11,6 +11,7 @@ export default defineConfig({
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: "on-first-retry",
+    locale: "pl-PL",
   },
   webServer: {
     command: `pnpm dev -p ${PORT}`,

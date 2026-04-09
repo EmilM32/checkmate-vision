@@ -16,14 +16,14 @@ test.describe("AI-10 smoke", () => {
   test("accepts FEN input and keeps UI interactive", async ({ page }) => {
     await page.goto("/")
 
-    const fenInput = page.locator("input.font-mono").first()
+    const fenInput = page.locator("input.font-mono:visible").first()
     await fenInput.fill(
       "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
     )
     await page.getByRole("button", { name: "Ustaw FEN" }).click()
 
     await expect(page.getByRole("button", { name: "Ustaw FEN" })).toBeEnabled()
-    await expect(page.locator('button[title="Flip"]')).toBeVisible()
+    await expect(page.locator('button[title="Obroc"]:visible')).toBeVisible()
   })
 
   test("loads PGN and enables move navigation", async ({ page }) => {
@@ -36,10 +36,10 @@ test.describe("AI-10 smoke", () => {
 
     await page.getByRole("button", { name: "Wczytaj PGN" }).click()
     await expect(
-      page.locator("ol button", { hasText: /^e4$/ }).first()
+      page.locator("ol:visible button", { hasText: /^e4$/ }).first()
     ).toBeVisible()
 
-    const buttons = page.locator("button")
+    const buttons = page.locator("button:visible")
     await expect(buttons.first()).toBeVisible()
   })
 })
