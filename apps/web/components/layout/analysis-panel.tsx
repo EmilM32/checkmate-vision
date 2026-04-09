@@ -1,3 +1,7 @@
+import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { ChevronDown, ChevronUp } from "lucide-react"
+
 import {
   Card,
   CardContent,
@@ -17,6 +21,7 @@ import { useI18n } from "@/hooks/use-i18n"
 export function AnalysisPanelPlaceholder() {
   const { t } = useI18n()
   const { state: engineState } = useEngine()
+  const [showImportInputs, setShowImportInputs] = useState(false)
   const batch = engineState.batch
   const progressPercent =
     batch.total > 0 ? Math.round((batch.completed / batch.total) * 100) : 0
@@ -69,12 +74,37 @@ export function AnalysisPanelPlaceholder() {
           <MoveList />
         </div>
 
-        {/* TODO: Inputy importu partii
-            — PGN: wklejenie notacji partii -> parsePgn() -> GameContext.loadGame()
-            — FEN: wklejenie pozycji -> validateFen() -> GameContext.setPosition() */}
-        <div className="space-y-3 border-t border-border/50 px-4 py-3">
-          <PGNInput />
-          <FENInput />
+        {/* Collapsible import inputs (PGN / FEN) */}
+        <div className="border-t border-border/50">
+          <button
+            type="button"
+            onClick={() => setShowImportInputs((prev) => !prev)}
+            className="flex w-full items-center justify-between px-4 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <span>{t("inputs.importGame")}</span>
+            {showImportInputs ? (
+              <ChevronDown className="size-3.5" />
+            ) : (
+              <ChevronUp className="size-3.5" />
+            )}
+          </button>
+          <AnimatePresence initial={false}>
+            {showImportInputs ? (
+              <motion.div
+                key="import-inputs"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-3 px-4 pb-3">
+                  <PGNInput />
+                  <FENInput />
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
       </CardContent>
     </Card>

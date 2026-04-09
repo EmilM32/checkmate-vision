@@ -48,7 +48,8 @@
     "loadPgn": "Wczytaj PGN",
     "analyzeGame": "Analizuj partie",
     "setFen": "Ustaw FEN",
-    "firstLoadPgn": "Najpierw wczytaj PGN z ruchami"
+    "firstLoadPgn": "Najpierw wczytaj PGN z ruchami",
+    "importGame": "Importuj partie"
   },
   "analysis": {
     "noMovesYet": "Brak ruchow",

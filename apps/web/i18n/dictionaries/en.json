@@ -48,7 +48,8 @@
     "loadPgn": "Load PGN",
     "analyzeGame": "Analyze game",
     "setFen": "Set FEN",
-    "firstLoadPgn": "Load a PGN with moves first"
+    "firstLoadPgn": "Load a PGN with moves first",
+    "importGame": "Import game"
   },
   "analysis": {
     "noMovesYet": "No moves yet",
