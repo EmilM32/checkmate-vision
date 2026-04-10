@@ -13,7 +13,7 @@
   "toolbar": {
     "heatmap": "Heatmap",
     "arrows": "Arrows",
-    "sleuth": "Sleuth",
+    "guess": "Guess",
     "chart": "Chart",
     "engine": "Engine",
     "export": "Export",
@@ -54,16 +54,16 @@
   },
   "analysis": {
     "noMovesYet": "No moves yet",
-    "sleuthEvalHidden": "Sleuth mode active. Reveal analysis to inspect evaluation chart.",
-    "sleuthLinesHidden": "Sleuth mode active. Reveal analysis to view engine lines.",
+    "guessEvalHidden": "Guess mode active. Reveal analysis to inspect evaluation chart.",
+    "guessLinesHidden": "Guess mode active. Reveal analysis to view engine lines.",
     "engineLines": "Engine Lines",
     "analyzing": "Analyzing...",
     "noAnalysis": "No analysis",
     "engineOff": "Engine is off",
     "engineRunningTip": "Engine is running — click to stop",
     "engineStartTip": "Start engine analysis",
-    "sleuthOnTip": "Sleuth mode active — analysis hidden until revealed",
-    "sleuthOffTip": "Enable sleuth mode — hide analysis for guessing",
+    "guessOnTip": "Guess mode active — analysis hidden until revealed",
+    "guessOffTip": "Enable guess mode — hide analysis for guessing",
     "revealTip": "Reveal hidden analysis",
     "noClassification": "No classification",
     "move": "Move",
@@ -91,6 +91,16 @@
     "good": "Good",
     "mistake": "Mistake",
     "blunder": "Blunder"
+  },
+  "analysisLegend": {
+    "title": "Analysis tools",
+    "engineDesc": "Toggles Stockfish engine analysis. When active, the engine evaluates the current position and shows the top candidate lines.",
+    "guessDesc": "Hides engine evaluation, arrows, and best-move lines so you can try to find the best move yourself before peeking.",
+    "revealDesc": "Temporarily reveals the hidden analysis for the current position. Analysis hides again when you move to a new position.",
+    "analyzeGameDesc": "Runs the engine through every position in the loaded game, classifying each move (brilliant, great, best, good, mistake, blunder).",
+    "engineActive": "Engine is running",
+    "guessRevealed": "Guess mode — analysis revealed",
+    "guessHidden": "Guess mode — analysis hidden"
   },
   "language": {
     "label": "Language",

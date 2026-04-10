@@ -91,7 +91,7 @@ export function selectPersistableEngineState(
     nps: engineState.nps,
     bestMove: engineState.bestMove,
     pvLines: engineState.pvLines,
-    sleuthRevealed: engineState.sleuthRevealed,
+    guessRevealed: engineState.guessRevealed,
     batch: engineState.batch,
   }
 }

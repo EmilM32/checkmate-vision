@@ -49,7 +49,7 @@ export function InteractiveChessboard() {
   const { state, makeMove } = useGame()
   const { state: uiState, dispatch: uiDispatch } = useUI()
   const { state: engineState } = useEngine()
-  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
+  const analysisVisible = !uiState.guessMode || engineState.guessRevealed
 
   const [rightClickSquares, setRightClickSquares] = useState<Set<string>>(
     new Set()

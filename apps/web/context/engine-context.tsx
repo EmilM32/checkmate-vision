@@ -53,7 +53,7 @@ export type EngineState = {
   bestMove: string | null
   pvLines: EngineLine[]
   isAnalyzing: boolean
-  sleuthRevealed: boolean
+  guessRevealed: boolean
   batch: BatchAnalysisState
 }
 
@@ -64,7 +64,7 @@ export type PersistableEngineState = Pick<
   | "nps"
   | "bestMove"
   | "pvLines"
-  | "sleuthRevealed"
+  | "guessRevealed"
   | "batch"
 >
 
@@ -75,7 +75,7 @@ export const initialEngineState: EngineState = {
   bestMove: null,
   pvLines: [],
   isAnalyzing: false,
-  sleuthRevealed: false,
+  guessRevealed: false,
   batch: {
     requestId: 0,
     queue: [],
@@ -94,7 +94,7 @@ export type EngineAction =
   | { type: "ENGINE_START_ANALYSIS" }
   | { type: "ENGINE_OUTPUT"; info: ParsedInfoLine }
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
-  | { type: "REVEAL_ANALYSIS" }
+  | { type: "ENGINE_REVEAL_ANALYSIS" }
   | { type: "ENGINE_CONCEAL_ANALYSIS" }
   | {
       type: "ENGINE_BATCH_REQUEST"
@@ -133,7 +133,7 @@ export function engineReducer(
         nps: 0,
         pvLines: [],
         bestMove: null,
-        sleuthRevealed: false,
+        guessRevealed: false,
       }
 
     case "ENGINE_OUTPUT": {
@@ -174,16 +174,16 @@ export function engineReducer(
         isAnalyzing: false,
       }
 
-    case "REVEAL_ANALYSIS":
+    case "ENGINE_REVEAL_ANALYSIS":
       return {
         ...state,
-        sleuthRevealed: true,
+        guessRevealed: true,
       }
 
     case "ENGINE_CONCEAL_ANALYSIS":
       return {
         ...state,
-        sleuthRevealed: false,
+        guessRevealed: false,
       }
 
     case "ENGINE_BATCH_REQUEST":

@@ -50,7 +50,7 @@ export function PVLines() {
   const { state: engineState } = useEngine()
   const { state: gameState } = useGame()
   const { state: uiState } = useUI()
-  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
+  const analysisVisible = !uiState.guessMode || engineState.guessRevealed
 
   const linesWithSan = useMemo(() => {
     return engineState.pvLines.map((line) => ({
@@ -70,7 +70,7 @@ export function PVLines() {
   if (!analysisVisible) {
     return (
       <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-        {t("analysis.sleuthLinesHidden")}
+        {t("analysis.guessLinesHidden")}
       </div>
     )
   }

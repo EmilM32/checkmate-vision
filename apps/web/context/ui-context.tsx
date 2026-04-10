@@ -16,7 +16,7 @@ export type UIState = {
   showInfluenceTrace: boolean
   selectedInfluenceSquare: string | null
   showArrows: boolean
-  sleuthMode: boolean
+  guessMode: boolean
   boardFlipped: boolean
   showEvalChart: boolean
   engineEnabled: boolean
@@ -28,7 +28,7 @@ export const initialUIState: UIState = {
   showInfluenceTrace: true,
   selectedInfluenceSquare: null,
   showArrows: true,
-  sleuthMode: false,
+  guessMode: false,
   boardFlipped: false,
   showEvalChart: false,
   engineEnabled: false,
@@ -41,7 +41,7 @@ export type UIAction =
   | { type: "UI_TOGGLE_INFLUENCE_TRACE" }
   | { type: "UI_SET_INFLUENCE_SQUARE"; payload: string | null }
   | { type: "UI_CLEAR_INFLUENCE_SQUARE" }
-  | { type: "UI_TOGGLE_SLEUTH_MODE" }
+  | { type: "UI_TOGGLE_GUESS_MODE" }
   | { type: "UI_TOGGLE_BOARD_FLIPPED" }
   | { type: "UI_TOGGLE_EVAL_CHART" }
   | { type: "UI_TOGGLE_ENGINE" }
@@ -83,10 +83,10 @@ function uiReducer(state: UIState, action: UIAction): UIState {
         ...state,
         selectedInfluenceSquare: null,
       }
-    case "UI_TOGGLE_SLEUTH_MODE":
+    case "UI_TOGGLE_GUESS_MODE":
       return {
         ...state,
-        sleuthMode: !state.sleuthMode,
+        guessMode: !state.guessMode,
       }
     case "UI_TOGGLE_BOARD_FLIPPED":
       return {

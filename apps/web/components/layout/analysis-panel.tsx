@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ChevronDown, ChevronUp, Cpu, Eye, Search } from "lucide-react"
+import { ChevronDown, ChevronUp, Cpu, Eye, EyeOff, Play } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -9,73 +9,140 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
+import { Separator } from "@workspace/ui/components/separator"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip"
 
 import { FENInput } from "@/components/inputs/fen-input"
 import { PGNInput } from "@/components/inputs/pgn-input"
 import { MoveList } from "@/components/analysis/move-list"
 import { PVLines } from "@/components/analysis/pv-lines"
 import { useEngine } from "@/hooks/use-engine"
+import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 
 export function AnalysisPanelPlaceholder() {
   const { t } = useI18n()
-  const { state: engineState, revealAnalysis, concealAnalysis } = useEngine()
+  const { state } = useGame()
+  const {
+    state: engineState,
+    revealAnalysis,
+    concealAnalysis,
+    requestBatchAnalysis,
+  } = useEngine()
   const { state: uiState, dispatch } = useUI()
   const [showImportInputs, setShowImportInputs] = useState(false)
 
-  const isRevealAvailable = uiState.sleuthMode && !engineState.sleuthRevealed
+  const isRevealAvailable = uiState.guessMode && !engineState.guessRevealed
   const batch = engineState.batch
+  const canAnalyze = useMemo(
+    () => state.history.length > 0 && batch.status !== "running",
+    [state.history.length, batch.status],
+  )
+
+  function handleAnalyzeBatch() {
+    if (state.history.length === 0) return
+
+    const queue = [
+      { moveIndex: 0, fen: state.initialFen, fenBefore: state.initialFen },
+      ...state.history.map((move, index) => ({
+        moveIndex: index + 1,
+        fen: move.fen,
+        fenBefore:
+          index === 0 ? state.initialFen : state.history[index - 1]!.fen,
+      })),
+    ]
+
+    requestBatchAnalysis(queue)
+  }
   const progressPercent =
     batch.total > 0 ? Math.round((batch.completed / batch.total) * 100) : 0
 
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-hidden">
-      <CardHeader className="border-b border-border/50">
+      <CardHeader className="space-y-3 border-b border-border/50">
         <div className="flex items-center justify-between">
           <CardTitle>{t("common.analysis")}</CardTitle>
-          <div className="flex items-center gap-1">
-            <Button
-              variant={uiState.engineEnabled ? "secondary" : "ghost"}
-              size="icon"
-              className="size-7"
-              title={
-                uiState.engineEnabled
-                  ? t("analysis.engineRunningTip")
-                  : t("analysis.engineStartTip")
-              }
-              onClick={() => dispatch({ type: "UI_TOGGLE_ENGINE" })}
-            >
-              <Cpu className="size-3.5" />
-            </Button>
-            <Button
-              variant={uiState.sleuthMode ? "secondary" : "ghost"}
-              size="icon"
-              className="size-7"
-              title={
-                uiState.sleuthMode
-                  ? t("analysis.sleuthOnTip")
-                  : t("analysis.sleuthOffTip")
-              }
-              onClick={() => {
-                concealAnalysis()
-                dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
-              }}
-            >
-              <Search className="size-3.5" />
-            </Button>
-            <Button
-              variant={engineState.sleuthRevealed ? "secondary" : "outline"}
-              size="sm"
-              className="h-7 text-xs"
-              disabled={!isRevealAvailable}
-              title={t("analysis.revealTip")}
-              onClick={revealAnalysis}
-            >
-              <Eye className="mr-1 size-3.5" />
-              {t("common.reveal")}
-            </Button>
-          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={uiState.engineEnabled ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                onClick={() => dispatch({ type: "UI_TOGGLE_ENGINE" })}
+              >
+                <Cpu className="size-3.5" />
+                {t("toolbar.engine")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {uiState.engineEnabled
+                ? t("analysis.engineRunningTip")
+                : t("analysis.engineStartTip")}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={uiState.guessMode ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                onClick={() => {
+                  concealAnalysis()
+                  dispatch({ type: "UI_TOGGLE_GUESS_MODE" })
+                }}
+              >
+                <EyeOff className="size-3.5" />
+                {t("toolbar.guess")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {uiState.guessMode
+                ? t("analysis.guessOnTip")
+                : t("analysis.guessOffTip")}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={engineState.guessRevealed ? "secondary" : "outline"}
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                disabled={!isRevealAvailable}
+                onClick={revealAnalysis}
+              >
+                <Eye className="size-3.5" />
+                {t("common.reveal")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t("analysis.revealTip")}
+            </TooltipContent>
+          </Tooltip>
+          <Separator orientation="vertical" className="mx-0.5 h-4" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                disabled={!canAnalyze}
+                onClick={handleAnalyzeBatch}
+              >
+                <Play className="size-3.5" />
+                {t("inputs.analyzeGame")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t("inputs.firstLoadPgn")}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden p-0">

@@ -27,7 +27,7 @@ export function useEngine() {
   }
 
   const revealAnalysis = () => {
-    dispatch({ type: "REVEAL_ANALYSIS" })
+    dispatch({ type: "ENGINE_REVEAL_ANALYSIS" })
   }
 
   const concealAnalysis = () => {

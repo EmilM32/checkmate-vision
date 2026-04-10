@@ -19,7 +19,7 @@ const ARROW_STYLES: Record<1 | 2 | 3, { color: string; opacity: number }> = {
 export function ArrowOverlay() {
   const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
-  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
+  const analysisVisible = !uiState.guessMode || engineState.guessRevealed
 
   const arrows = useMemo(
     () => buildMultiPvArrows(engineState.pvLines),

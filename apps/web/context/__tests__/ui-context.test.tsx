@@ -30,7 +30,7 @@ describe("UIContext", () => {
       dispatch({ type: "UI_TOGGLE_HEATMAP" })
       dispatch({ type: "UI_TOGGLE_INFLUENCE_TRACE" })
       dispatch({ type: "UI_SET_INFLUENCE_SQUARE", payload: "e4" })
-      dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
+      dispatch({ type: "UI_TOGGLE_GUESS_MODE" })
       dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
       dispatch({ type: "UI_TOGGLE_EVAL_CHART" })
     })
@@ -41,7 +41,7 @@ describe("UIContext", () => {
     expect(state.heatmapMode).toBe("net")
     expect(state.showInfluenceTrace).toBe(false)
     expect(state.selectedInfluenceSquare).toBe("e4")
-    expect(state.sleuthMode).toBe(true)
+    expect(state.guessMode).toBe(true)
     expect(state.boardFlipped).toBe(true)
     expect(state.showEvalChart).toBe(true)
   })
@@ -61,8 +61,8 @@ describe("UIContext", () => {
       dispatch({ type: "UI_TOGGLE_INFLUENCE_TRACE" })
       dispatch({ type: "UI_SET_INFLUENCE_SQUARE", payload: "c5" })
       dispatch({ type: "UI_CLEAR_INFLUENCE_SQUARE" })
-      dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
-      dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
+      dispatch({ type: "UI_TOGGLE_GUESS_MODE" })
+      dispatch({ type: "UI_TOGGLE_GUESS_MODE" })
       dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
       dispatch({ type: "UI_TOGGLE_BOARD_FLIPPED" })
       dispatch({ type: "UI_TOGGLE_EVAL_CHART" })
@@ -84,7 +84,7 @@ describe("UIContext", () => {
           heatmapMode: "split",
           showInfluenceTrace: false,
           selectedInfluenceSquare: "e5",
-          sleuthMode: true,
+          guessMode: true,
           boardFlipped: true,
           showEvalChart: true,
           engineEnabled: true,
@@ -98,7 +98,7 @@ describe("UIContext", () => {
       heatmapMode: "split",
       showInfluenceTrace: false,
       selectedInfluenceSquare: "e5",
-      sleuthMode: true,
+      guessMode: true,
       boardFlipped: true,
       showEvalChart: true,
       engineEnabled: true,

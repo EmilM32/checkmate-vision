@@ -74,24 +74,24 @@ describe("engineReducer batch analysis", () => {
 
   it("reveals and conceals analysis explicitly", () => {
     const revealed = engineReducer(initialEngineState, {
-      type: "REVEAL_ANALYSIS",
+      type: "ENGINE_REVEAL_ANALYSIS",
     })
-    expect(revealed.sleuthRevealed).toBe(true)
+    expect(revealed.guessRevealed).toBe(true)
 
     const concealed = engineReducer(revealed, {
       type: "ENGINE_CONCEAL_ANALYSIS",
     })
-    expect(concealed.sleuthRevealed).toBe(false)
+    expect(concealed.guessRevealed).toBe(false)
   })
 
   it("resets revealed state when starting a fresh analysis", () => {
     const revealed = engineReducer(initialEngineState, {
-      type: "REVEAL_ANALYSIS",
+      type: "ENGINE_REVEAL_ANALYSIS",
     })
-    expect(revealed.sleuthRevealed).toBe(true)
+    expect(revealed.guessRevealed).toBe(true)
 
     const restarted = engineReducer(revealed, { type: "ENGINE_START_ANALYSIS" })
-    expect(restarted.sleuthRevealed).toBe(false)
+    expect(restarted.guessRevealed).toBe(false)
   })
 
   it("preserves evaluation when starting fresh analysis", () => {
@@ -103,7 +103,7 @@ describe("engineReducer batch analysis", () => {
         nps: 1000000,
         bestMove: "e2e4",
         pvLines: [],
-        sleuthRevealed: false,
+        guessRevealed: false,
         batch: initialEngineState.batch,
       },
     })
@@ -124,7 +124,7 @@ describe("engineReducer batch analysis", () => {
         nps: 0,
         bestMove: null,
         pvLines: [],
-        sleuthRevealed: false,
+        guessRevealed: false,
         batch: initialEngineState.batch,
       },
     })
@@ -175,7 +175,7 @@ describe("engineReducer batch analysis", () => {
             pv: ["e2e4", "e7e5"],
           },
         ],
-        sleuthRevealed: true,
+        guessRevealed: true,
         batch: {
           requestId: 321,
           queue: [],
@@ -191,7 +191,7 @@ describe("engineReducer batch analysis", () => {
 
     expect(restored.depth).toBe(16)
     expect(restored.bestMove).toBe("e2e4")
-    expect(restored.sleuthRevealed).toBe(true)
+    expect(restored.guessRevealed).toBe(true)
     expect(restored.isAnalyzing).toBe(false)
   })
 
@@ -204,7 +204,7 @@ describe("engineReducer batch analysis", () => {
         nps: 1000,
         bestMove: "d2d4",
         pvLines: [],
-        sleuthRevealed: true,
+        guessRevealed: true,
         batch: {
           requestId: 2,
           queue: [],

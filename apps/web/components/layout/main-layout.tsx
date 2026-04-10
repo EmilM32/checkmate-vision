@@ -15,6 +15,7 @@ import { EvalBar } from "@/components/analysis/eval-bar"
 import { EvalChartPlaceholder } from "@/components/analysis/eval-chart"
 import { PlayerBarPlaceholder } from "@/components/board/player-bar"
 import { HeatmapLegend } from "@/components/board/heatmap-overlay"
+import { AnalysisLegend } from "@/components/layout/analysis-legend"
 import { AnalysisPanelPlaceholder } from "@/components/layout/analysis-panel"
 import { BoardPanelPlaceholder } from "@/components/layout/board-panel"
 import { ToolbarPlaceholder } from "@/components/layout/toolbar"
@@ -169,6 +170,7 @@ export function MainLayoutPlaceholder() {
             <div className="hidden w-85 shrink-0 flex-col gap-3 lg:flex">
               <div className="flex-1 overflow-hidden">
                 <HeatmapLegend />
+                <AnalysisLegend />
               </div>
             </div>
           </div>

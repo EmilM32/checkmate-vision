@@ -9,7 +9,7 @@ import { evalToPercent, formatEval } from "@/lib/engine/eval"
 export function EvalBar() {
   const { state } = useEngine()
   const { state: uiState } = useUI()
-  const analysisVisible = !uiState.sleuthMode || state.sleuthRevealed
+  const analysisVisible = !uiState.guessMode || state.guessRevealed
 
   const pct = evalToPercent(state.evaluation)
   const label = formatEval(state.evaluation)

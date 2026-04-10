@@ -15,13 +15,13 @@ let uiState = {
   showInfluenceTrace: true,
   selectedInfluenceSquare: null as string | null,
   showArrows: true,
-  sleuthMode: false,
+  guessMode: false,
   boardFlipped: false,
   showEvalChart: false,
 }
 
 let engineState = {
-  sleuthRevealed: false,
+  guessRevealed: false,
 }
 
 vi.mock("@/hooks/use-ui", () => ({
@@ -48,7 +48,7 @@ vi.mock("@/hooks/use-i18n", () => ({
       const dictionary: Record<string, string> = {
         "toolbar.heatmap": "Heatmap",
         "toolbar.arrows": "Arrows",
-        "toolbar.sleuth": "Sleuth",
+        "toolbar.guess": "Guess",
         "toolbar.chart": "Chart",
         "toolbar.export": "Export",
         "toolbar.flip": "Flip",
@@ -83,12 +83,12 @@ describe("ToolbarPlaceholder", () => {
       showInfluenceTrace: true,
       selectedInfluenceSquare: null,
       showArrows: true,
-      sleuthMode: false,
+      guessMode: false,
       boardFlipped: false,
       showEvalChart: false,
     }
     engineState = {
-      sleuthRevealed: false,
+      guessRevealed: false,
     }
   })
 

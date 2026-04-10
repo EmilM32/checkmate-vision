@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { useEngine } from "@/hooks/use-engine"
@@ -10,10 +10,9 @@ import { parsePgn } from "@/lib/chess/fen-pgn"
 
 export function PGNInput() {
   const { t } = useI18n()
-  const { state, loadPgnGame } = useGame()
+  const { loadPgnGame } = useGame()
   const {
     state: engineState,
-    requestBatchAnalysis,
     clearBatchAnalysis,
   } = useEngine()
 
@@ -21,10 +20,6 @@ export function PGNInput() {
   const [error, setError] = useState<string | null>(null)
 
   const isBatchRunning = engineState.batch.status === "running"
-
-  const canAnalyze = useMemo(() => {
-    return state.history.length > 0 && !isBatchRunning
-  }, [state.history.length, isBatchRunning])
 
   function handleLoadPgn() {
     setError(null)
@@ -44,26 +39,6 @@ export function PGNInput() {
     clearBatchAnalysis()
   }
 
-  function handleAnalyzeBatch() {
-    setError(null)
-    if (state.history.length === 0) {
-      setError(t("inputs.firstLoadPgn"))
-      return
-    }
-
-    const queue = [
-      { moveIndex: 0, fen: state.initialFen, fenBefore: state.initialFen },
-      ...state.history.map((move, index) => ({
-        moveIndex: index + 1,
-        fen: move.fen,
-        fenBefore:
-          index === 0 ? state.initialFen : state.history[index - 1]!.fen,
-      })),
-    ]
-
-    requestBatchAnalysis(queue)
-  }
-
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs text-muted-foreground">{t("common.pgn")}</label>
@@ -76,19 +51,9 @@ export function PGNInput() {
         disabled={isBatchRunning}
       />
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
-      <div className="flex items-center gap-2">
-        <Button size="sm" onClick={handleLoadPgn} disabled={isBatchRunning}>
-          {t("inputs.loadPgn")}
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={handleAnalyzeBatch}
-          disabled={!canAnalyze}
-        >
-          {t("inputs.analyzeGame")}
-        </Button>
-      </div>
+      <Button size="sm" onClick={handleLoadPgn} disabled={isBatchRunning}>
+        {t("inputs.loadPgn")}
+      </Button>
     </div>
   )
 }

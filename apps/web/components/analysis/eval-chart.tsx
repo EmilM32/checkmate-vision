@@ -46,7 +46,7 @@ export function EvalChartPlaceholder() {
   const { state, goToMove } = useGame()
   const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
-  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
+  const analysisVisible = !uiState.guessMode || engineState.guessRevealed
   const data = buildEvalChartData(state.history)
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -124,7 +124,7 @@ export function EvalChartPlaceholder() {
     >
       {!analysisVisible ? (
         <div className="flex h-full items-center justify-center rounded-md bg-muted/40 text-xs text-muted-foreground">
-          {t("analysis.sleuthEvalHidden")}
+          {t("analysis.guessEvalHidden")}
         </div>
       ) : null}
       {containerSize.width > 0 && containerSize.height > 0 ? (

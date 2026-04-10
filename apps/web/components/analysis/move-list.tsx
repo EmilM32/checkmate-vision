@@ -22,7 +22,7 @@ export function MoveList() {
   const { state, goToMove } = useGame()
   const { state: engineState, cancelBatchAnalysis } = useEngine()
   const { state: uiState } = useUI()
-  const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
+  const analysisVisible = !uiState.guessMode || engineState.guessRevealed
   const activeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {

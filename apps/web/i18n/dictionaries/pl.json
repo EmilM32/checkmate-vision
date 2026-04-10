@@ -13,7 +13,7 @@
   "toolbar": {
     "heatmap": "Heatmapa",
     "arrows": "Strzalki",
-    "sleuth": "Sleuth",
+    "guess": "Zgaduj",
     "chart": "Wykres",
     "engine": "Silnik",
     "export": "Eksport",
@@ -54,16 +54,16 @@
   },
   "analysis": {
     "noMovesYet": "Brak ruchow",
-    "sleuthEvalHidden": "Tryb Sleuth aktywny. Odkryj analize, aby zobaczyc wykres oceny.",
-    "sleuthLinesHidden": "Tryb Sleuth aktywny. Odkryj analize, aby zobaczyc linie silnika.",
+    "guessEvalHidden": "Tryb zgadywania aktywny. Odkryj analize, aby zobaczyc wykres oceny.",
+    "guessLinesHidden": "Tryb zgadywania aktywny. Odkryj analize, aby zobaczyc linie silnika.",
     "engineLines": "Linie silnika",
     "analyzing": "Analizowanie...",
     "noAnalysis": "Brak analizy",
     "engineOff": "Silnik wylaczony",
     "engineRunningTip": "Silnik dziala — kliknij, aby zatrzymac",
     "engineStartTip": "Uruchom analize silnika",
-    "sleuthOnTip": "Tryb Sleuth aktywny — analiza ukryta do odkrycia",
-    "sleuthOffTip": "Wlacz tryb Sleuth — ukryj analize do zgadywania",
+    "guessOnTip": "Tryb zgadywania aktywny — analiza ukryta do odkrycia",
+    "guessOffTip": "Wlacz tryb zgadywania — ukryj analize do zgadywania",
     "revealTip": "Odkryj ukryta analize",
     "noClassification": "Brak klasyfikacji",
     "move": "Ruch",
@@ -91,6 +91,16 @@
     "good": "Dobry",
     "mistake": "Pomylka",
     "blunder": "Blunder"
+  },
+  "analysisLegend": {
+    "title": "Narzedzia analizy",
+    "engineDesc": "Wlacza lub wylacza analize silnika Stockfish. Gdy aktywny, silnik ocenia biezaca pozycje i pokazuje najlepsze linie.",
+    "guessDesc": "Ukrywa ocene silnika, strzalki i linie, abys mogl samodzielnie znalezc najlepszy ruch przed podejrzeniem odpowiedzi.",
+    "revealDesc": "Tymczasowo odkrywa ukryta analize dla biezacej pozycji. Analiza ukrywa sie ponownie po przejsciu do nowej pozycji.",
+    "analyzeGameDesc": "Uruchamia silnik dla kazdej pozycji w zaladowanej partii, klasyfikujac kazdy ruch (genialny, swietny, najlepszy, dobry, pomylka, blunder).",
+    "engineActive": "Silnik dziala",
+    "guessRevealed": "Tryb zgadywania — analiza odkryta",
+    "guessHidden": "Tryb zgadywania — analiza ukryta"
   },
   "language": {
     "label": "Jezyk",
