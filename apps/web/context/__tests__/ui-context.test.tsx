@@ -87,6 +87,7 @@ describe("UIContext", () => {
           sleuthMode: true,
           boardFlipped: true,
           showEvalChart: true,
+          engineEnabled: true,
         },
       })
     })
@@ -100,6 +101,7 @@ describe("UIContext", () => {
       sleuthMode: true,
       boardFlipped: true,
       showEvalChart: true,
+      engineEnabled: true,
     })
 
     act(() => {

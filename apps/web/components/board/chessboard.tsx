@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import type { PieceDropHandlerArgs } from "react-chessboard"
 
@@ -21,6 +21,10 @@ const Chessboard = dynamic(
 const HIGHLIGHT_STYLE: React.CSSProperties = {
   background: "radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)",
   boxShadow: "inset 0 0 1px 4px rgba(255, 170, 0, 0.6)",
+}
+
+const RIGHT_CLICK_HIGHLIGHT_STYLE: React.CSSProperties = {
+  backgroundColor: "rgba(255, 170, 0, 0.4)",
 }
 
 const INFLUENCE_TARGET_STYLE: React.CSSProperties = {
@@ -47,11 +51,20 @@ export function InteractiveChessboard() {
   const { state: engineState } = useEngine()
   const analysisVisible = !uiState.sleuthMode || engineState.sleuthRevealed
 
+  const [rightClickSquares, setRightClickSquares] = useState<Set<string>>(
+    new Set()
+  )
+  const altKeyRef = useRef(false)
+
   const bestMoveUci =
     engineState.pvLines[0]?.pv[0] ?? engineState.bestMove ?? null
 
   const squareStyles = useMemo<Record<string, React.CSSProperties>>(() => {
     const styles: Record<string, React.CSSProperties> = {}
+
+    for (const sq of rightClickSquares) {
+      styles[sq] = RIGHT_CLICK_HIGHLIGHT_STYLE
+    }
 
     if (
       analysisVisible &&
@@ -62,8 +75,8 @@ export function InteractiveChessboard() {
       const from = bestMoveUci.slice(0, 2)
       const to = bestMoveUci.slice(2, 4)
 
-      styles[from] = HIGHLIGHT_STYLE
-      styles[to] = HIGHLIGHT_STYLE
+      styles[from] = { ...styles[from], ...HIGHLIGHT_STYLE }
+      styles[to] = { ...styles[to], ...HIGHLIGHT_STYLE }
     }
 
     if (uiState.showHeatmap && uiState.selectedInfluenceSquare) {
@@ -77,29 +90,62 @@ export function InteractiveChessboard() {
   }, [
     analysisVisible,
     bestMoveUci,
+    rightClickSquares,
     uiState.selectedInfluenceSquare,
     uiState.showArrows,
     uiState.showHeatmap,
   ])
 
+  const handleSquareMouseDown = useCallback(
+    (
+      _args: { piece: { pieceType: string } | null; square: string },
+      e: React.MouseEvent
+    ) => {
+      if (e.button === 2) {
+        altKeyRef.current = e.altKey
+      }
+    },
+    []
+  )
+
   const handleSquareRightClick = useCallback(
     ({ square }: { square: string }) => {
-      if (!uiState.showHeatmap) return
+      if (uiState.showHeatmap && altKeyRef.current) {
+        uiDispatch({
+          type: "UI_SET_INFLUENCE_SQUARE",
+          payload: uiState.selectedInfluenceSquare === square ? null : square,
+        })
+        return
+      }
 
-      uiDispatch({
-        type: "UI_SET_INFLUENCE_SQUARE",
-        payload: uiState.selectedInfluenceSquare === square ? null : square,
+      setRightClickSquares((prev) => {
+        const next = new Set(prev)
+        if (next.has(square)) {
+          next.delete(square)
+        } else {
+          next.add(square)
+        }
+        return next
       })
     },
     [uiDispatch, uiState.selectedInfluenceSquare, uiState.showHeatmap]
   )
 
+  const handleSquareClick = useCallback(() => {
+    if (rightClickSquares.size > 0) {
+      setRightClickSquares(new Set())
+    }
+  }, [rightClickSquares.size])
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (isTypingTarget(event.target)) return
 
-      if (event.key === "Escape" && uiState.selectedInfluenceSquare) {
-        uiDispatch({ type: "UI_CLEAR_INFLUENCE_SQUARE" })
+      if (event.key === "Escape") {
+        if (uiState.selectedInfluenceSquare) {
+          uiDispatch({ type: "UI_CLEAR_INFLUENCE_SQUARE" })
+        }
+        setRightClickSquares((prev) => (prev.size > 0 ? new Set() : prev))
         return
       }
 
@@ -116,6 +162,10 @@ export function InteractiveChessboard() {
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [uiDispatch, uiState.selectedInfluenceSquare, uiState.showHeatmap])
+
+  useEffect(() => {
+    setRightClickSquares((prev) => (prev.size > 0 ? new Set() : prev))
+  }, [state.fen])
 
   const handlePieceDrop = useCallback(
     ({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs): boolean => {
@@ -143,6 +193,8 @@ export function InteractiveChessboard() {
           squareStyles,
           onPieceDrop: handlePieceDrop,
           onSquareRightClick: handleSquareRightClick,
+          onSquareMouseDown: handleSquareMouseDown,
+          onSquareClick: handleSquareClick,
           animationDurationInMs: 200,
         }}
       />

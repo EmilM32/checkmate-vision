@@ -22,6 +22,23 @@ export function EvalBar() {
   const evalDir = whiteOnBottom ? "0deg" : "180deg"
   const labelOnTop = isWhiteBetter === whiteOnBottom
 
+  if (!uiState.engineEnabled) {
+    return (
+      <div
+        className="eval-bar-gradient relative flex w-7 shrink-0 flex-col overflow-hidden rounded-l-lg opacity-40"
+        style={{ "--eval-dir": evalDir } as React.CSSProperties}
+      >
+        <span
+          className={`absolute left-1/2 -translate-x-1/2 text-[10px] leading-none font-bold text-zinc-500 ${
+            whiteOnBottom ? "bottom-1.5" : "top-1.5"
+          }`}
+        >
+          —
+        </span>
+      </div>
+    )
+  }
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       {!analysisVisible ? (

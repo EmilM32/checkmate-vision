@@ -19,6 +19,7 @@ export type UIState = {
   sleuthMode: boolean
   boardFlipped: boolean
   showEvalChart: boolean
+  engineEnabled: boolean
 }
 
 export const initialUIState: UIState = {
@@ -30,6 +31,7 @@ export const initialUIState: UIState = {
   sleuthMode: false,
   boardFlipped: false,
   showEvalChart: false,
+  engineEnabled: false,
 }
 
 export type UIAction =
@@ -42,6 +44,7 @@ export type UIAction =
   | { type: "UI_TOGGLE_SLEUTH_MODE" }
   | { type: "UI_TOGGLE_BOARD_FLIPPED" }
   | { type: "UI_TOGGLE_EVAL_CHART" }
+  | { type: "UI_TOGGLE_ENGINE" }
   | { type: "UI_RESTORE_STATE"; payload: UIState }
   | { type: "UI_RESET" }
 
@@ -94,6 +97,11 @@ function uiReducer(state: UIState, action: UIAction): UIState {
       return {
         ...state,
         showEvalChart: !state.showEvalChart,
+      }
+    case "UI_TOGGLE_ENGINE":
+      return {
+        ...state,
+        engineEnabled: !state.engineEnabled,
       }
     case "UI_RESTORE_STATE":
       return {

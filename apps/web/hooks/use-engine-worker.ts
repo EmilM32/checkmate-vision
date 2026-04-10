@@ -124,6 +124,7 @@ export function useEngineWorker() {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const statusRef = useRef<EngineWorkerStatus>("idle")
   const annotateMoveRef = useRef(annotateMove)
+  const fenRef = useRef(gameState.fen)
   const latestEvalRef = useRef<EngineScore>(null)
   const pvScoresRef = useRef<{
     1: EngineScore
@@ -150,6 +151,10 @@ export function useEngineWorker() {
   useEffect(() => {
     annotateMoveRef.current = annotateMove
   }, [annotateMove])
+
+  useEffect(() => {
+    fenRef.current = gameState.fen
+  }, [gameState.fen])
 
   const startAnalysis = useCallback(
     (fen: string, depth = ANALYSIS_DEPTH) => {
@@ -246,6 +251,7 @@ export function useEngineWorker() {
       if (line === "readyok") {
         setStatus("ready")
         statusRef.current = "ready"
+        startAnalysis(fenRef.current)
         return
       }
 

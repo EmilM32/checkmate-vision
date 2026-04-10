@@ -4,15 +4,12 @@ import { Button } from "@workspace/ui/components/button"
 import {
   ChartLine,
   Download,
-  Eye,
   FlipVertical,
   Layers,
   MoveRight,
   RotateCcw,
-  Search,
 } from "lucide-react"
 
-import { useEngine } from "@/hooks/use-engine"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 
@@ -21,16 +18,9 @@ type ToolbarPlaceholderProps = {
   onNewAnalysis: () => void
 }
 
-// TODO: Przyciski narzedzi
-// - Heatmap: toggle UIContext.showHeatmap — wlacza/wylacza nakladke kontroli pol
-// - Arrows: toggle UIContext.showArrows — wlacza/wylacza strzalki najlepszych ruchow
-// - Sleuth: toggle UIContext.sleuthMode — tryb zgadywania (ukrywa najlepszy ruch, gracz probuje sam)
-// - Export: html-to-image -> zapis aktualnej pozycji jako PNG
-// - Flip: toggle UIContext.boardFlipped — odwraca szachownice (bialy/czarny na dole)
 const TOOLBAR_ITEMS = [
   { key: "heatmap", icon: Layers },
   { key: "arrows", icon: MoveRight },
-  { key: "sleuth", icon: Search },
   { key: "chart", icon: ChartLine },
   { key: "export", icon: Download },
   { key: "flip", icon: FlipVertical },
@@ -42,9 +32,7 @@ export function ToolbarPlaceholder({
 }: ToolbarPlaceholderProps) {
   const { locale, setLocale, isSwitchingLocale, t } = useI18n()
   const { state: uiState, dispatch } = useUI()
-  const { state: engineState, revealAnalysis, concealAnalysis } = useEngine()
 
-  const isRevealAvailable = uiState.sleuthMode && !engineState.sleuthRevealed
   const nextHeatmapMode = uiState.heatmapMode === "net" ? "split" : "net"
   const heatmapModeLabel =
     uiState.heatmapMode === "net"
@@ -61,13 +49,11 @@ export function ToolbarPlaceholder({
               ? "secondary"
               : key === "arrows" && uiState.showArrows
                 ? "secondary"
-                : key === "sleuth" && uiState.sleuthMode
+                : key === "chart" && uiState.showEvalChart
                   ? "secondary"
-                  : key === "chart" && uiState.showEvalChart
+                  : key === "flip" && uiState.boardFlipped
                     ? "secondary"
-                    : key === "flip" && uiState.boardFlipped
-                      ? "secondary"
-                      : "ghost"
+                    : "ghost"
           }
           size="icon"
           className="size-8"
@@ -80,12 +66,6 @@ export function ToolbarPlaceholder({
 
             if (key === "arrows") {
               dispatch({ type: "UI_TOGGLE_ARROWS" })
-              return
-            }
-
-            if (key === "sleuth") {
-              concealAnalysis()
-              dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
               return
             }
 
@@ -121,17 +101,6 @@ export function ToolbarPlaceholder({
           {heatmapModeLabel}
         </Button>
       ) : null}
-
-      <Button
-        variant={engineState.sleuthRevealed ? "secondary" : "outline"}
-        size="sm"
-        className="h-8"
-        disabled={!isRevealAvailable}
-        onClick={revealAnalysis}
-      >
-        <Eye className="mr-1 size-4" />
-        {t("common.reveal")}
-      </Button>
 
       <Button
         variant="outline"

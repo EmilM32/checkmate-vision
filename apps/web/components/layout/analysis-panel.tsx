@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { ChevronDown, ChevronUp, Cpu, Eye, Search } from "lucide-react"
 
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
@@ -15,13 +16,15 @@ import { MoveList } from "@/components/analysis/move-list"
 import { PVLines } from "@/components/analysis/pv-lines"
 import { useEngine } from "@/hooks/use-engine"
 import { useI18n } from "@/hooks/use-i18n"
+import { useUI } from "@/hooks/use-ui"
 
-// Panel analizy — prawy sidebar na desktop, zakladki na mobile.
-// Zawiera wszystkie narzedzia analizy partii w jednym Card.
 export function AnalysisPanelPlaceholder() {
   const { t } = useI18n()
-  const { state: engineState } = useEngine()
+  const { state: engineState, revealAnalysis, concealAnalysis } = useEngine()
+  const { state: uiState, dispatch } = useUI()
   const [showImportInputs, setShowImportInputs] = useState(false)
+
+  const isRevealAvailable = uiState.sleuthMode && !engineState.sleuthRevealed
   const batch = engineState.batch
   const progressPercent =
     batch.total > 0 ? Math.round((batch.completed / batch.total) * 100) : 0
@@ -29,7 +32,51 @@ export function AnalysisPanelPlaceholder() {
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-hidden">
       <CardHeader className="border-b border-border/50">
-        <CardTitle>{t("common.analysis")}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>{t("common.analysis")}</CardTitle>
+          <div className="flex items-center gap-1">
+            <Button
+              variant={uiState.engineEnabled ? "secondary" : "ghost"}
+              size="icon"
+              className="size-7"
+              title={
+                uiState.engineEnabled
+                  ? t("analysis.engineRunningTip")
+                  : t("analysis.engineStartTip")
+              }
+              onClick={() => dispatch({ type: "UI_TOGGLE_ENGINE" })}
+            >
+              <Cpu className="size-3.5" />
+            </Button>
+            <Button
+              variant={uiState.sleuthMode ? "secondary" : "ghost"}
+              size="icon"
+              className="size-7"
+              title={
+                uiState.sleuthMode
+                  ? t("analysis.sleuthOnTip")
+                  : t("analysis.sleuthOffTip")
+              }
+              onClick={() => {
+                concealAnalysis()
+                dispatch({ type: "UI_TOGGLE_SLEUTH_MODE" })
+              }}
+            >
+              <Search className="size-3.5" />
+            </Button>
+            <Button
+              variant={engineState.sleuthRevealed ? "secondary" : "outline"}
+              size="sm"
+              className="h-7 text-xs"
+              disabled={!isRevealAvailable}
+              title={t("analysis.revealTip")}
+              onClick={revealAnalysis}
+            >
+              <Eye className="mr-1 size-3.5" />
+              {t("common.reveal")}
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden p-0">
         {/* TODO: Top 3 linie silnika (Principal Variations)

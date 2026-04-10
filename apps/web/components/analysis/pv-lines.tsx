@@ -59,6 +59,14 @@ export function PVLines() {
     }))
   }, [engineState.pvLines, gameState.fen])
 
+  if (!uiState.engineEnabled) {
+    return (
+      <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+        {t("analysis.engineOff")}
+      </div>
+    )
+  }
+
   if (!analysisVisible) {
     return (
       <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
