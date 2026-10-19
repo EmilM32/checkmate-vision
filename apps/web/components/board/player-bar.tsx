@@ -38,7 +38,7 @@ export function PlayerBar({ color }: { color: "white" | "black" }) {
   const isToMove = (state.turn === "w") === (color === "white")
 
   return (
-    <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5">
+    <div className="flex h-9 w-full items-center justify-between gap-2 px-1">
       <div className="flex min-w-0 items-center gap-2">
         <div
           aria-hidden="true"

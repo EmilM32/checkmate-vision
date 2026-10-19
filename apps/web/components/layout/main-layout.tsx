@@ -81,10 +81,6 @@ export function MainLayoutPlaceholder() {
   const topPlayerColor = uiState.boardFlipped ? "white" : "black"
   const bottomPlayerColor = uiState.boardFlipped ? "black" : "white"
 
-  const boardViewportCapClasses = uiState.showEvalChart
-    ? "max-w-[min(98vw,calc(100svh-18rem))] md:max-w-[min(96vw,calc(100svh-19rem))] lg:max-w-[min(100%,calc(100svh-17rem))]"
-    : "max-w-[min(98vw,calc(100svh-9rem))] md:max-w-[min(96vw,calc(100svh-10rem))] lg:max-w-[min(100%,calc(100svh-8.5rem))]"
-
   return (
     <main className="h-svh overflow-hidden p-2 md:p-4 lg:p-5">
       <motion.div
@@ -96,23 +92,24 @@ export function MainLayoutPlaceholder() {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
           <div className="flex min-h-0 min-w-0 flex-1 gap-4">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-              <div className="w-full pl-7">
-                <PlayerBar color={topPlayerColor} />
-              </div>
-
-              <div className="flex min-h-0 flex-1 items-center justify-center">
-                <div
-                  className={`flex h-full max-h-full w-full items-stretch ${boardViewportCapClasses}`}
-                >
-                  <EvalBar />
-                  <div className="min-w-0 flex-1">
-                    <BoardPanelPlaceholder exportRef={boardExportRef} />
+              {/* Size container: the board group takes the largest square
+                  that fits next to the eval bar (w-7) and between the two
+                  player bars (h-9 each), whatever the rest of the layout. */}
+              <div className="[container-type:size] flex min-h-0 flex-1 items-center justify-center">
+                <div className="flex w-[min(100cqw,calc(100cqh-4.5rem+1.75rem))] flex-col">
+                  <div className="pl-7">
+                    <PlayerBar color={topPlayerColor} />
+                  </div>
+                  <div className="flex items-stretch">
+                    <EvalBar />
+                    <div className="min-w-0 flex-1">
+                      <BoardPanelPlaceholder exportRef={boardExportRef} />
+                    </div>
+                  </div>
+                  <div className="pl-7">
+                    <PlayerBar color={bottomPlayerColor} />
                   </div>
                 </div>
-              </div>
-
-              <div className="w-full pl-7">
-                <PlayerBar color={bottomPlayerColor} />
               </div>
 
               <div className="flex w-full flex-wrap items-center justify-between gap-2 px-1 py-1 lg:hidden">
@@ -170,7 +167,7 @@ export function MainLayoutPlaceholder() {
               </div>
             </div>
 
-            <div className="hidden w-85 shrink-0 flex-col gap-3 lg:flex">
+            <div className="hidden w-85 shrink-0 flex-col gap-3 xl:flex">
               <div className="flex-1 overflow-hidden">
                 <HeatmapLegend />
                 <AnalysisLegend />
