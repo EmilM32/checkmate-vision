@@ -16,6 +16,10 @@ import type { BatchAnalysisItem, EngineScore } from "@/context/engine-context"
 
 export type EngineWorkerStatus = "idle" | "initializing" | "ready" | "analyzing"
 
+// "live" searches drive the on-screen analysis of the current position;
+// "batch" searches only feed game analysis and never touch the live view.
+type SearchMode = "live" | "batch"
+
 const DEBOUNCE_MS = 150
 const ANALYSIS_DEPTH = 20
 const MULTI_PV = 3
@@ -142,6 +146,8 @@ export function useEngineWorker() {
   const annotateMoveRef = useRef(annotateMove)
   const fenRef = useRef(gameState.fen)
   const searchFenRef = useRef<string | null>(null)
+  const searchModeRef = useRef<SearchMode>("live")
+  const liveFenRef = useRef<string | null>(null)
   const handleMessageRef = useRef<((e: MessageEvent) => void) | null>(null)
   const latestEvalRef = useRef<EngineScore>(null)
   const pvScoresRef = useRef<{
@@ -175,13 +181,18 @@ export function useEngineWorker() {
   }, [gameState.fen])
 
   const startAnalysis = useCallback(
-    (fen: string, depth = ANALYSIS_DEPTH) => {
+    (fen: string, mode: SearchMode = "live") => {
       const worker = workerRef.current
       if (!worker) return
 
-      dispatch({ type: "ENGINE_START_ANALYSIS" })
+      const isLive = mode === "live"
+      if (isLive) {
+        dispatch({ type: "ENGINE_START_ANALYSIS" })
+        liveFenRef.current = fen
+      }
       pvScoresRef.current = { 1: null, 2: null, 3: null }
       searchFenRef.current = fen
+      searchModeRef.current = mode
       setStatus("analyzing")
       statusRef.current = "analyzing"
       isAnalyzingRef.current = true
@@ -189,7 +200,9 @@ export function useEngineWorker() {
       const terminalScore = getTerminalScore(fen)
       if (terminalScore) {
         pvScoresRef.current[1] = terminalScore
-        dispatch({ type: "ENGINE_TERMINAL_POSITION", score: terminalScore })
+        if (isLive) {
+          dispatch({ type: "ENGINE_TERMINAL_POSITION", score: terminalScore })
+        }
         // Finish asynchronously, like a real search, so the regular
         // bestmove flow (classification, batch, pending FEN) runs.
         setTimeout(() => {
@@ -205,7 +218,7 @@ export function useEngineWorker() {
       worker.postMessage(
         serializeCommand({
           type: "go",
-          depth,
+          depth: ANALYSIS_DEPTH,
           multipv: MULTI_PV,
         })
       )
@@ -224,7 +237,7 @@ export function useEngineWorker() {
       }
 
       batch.currentIndex = index
-      startAnalysis(item.fen, ANALYSIS_DEPTH)
+      startAnalysis(item.fen, "batch")
     },
     [dispatch, startAnalysis]
   )
@@ -254,6 +267,12 @@ export function useEngineWorker() {
     },
     [dispatch, startBatchAtIndex]
   )
+
+  // After game analysis the engine returns to the position on the board,
+  // which may have changed while the batch was running.
+  const resumeLiveAnalysis = useCallback(() => {
+    startAnalysis(fenRef.current)
+  }, [startAnalysis])
 
   const requestAnalysis = useCallback(
     (fen: string) => {
@@ -299,6 +318,8 @@ export function useEngineWorker() {
           ),
         }
         pvScoresRef.current[info.multipv] = info.score
+        if (searchModeRef.current === "batch") return
+
         if (info.multipv === 1 && info.score) {
           latestEvalRef.current = info.score
         }
@@ -309,7 +330,9 @@ export function useEngineWorker() {
       const bestMove = parseBestMoveLine(line)
       if (bestMove) {
         isAnalyzingRef.current = false
-        dispatch({ type: "ENGINE_BESTMOVE", bestMove })
+        if (searchModeRef.current === "live") {
+          dispatch({ type: "ENGINE_BESTMOVE", bestMove })
+        }
 
         if (queuedBatchRef.current) {
           const queuedBatch = queuedBatchRef.current
@@ -357,12 +380,11 @@ export function useEngineWorker() {
               const classification =
                 scoreBefore && scoreAfter ? classifyMove(input) : null
 
-              annotateMoveRef.current(item.moveIndex, {
-                scoreBefore,
-                scoreAfter,
-                delta,
-                classification,
-              })
+              annotateMoveRef.current(
+                item.moveIndex,
+                { scoreBefore, scoreAfter, delta, classification },
+                item.fen
+              )
 
               batch.previousScore = scoreAfter
             }
@@ -378,8 +400,7 @@ export function useEngineWorker() {
           if (batch.cancelled) {
             batch.running = false
             dispatch({ type: "ENGINE_BATCH_CANCELLED" })
-            setStatus("ready")
-            statusRef.current = "ready"
+            resumeLiveAnalysis()
             return
           }
 
@@ -389,8 +410,7 @@ export function useEngineWorker() {
           } else {
             batch.running = false
             dispatch({ type: "ENGINE_BATCH_DONE" })
-            setStatus("ready")
-            statusRef.current = "ready"
+            resumeLiveAnalysis()
           }
           return
         }
@@ -429,12 +449,16 @@ export function useEngineWorker() {
           const classification =
             pendingMove.scoreBefore && scoreAfter ? classifyMove(input) : null
 
-          annotateMoveRef.current(pendingMove.moveIndex, {
-            scoreBefore: pendingMove.scoreBefore,
-            scoreAfter,
-            delta,
-            classification,
-          })
+          annotateMoveRef.current(
+            pendingMove.moveIndex,
+            {
+              scoreBefore: pendingMove.scoreBefore,
+              scoreAfter,
+              delta,
+              classification,
+            },
+            pendingMove.fenAfter
+          )
 
           pendingMoveRef.current = null
         }
@@ -454,7 +478,7 @@ export function useEngineWorker() {
         return
       }
     },
-    [dispatch, startAnalysis]
+    [dispatch, startAnalysis, beginBatch, startBatchAtIndex, resumeLiveAnalysis]
   )
 
   const init = useCallback(() => {
@@ -481,6 +505,8 @@ export function useEngineWorker() {
     workerRef.current?.terminate()
     workerRef.current = null
     searchFenRef.current = null
+    searchModeRef.current = "live"
+    liveFenRef.current = null
     isAnalyzingRef.current = false
     waitingForStopRef.current = false
     pendingFenRef.current = null
@@ -504,7 +530,15 @@ export function useEngineWorker() {
 
   // React to FEN changes with debounce
   useEffect(() => {
-    if (batchRunRef.current.running || queuedBatchRef.current) return
+    if (batchRunRef.current.running || queuedBatchRef.current) {
+      // The engine is busy with the game; drop live lines that describe a
+      // different position until the batch ends and live analysis resumes.
+      if (liveFenRef.current && liveFenRef.current !== gameState.fen) {
+        liveFenRef.current = null
+        dispatch({ type: "ENGINE_CLEAR_ANALYSIS" })
+      }
+      return
+    }
 
     if (statusRef.current !== "ready" && statusRef.current !== "analyzing")
       return
@@ -522,7 +556,7 @@ export function useEngineWorker() {
         clearTimeout(debounceTimerRef.current)
       }
     }
-  }, [gameState.fen, requestAnalysis])
+  }, [gameState.fen, requestAnalysis, dispatch])
 
   useEffect(() => {
     if (batchRunRef.current.running || queuedBatchRef.current) {
@@ -610,11 +644,12 @@ export function useEngineWorker() {
     if (!isAnalyzingRef.current) {
       batch.running = false
       dispatch({ type: "ENGINE_BATCH_CANCELLED" })
+      resumeLiveAnalysis()
       return
     }
 
     workerRef.current?.postMessage(serializeCommand({ type: "stop" }))
-  }, [engineState.batch.cancelRequested, dispatch])
+  }, [engineState.batch.cancelRequested, dispatch, resumeLiveAnalysis])
 
   // Cleanup on unmount
   useEffect(() => {

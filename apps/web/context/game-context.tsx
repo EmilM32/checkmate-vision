@@ -99,7 +99,11 @@ function deriveState(
 type GameContextValue = {
   state: GameState
   makeMove: (from: string, to: string, promotion?: string) => boolean
-  annotateMove: (index: number, patch: MoveAnalysisPatch) => void
+  annotateMove: (
+    index: number,
+    patch: MoveAnalysisPatch,
+    expectedFen?: string
+  ) => void
   setPositionFromFen: (fen: string) => boolean
   loadPgnGame: (parsed: ParsedGame) => boolean
   undo: () => void
@@ -152,13 +156,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
   )
 
   const annotateMove = useCallback(
-    (index: number, patch: MoveAnalysisPatch) => {
+    (index: number, patch: MoveAnalysisPatch, expectedFen?: string) => {
       const { history, currentMoveIndex } = state
       if (index < 1 || index > history.length) return
 
       const historyIndex = index - 1
       const move = history[historyIndex]
       if (!move) return
+      // Analysis computed for a position that is no longer at this index
+      // (the game changed meanwhile) must not be attached to another move.
+      if (expectedFen !== undefined && move.fen !== expectedFen) return
 
       const nextHistory = [...history]
       nextHistory[historyIndex] = {

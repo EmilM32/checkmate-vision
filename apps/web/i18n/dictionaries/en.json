@@ -59,6 +59,7 @@
     "engineLines": "Engine Lines",
     "analyzing": "Analyzing...",
     "noAnalysis": "No analysis",
+    "livePausedDuringBatch": "Paused while the game is being analyzed",
     "engineOff": "Engine is off",
     "engineRunningTip": "Engine is running — click to stop",
     "engineStartTip": "Start engine analysis",

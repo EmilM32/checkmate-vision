@@ -59,6 +59,7 @@
     "engineLines": "Linie silnika",
     "analyzing": "Analizowanie...",
     "noAnalysis": "Brak analizy",
+    "livePausedDuringBatch": "Wstrzymane na czas analizy partii",
     "engineOff": "Silnik wylaczony",
     "engineRunningTip": "Silnik dziala — kliknij, aby zatrzymac",
     "engineStartTip": "Uruchom analize silnika",
