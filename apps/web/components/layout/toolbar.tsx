@@ -37,7 +37,7 @@ export function Toolbar({ onExport, onNewAnalysis }: ToolbarProps) {
       : t("heatmap.modeSplitShort")
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
       {TOOLBAR_ITEMS.map(({ key, icon: Icon }) => (
         <Button
           key={key}
