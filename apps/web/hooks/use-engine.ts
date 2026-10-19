@@ -38,6 +38,10 @@ export function useEngine() {
     dispatch({ type: "ENGINE_RESTORE_STATE", payload })
   }
 
+  const retryEngine = () => {
+    dispatch({ type: "ENGINE_RETRY_REQUEST" })
+  }
+
   const resetEngine = () => {
     dispatch({ type: "ENGINE_RESET" })
   }
@@ -51,5 +55,6 @@ export function useEngine() {
     concealAnalysis,
     restoreEngineState,
     resetEngine,
+    retryEngine,
   }
 }
