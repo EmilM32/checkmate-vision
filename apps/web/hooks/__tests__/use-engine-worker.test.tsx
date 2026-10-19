@@ -128,6 +128,21 @@ describe("useEngineWorker", () => {
     vi.unstubAllGlobals()
   })
 
+  it("configures the engine before it reports ready", () => {
+    const harness = renderEngineHarness()
+    act(() => {
+      harness.current.worker.start()
+    })
+    emit(harness, "uciok")
+
+    expect(harness.stockfish.commands).toEqual([
+      "uci",
+      "setoption name Contempt value 0",
+      "setoption name MultiPV value 3",
+      "isready",
+    ])
+  })
+
   it("analyzes the current position once the engine is ready", () => {
     const harness = renderEngineHarness()
     startEngine(harness)
@@ -191,7 +206,7 @@ describe("useEngineWorker", () => {
     // round-trip.
     expect(harness.stockfish.commands.slice(commandCount)).toEqual([
       `position fen ${START_FEN}`,
-      "go depth 20 multipv 3",
+      "go depth 20",
     ])
   })
 
@@ -242,13 +257,20 @@ describe("useEngineWorker", () => {
       })
 
       requestGameAnalysis(harness)
-      expect(lastCommands(harness)).toEqual([
+      // Game analysis uses its own (cheaper) search settings.
+      expect(lastCommands(harness, 3)).toEqual([
+        "setoption name MultiPV value 2",
         `position fen ${START_FEN}`,
-        "go depth 20 multipv 3",
+        "go depth 16",
       ])
 
       emit(harness, "info depth 12 multipv 1 score cp 90 pv d2d4")
       emit(harness, "bestmove d2d4")
+      expect(lastCommands(harness, 3)).toEqual([
+        "go depth 16",
+        `position fen ${AFTER_E4_FEN}`,
+        "go depth 16",
+      ])
       emit(harness, "info depth 12 multipv 1 score cp -10 pv c7c5")
 
       expect(harness.current.engine.state.evaluation).toEqual({
@@ -265,9 +287,10 @@ describe("useEngineWorker", () => {
         scoreBefore: { type: "cp", value: 90 },
         scoreAfter: { type: "cp", value: 10 },
       })
-      expect(lastCommands(harness)).toEqual([
+      expect(lastCommands(harness, 3)).toEqual([
+        "setoption name MultiPV value 3",
         `position fen ${AFTER_E4_FEN}`,
-        "go depth 20 multipv 3",
+        "go depth 20",
       ])
       expect(harness.current.engine.state.isAnalyzing).toBe(true)
     })
@@ -291,7 +314,7 @@ describe("useEngineWorker", () => {
       expect(harness.current.engine.state.batch.status).toBe("cancelled")
       expect(lastCommands(harness)).toEqual([
         `position fen ${START_FEN}`,
-        "go depth 20 multipv 3",
+        "go depth 20",
       ])
     })
 

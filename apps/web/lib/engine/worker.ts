@@ -2,7 +2,8 @@ export type EngineCommand =
   | { type: "uci" }
   | { type: "isready" }
   | { type: "position"; fen: string }
-  | { type: "go"; depth: number; multipv: number }
+  | { type: "setoption"; name: string; value: string | number }
+  | { type: "go"; depth: number }
   | { type: "stop" }
 
 export function serializeCommand(command: EngineCommand) {
@@ -13,8 +14,10 @@ export function serializeCommand(command: EngineCommand) {
       return "isready"
     case "position":
       return `position fen ${command.fen}`
+    case "setoption":
+      return `setoption name ${command.name} value ${command.value}`
     case "go":
-      return `go depth ${command.depth} multipv ${command.multipv}`
+      return `go depth ${command.depth}`
     case "stop":
       return "stop"
     default:
