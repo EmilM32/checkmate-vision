@@ -107,5 +107,13 @@
     "label": "Jezyk",
     "pl": "PL",
     "en": "EN"
+  },
+  "promotion": {
+    "choose": "Wybierz figure promocji",
+    "cancel": "Anuluj promocje",
+    "q": "Hetman",
+    "r": "Wieza",
+    "b": "Goniec",
+    "n": "Skoczek"
   }
 }
