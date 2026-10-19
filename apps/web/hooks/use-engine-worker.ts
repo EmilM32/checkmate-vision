@@ -8,11 +8,12 @@ import {
   getPvGapCp,
   getTerminalScore,
 } from "@/lib/chess/move-analysis"
+import { analysisCache } from "@/lib/engine/analysis-cache"
 import { getSideToMove, toWhitePerspective } from "@/lib/engine/eval"
 import { parseInfoLine, parseBestMoveLine } from "@/lib/engine/parser"
 import { ENGINE_URL } from "@/lib/engine/engine-url"
 import { serializeCommand } from "@/lib/engine/worker"
-import type { EngineScore } from "@/context/engine-context"
+import type { EngineLine, EngineScore } from "@/context/engine-context"
 
 export type EngineWorkerStatus = "idle" | "initializing" | "ready" | "analyzing"
 
@@ -59,6 +60,14 @@ export function useEngineWorker() {
   }>({ 1: null, 2: null, 3: null })
   const pendingMoveRef = useRef<PendingMoveClassification | null>(null)
   const previousGameRef = useRef(gameState)
+  // Current search: lines and depth reached, whether we interrupted it, and
+  // the depth of cached lines that shallower output must not replace.
+  const linesRef = useRef(new Map<1 | 2 | 3, EngineLine>())
+  const depthRef = useRef(0)
+  const stopSentRef = useRef(false)
+  const cachedDepthRef = useRef(0)
+  // The search was stopped because the tab was hidden; resume when visible.
+  const pausedRef = useRef(false)
 
   useEffect(() => {
     annotateMoveRef.current = annotateMove
@@ -75,10 +84,47 @@ export function useEngineWorker() {
 
       dispatch({ type: "ENGINE_START_ANALYSIS" })
       pvScoresRef.current = { 1: null, 2: null, 3: null }
+      linesRef.current = new Map()
+      depthRef.current = 0
+      stopSentRef.current = false
+      cachedDepthRef.current = 0
       searchFenRef.current = fen
       setStatus("analyzing")
       statusRef.current = "analyzing"
       isAnalyzingRef.current = true
+
+      // Show what is already known about the position at once. A complete
+      // live result is final; anything else (an interrupted search, game
+      // analysis) is shown until the new search goes deeper.
+      const cached = analysisCache.get(fen)
+      if (cached) {
+        const final =
+          cached.complete && cached.lines.length >= LIVE_SEARCH.multiPv
+        for (const line of cached.lines) {
+          linesRef.current.set(line.id, line)
+          pvScoresRef.current[line.id] = line.score
+        }
+        depthRef.current = cached.depth
+        cachedDepthRef.current = cached.depth
+        dispatch({
+          type: "ENGINE_SHOW_CACHED",
+          depth: cached.depth,
+          lines: cached.lines,
+          final,
+        })
+
+        if (final) {
+          // Finish like a search so classification and queued positions run.
+          const bestMove = cached.lines[0]?.pv[0] ?? "(none)"
+          setTimeout(() => {
+            if (workerRef.current !== worker) return
+            handleMessageRef.current?.(
+              new MessageEvent("message", { data: `bestmove ${bestMove}` })
+            )
+          }, 0)
+          return
+        }
+      }
 
       const terminalScore = getTerminalScore(fen)
       if (terminalScore) {
@@ -116,6 +162,7 @@ export function useEngineWorker() {
         pendingFenRef.current = fen
         if (!waitingForStopRef.current) {
           waitingForStopRef.current = true
+          stopSentRef.current = true
           worker.postMessage(serializeCommand({ type: "stop" }))
         }
       } else {
@@ -167,11 +214,19 @@ export function useEngineWorker() {
             getSideToMove(searchFenRef.current ?? fenRef.current)
           ),
         }
+        dispatch({ type: "ENGINE_OUTPUT", info })
+        if (info.depth < cachedDepthRef.current) return
+
         pvScoresRef.current[info.multipv] = info.score
+        linesRef.current.set(info.multipv, {
+          id: info.multipv,
+          score: info.score,
+          pv: info.pv,
+        })
+        depthRef.current = Math.max(depthRef.current, info.depth)
         if (info.multipv === 1 && info.score) {
           latestEvalRef.current = info.score
         }
-        dispatch({ type: "ENGINE_OUTPUT", info })
         return
       }
 
@@ -179,6 +234,14 @@ export function useEngineWorker() {
       if (bestMove) {
         isAnalyzingRef.current = false
         dispatch({ type: "ENGINE_BESTMOVE", bestMove })
+
+        if (searchFenRef.current) {
+          analysisCache.set(searchFenRef.current, {
+            depth: depthRef.current,
+            lines: [...linesRef.current.values()].sort((a, b) => a.id - b.id),
+            complete: !stopSentRef.current,
+          })
+        }
 
         const pendingMove = pendingMoveRef.current
         const scoreAfter = pvScoresRef.current[1]
@@ -237,6 +300,7 @@ export function useEngineWorker() {
     waitingForStopRef.current = false
     pendingFenRef.current = null
     pendingMoveRef.current = null
+    pausedRef.current = false
     latestEvalRef.current = null
     pvScoresRef.current = { 1: null, 2: null, 3: null }
     setStatus("idle")
@@ -331,6 +395,31 @@ export function useEngineWorker() {
   useEffect(() => {
     dispatch({ type: "ENGINE_CONCEAL_ANALYSIS" })
   }, [gameState.fen, dispatch])
+
+  // Do not burn CPU (and battery) analysing in a background tab.
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      const worker = workerRef.current
+      if (!worker) return
+
+      if (document.hidden) {
+        if (isAnalyzingRef.current && !waitingForStopRef.current) {
+          pausedRef.current = true
+          waitingForStopRef.current = true
+          stopSentRef.current = true
+          pendingFenRef.current = null
+          worker.postMessage(serializeCommand({ type: "stop" }))
+        }
+      } else if (pausedRef.current) {
+        pausedRef.current = false
+        requestAnalysis(fenRef.current)
+      }
+    }
+
+    document.addEventListener("visibilitychange", onVisibilityChange)
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange)
+  }, [requestAnalysis])
 
   useEffect(() => {
     handleMessageRef.current = handleMessage

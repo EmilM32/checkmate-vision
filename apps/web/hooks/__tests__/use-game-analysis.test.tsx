@@ -9,6 +9,7 @@ import {
 } from "@/context/engine-context"
 import { GameProvider, useGameContext } from "@/context/game-context"
 import { useGameAnalysis } from "@/hooks/use-game-analysis"
+import { analysisCache } from "@/lib/engine/analysis-cache"
 import { FakeStockfish } from "@/lib/engine/__tests__/fake-stockfish"
 import { parsePgn } from "@/lib/chess/fen-pgn"
 
@@ -89,6 +90,7 @@ function workerAnalyzing(fen: string) {
 
 describe("useGameAnalysis", () => {
   beforeEach(() => {
+    analysisCache.clear()
     workers = []
     vi.stubGlobal(
       "Worker",
@@ -139,6 +141,11 @@ describe("useGameAnalysis", () => {
     expect(workers.every((worker) => worker.terminated)).toBe(true)
     // The live analysis state is untouched by game analysis.
     expect(result.current.engine.state.evaluation).toBeNull()
+    // Results are kept for the live view while browsing the game.
+    expect(analysisCache.get(afterE5!)).toMatchObject({
+      depth: 18,
+      complete: false,
+    })
   })
 
   it("cancels a running analysis", async () => {

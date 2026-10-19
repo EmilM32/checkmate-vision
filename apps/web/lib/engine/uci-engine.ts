@@ -1,4 +1,4 @@
-import type { EngineScore } from "@/context/engine-context"
+import type { EngineLine, EngineScore } from "@/context/engine-context"
 import { getTerminalScore } from "@/lib/chess/move-analysis"
 import { getSideToMove, toWhitePerspective } from "@/lib/engine/eval"
 import { parseBestMoveLine, parseInfoLine } from "@/lib/engine/parser"
@@ -11,6 +11,9 @@ export type SearchLimits = { depth: number; movetimeMs: number }
 export type SearchResult = {
   // Scores per multi-PV line, from White's perspective.
   scores: LineScores
+  // The deepest completed lines, best first; empty for terminal positions.
+  lines: EngineLine[]
+  depth: number
 }
 
 export type UciEngineOptions = {
@@ -36,6 +39,8 @@ export class EngineFailure extends Error {
 type PendingSearch = {
   fen: string
   scores: LineScores
+  lines: Map<1 | 2 | 3, EngineLine>
+  depth: number
   resolve: (result: SearchResult) => void
   reject: (error: Error) => void
 }
@@ -113,13 +118,19 @@ export class UciEngine {
 
     const terminalScore = getTerminalScore(fen)
     if (terminalScore) {
-      return Promise.resolve({ scores: { 1: terminalScore, 2: null, 3: null } })
+      return Promise.resolve({
+        scores: { 1: terminalScore, 2: null, 3: null },
+        lines: [],
+        depth: 0,
+      })
     }
 
     return new Promise<SearchResult>((resolve, reject) => {
       this.pending = {
         fen,
         scores: { 1: null, 2: null, 3: null },
+        lines: new Map(),
+        depth: 0,
         resolve,
         reject,
       }
@@ -156,16 +167,20 @@ export class UciEngine {
 
     const info = parseInfoLine(line)
     if (info) {
-      pending.scores[info.multipv] = toWhitePerspective(
-        info.score,
-        getSideToMove(pending.fen)
-      )
+      const score = toWhitePerspective(info.score, getSideToMove(pending.fen))
+      pending.scores[info.multipv] = score
+      pending.lines.set(info.multipv, { id: info.multipv, score, pv: info.pv })
+      pending.depth = Math.max(pending.depth, info.depth)
       return
     }
 
     if (parseBestMoveLine(line)) {
       this.pending = null
-      pending.resolve({ scores: pending.scores })
+      pending.resolve({
+        scores: pending.scores,
+        lines: [...pending.lines.values()].sort((a, b) => a.id - b.id),
+        depth: pending.depth,
+      })
     }
   }
 
