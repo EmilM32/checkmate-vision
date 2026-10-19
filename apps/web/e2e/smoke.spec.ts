@@ -190,3 +190,30 @@ test.describe("game import and moves", () => {
     ).toBeVisible()
   })
 })
+
+test.describe("mobile layout", () => {
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test("scrolls to the whole analysis panel without overflowing sideways", async ({
+    page,
+  }) => {
+    await page.goto("/")
+
+    // The board stays within the first screen.
+    const board = page.locator("main section").first()
+    const boardBox = await board.boundingBox()
+    expect(boardBox).not.toBeNull()
+    expect(boardBox!.y + boardBox!.height).toBeLessThanOrEqual(844)
+
+    // The panel's last control used to be clipped below the viewport.
+    await openImportInputs(page)
+    const loadPgn = page.getByRole("button", { name: "Wczytaj PGN" })
+    await loadPgn.scrollIntoViewIfNeeded()
+    await expect(loadPgn).toBeInViewport()
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth
+    )
+    expect(overflow).toBeLessThanOrEqual(0)
+  })
+})

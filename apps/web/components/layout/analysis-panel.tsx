@@ -182,7 +182,7 @@ export function AnalysisPanel() {
             </p>
           ) : null}
         </div>
-        <div className="min-h-32 flex-1 overflow-hidden px-4 py-3">
+        <div className="h-48 overflow-hidden px-4 py-3 lg:h-auto lg:min-h-32 lg:flex-1">
           <MoveList />
         </div>
 

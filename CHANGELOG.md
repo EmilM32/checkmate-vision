@@ -13,6 +13,11 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 - Player bars with names, ratings, clocks, captured pieces and material lead.
 - Accessible names for navigation buttons and classified moves.
 - CI workflow (typecheck, lint, test, build, e2e).
+- Game analysis runs in its own pool of engines (cores - 1, at most 4) next to the
+  live engine, and classifies each move as soon as both of its positions are done.
+- Engine results are cached per position: revisiting a position, or browsing an
+  analysed game, shows its lines at once instead of searching again.
+- Engine load and crash errors are shown in the analysis panel with a retry button.
 
 ### Fixed
 - Engine scores were read from the side-to-move perspective as if they were White's:
@@ -27,11 +32,18 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   swapped on a flipped board; hard-coded `10:00` clocks.
 - Low-contrast move classification colours in the move list.
 - Conditional hook call in the heatmap legend and other lint warnings.
+- On phones and tablets the analysis panel was cut off below the screen; the page now
+  scrolls there, and the toolbar wraps instead of overflowing.
 
 ### Changed
 - Session schema v2: analysis saved by earlier versions is discarded on load (the game is
   kept).
-- Game analysis searches depth 16 with two lines; live analysis depth 20 with three.
+- Stockfish 19 (lite NNUE, single-threaded, ~2 MB) replaces Stockfish 10: about 3-4x
+  faster to the same depth. The engine files are copied from the `stockfish` package
+  on install instead of being committed, and served with long-lived cache headers.
+- Live analysis searches depth 22 (at most 12 s) with three lines; game analysis
+  depth 18 (at most 1.5 s per position) with two.
+- Live analysis pauses while the tab is hidden.
 - ESLint ignores the vendored Stockfish build in `public/`.
 
 ## [1.0.0] - 2026-04-08

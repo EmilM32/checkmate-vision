@@ -41,7 +41,7 @@ export default async function RootLayout({
         outfit.variable
       )}
     >
-      <body suppressHydrationWarning className="h-svh overflow-hidden">
+      <body suppressHydrationWarning className="lg:h-svh lg:overflow-hidden">
         <I18nProvider locale={locale} dictionary={dictionary}>
           <ThemeProvider>
             <TooltipProvider>{children}</TooltipProvider>

@@ -38,7 +38,7 @@ function MobileTabContent({ activeTab }: { activeTab: MobileTab }) {
 
   if (activeTab === "moves") {
     return (
-      <Card className="h-full overflow-hidden">
+      <Card className="h-[min(60svh,28rem)] overflow-hidden">
         <CardHeader className="border-b border-border/50">
           <CardTitle>{t("common.moves")}</CardTitle>
         </CardHeader>
@@ -82,21 +82,24 @@ export function MainLayout() {
   const bottomPlayerColor = uiState.boardFlipped ? "black" : "white"
 
   return (
-    <main className="h-svh overflow-hidden p-2 md:p-4 lg:p-5">
+    <main className="min-h-svh p-2 md:p-4 lg:h-svh lg:overflow-hidden lg:p-5">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        className="flex h-full w-full flex-col gap-3 lg:flex-row lg:items-stretch lg:justify-center lg:gap-4"
+        className="flex w-full flex-col gap-3 lg:h-full lg:flex-row lg:items-stretch lg:justify-center lg:gap-4"
       >
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
           <div className="flex min-h-0 min-w-0 flex-1 gap-4">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {/* Size container: the board group takes the largest square
                   that fits next to the eval bar (w-7) and between the two
-                  player bars (h-9 each), whatever the rest of the layout. */}
-              <div className="[container-type:size] flex min-h-0 flex-1 items-center justify-center">
-                <div className="flex w-[min(100cqw,calc(100cqh-4.5rem+1.75rem))] flex-col">
+                  player bars (h-9 each), whatever the rest of the layout.
+                  Below lg the page scrolls instead: the board follows the
+                  width, capped so it stays within the viewport height
+                  together with the bars and the controls under it. */}
+              <div className="[container-type:inline-size] flex justify-center lg:[container-type:size] lg:min-h-0 lg:flex-1 lg:items-center">
+                <div className="flex w-[min(100cqw,calc(100svh-9rem+1.75rem))] flex-col lg:w-[min(100cqw,calc(100cqh-4.5rem+1.75rem))]">
                   <div className="pl-7">
                     <PlayerBar color={topPlayerColor} />
                   </div>
@@ -135,7 +138,7 @@ export function MainLayout() {
                 ) : null}
               </AnimatePresence>
 
-              <div className="mt-2 max-h-[min(34svh,20rem)] overflow-hidden lg:hidden">
+              <div className="mt-2 lg:hidden">
                 <Tabs
                   value={mobileTab}
                   onValueChange={(value) => setMobileTab(value as MobileTab)}
@@ -149,7 +152,7 @@ export function MainLayout() {
                     <TabsTrigger value="chart">{t("common.chart")}</TabsTrigger>
                   </TabsList>
 
-                  <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                  <div className="mt-3">
                     <AnimatePresence mode="wait" initial={false}>
                       <motion.div
                         key={mobileTab}
