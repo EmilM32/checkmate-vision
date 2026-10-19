@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 import { MoveList } from "@/components/analysis/move-list"
 import { EvalBar } from "@/components/analysis/eval-bar"
 import { EvalChartPlaceholder } from "@/components/analysis/eval-chart"
-import { PlayerBarPlaceholder } from "@/components/board/player-bar"
+import { PlayerBar } from "@/components/board/player-bar"
 import { HeatmapLegend } from "@/components/board/heatmap-overlay"
 import { AnalysisLegend } from "@/components/layout/analysis-legend"
 import { AnalysisPanelPlaceholder } from "@/components/layout/analysis-panel"
@@ -78,6 +78,9 @@ export function MainLayoutPlaceholder() {
     clearPersistedSession()
   }, [newGame, resetEngine, uiDispatch])
 
+  const topPlayerColor = uiState.boardFlipped ? "white" : "black"
+  const bottomPlayerColor = uiState.boardFlipped ? "black" : "white"
+
   const boardViewportCapClasses = uiState.showEvalChart
     ? "max-w-[min(98vw,calc(100svh-18rem))] md:max-w-[min(96vw,calc(100svh-19rem))] lg:max-w-[min(100%,calc(100svh-17rem))]"
     : "max-w-[min(98vw,calc(100svh-9rem))] md:max-w-[min(96vw,calc(100svh-10rem))] lg:max-w-[min(100%,calc(100svh-8.5rem))]"
@@ -94,7 +97,7 @@ export function MainLayoutPlaceholder() {
           <div className="flex min-h-0 min-w-0 flex-1 gap-4">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <div className="w-full pl-7">
-                <PlayerBarPlaceholder color="black" />
+                <PlayerBar color={topPlayerColor} />
               </div>
 
               <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -109,7 +112,7 @@ export function MainLayoutPlaceholder() {
               </div>
 
               <div className="w-full pl-7">
-                <PlayerBarPlaceholder color="white" />
+                <PlayerBar color={bottomPlayerColor} />
               </div>
 
               <div className="flex w-full flex-wrap items-center justify-between gap-2 px-1 py-1 lg:hidden">

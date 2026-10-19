@@ -23,6 +23,7 @@ import {
   CLASSIFICATION_LABEL_KEYS,
   CLASSIFICATION_COLORS,
 } from "@/lib/chess/classification"
+import { getMoveNumbering, getPlyMoveNumber } from "@/lib/chess/move-numbering"
 import { formatEval } from "@/lib/engine/eval"
 
 function EvalDot(
@@ -47,7 +48,8 @@ export function EvalChartPlaceholder() {
   const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
-  const data = buildEvalChartData(state.history)
+  const data = buildEvalChartData(state.history, state.initialFen)
+  const numbering = getMoveNumbering(state.initialFen)
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -89,11 +91,9 @@ export function EvalChartPlaceholder() {
   const renderTooltip = ({
     active,
     payload,
-    label,
   }: {
     active?: boolean
     payload?: ReadonlyArray<{ payload: EvalChartPoint }>
-    label?: string | number
   }) => {
     if (!active || !payload?.length) return null
     const point = payload[0]?.payload
@@ -107,7 +107,7 @@ export function EvalChartPlaceholder() {
     return (
       <div className="rounded border border-border/70 bg-background/95 px-2 py-1 text-xs shadow-sm">
         <div className="text-muted-foreground">
-          {t("analysis.move")} {label}
+          {point.moveIndex === 0 ? `${t("analysis.move")} 0` : point.moveLabel}
         </div>
         <div className="font-medium">
           {t("analysis.eval")}: {evalLabel}
@@ -154,7 +154,7 @@ export function EvalChartPlaceholder() {
               tickLine={false}
               axisLine={false}
               tickFormatter={(value: number) =>
-                value === 0 ? "0" : `${Math.ceil(value / 2)}`
+                value === 0 ? "0" : `${getPlyMoveNumber(value, numbering)}`
               }
               minTickGap={20}
             />

@@ -12,7 +12,11 @@ import {
 import { Chess, DEFAULT_POSITION } from "chess.js"
 import type { EngineScore } from "@/context/engine-context"
 import type { MoveClassification } from "@/lib/chess/classification"
-import type { ParsedGame } from "@/lib/chess/fen-pgn"
+import {
+  EMPTY_GAME_META,
+  type GameMeta,
+  type ParsedGame,
+} from "@/lib/chess/fen-pgn"
 
 // ── Types ──
 
@@ -23,6 +27,8 @@ export type MoveEntry = {
   scoreAfter: EngineScore
   delta: number | null
   classification: MoveClassification | null
+  // Mover's remaining clock time in seconds (from PGN `[%clk]` comments).
+  clock?: number | null
 }
 
 export type MoveAnalysisPatch = {
@@ -40,6 +46,7 @@ export type GameState = {
   currentMoveIndex: number
   turn: "w" | "b"
   isGameOver: boolean
+  meta: GameMeta
 }
 
 export const initialGameState: GameState = {
@@ -50,6 +57,7 @@ export const initialGameState: GameState = {
   currentMoveIndex: 0,
   turn: "w",
   isGameOver: false,
+  meta: EMPTY_GAME_META,
 }
 
 // ── Reducer ──
@@ -114,7 +122,8 @@ function deriveState(
   chess: Chess,
   history: MoveEntry[],
   currentMoveIndex: number,
-  initialFen: string
+  initialFen: string,
+  meta: GameMeta
 ): GameState {
   return {
     initialFen,
@@ -124,6 +133,7 @@ function deriveState(
     currentMoveIndex,
     turn: chess.turn(),
     isGameOver: chess.isGameOver(),
+    meta,
   }
 }
 
@@ -178,7 +188,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const newIndex = newHistory.length
         dispatch({
           type: "SET_STATE",
-          payload: deriveState(chess, newHistory, newIndex, state.initialFen),
+          payload: deriveState(
+            chess,
+            newHistory,
+            newIndex,
+            state.initialFen,
+            // A new move leaves the loaded game, so its result no longer applies.
+            { ...state.meta, result: null }
+          ),
         })
         return true
       } catch {
@@ -201,7 +218,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       chess.load(fen)
       dispatch({
         type: "SET_STATE",
-        payload: deriveState(chess, [], 0, fen),
+        payload: deriveState(chess, [], 0, fen, EMPTY_GAME_META),
       })
       return true
     } catch {
@@ -222,11 +239,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         scoreAfter: null,
         delta: null,
         classification: null,
+        clock: move.clock,
       }))
 
       dispatch({
         type: "SET_STATE",
-        payload: deriveState(chess, history, history.length, parsed.initialFen),
+        payload: deriveState(
+          chess,
+          history,
+          history.length,
+          parsed.initialFen,
+          parsed.meta
+        ),
       })
       return true
     } catch {
@@ -244,7 +268,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       replayMoves(chess, history, clamped, state.initialFen)
       dispatch({
         type: "SET_STATE",
-        payload: deriveState(chess, history, clamped, state.initialFen),
+        payload: deriveState(
+          chess,
+          history,
+          clamped,
+          state.initialFen,
+          state.meta
+        ),
       })
     },
     [state]
@@ -282,7 +312,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           chess,
           snapshot.history,
           clampedMoveIndex,
-          snapshot.initialFen
+          snapshot.initialFen,
+          // Sessions saved before game metadata existed have no `meta`.
+          snapshot.meta ?? EMPTY_GAME_META
         ),
       })
 

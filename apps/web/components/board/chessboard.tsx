@@ -6,9 +6,12 @@ import type { PieceDropHandlerArgs } from "react-chessboard"
 
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
+import { PromotionPicker } from "@/components/board/promotion-picker"
+
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useUI } from "@/hooks/use-ui"
+import { isPromotionMove, type PromotionPiece } from "@/lib/chess/promotion"
 
 const Chessboard = dynamic(
   () => import("react-chessboard").then((m) => m.Chessboard),
@@ -34,6 +37,12 @@ const INFLUENCE_TARGET_STYLE: React.CSSProperties = {
     "inset 0 0 0 4px rgba(56, 189, 248, 0.95), inset 0 0 0 7px rgba(15, 23, 42, 0.35)",
 }
 
+type PendingPromotion = {
+  from: string
+  to: string
+  color: "w" | "b"
+}
+
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
   const tag = target.tagName.toLowerCase()
@@ -55,6 +64,8 @@ export function InteractiveChessboard() {
     new Set()
   )
   const altKeyRef = useRef(false)
+  const [pendingPromotion, setPendingPromotion] =
+    useState<PendingPromotion | null>(null)
 
   const bestMoveUci =
     engineState.pvLines[0]?.pv[0] ?? engineState.bestMove ?? null
@@ -142,6 +153,7 @@ export function InteractiveChessboard() {
       if (isTypingTarget(event.target)) return
 
       if (event.key === "Escape") {
+        setPendingPromotion(null)
         if (uiState.selectedInfluenceSquare) {
           uiDispatch({ type: "UI_CLEAR_INFLUENCE_SQUARE" })
         }
@@ -165,27 +177,42 @@ export function InteractiveChessboard() {
 
   useEffect(() => {
     setRightClickSquares((prev) => (prev.size > 0 ? new Set() : prev))
+    setPendingPromotion(null)
   }, [state.fen])
 
   const handlePieceDrop = useCallback(
     ({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs): boolean => {
       if (!targetSquare) return false
 
-      const isPawnPromotion =
+      if (
         piece.pieceType[1] === "P" &&
-        (targetSquare[1] === "8" || targetSquare[1] === "1")
+        isPromotionMove(state.fen, sourceSquare, targetSquare)
+      ) {
+        // The pawn snaps back until a piece is chosen in the picker.
+        setPendingPromotion({
+          from: sourceSquare,
+          to: targetSquare,
+          color: piece.pieceType[0] === "b" ? "b" : "w",
+        })
+        return false
+      }
 
-      return makeMove(
-        sourceSquare,
-        targetSquare,
-        isPawnPromotion ? "q" : undefined
-      )
+      return makeMove(sourceSquare, targetSquare)
     },
-    [makeMove]
+    [makeMove, state.fen]
+  )
+
+  const handlePromotionSelect = useCallback(
+    (promotion: PromotionPiece) => {
+      if (!pendingPromotion) return
+      makeMove(pendingPromotion.from, pendingPromotion.to, promotion)
+      setPendingPromotion(null)
+    },
+    [makeMove, pendingPromotion]
   )
 
   return (
-    <div className="aspect-square w-full overflow-hidden rounded-r-lg bg-background/60">
+    <div className="relative aspect-square w-full overflow-hidden rounded-r-lg bg-background/60">
       <Chessboard
         options={{
           position: state.fen,
@@ -198,6 +225,15 @@ export function InteractiveChessboard() {
           animationDurationInMs: 200,
         }}
       />
+      {pendingPromotion ? (
+        <PromotionPicker
+          square={pendingPromotion.to}
+          color={pendingPromotion.color}
+          boardFlipped={uiState.boardFlipped}
+          onSelect={handlePromotionSelect}
+          onCancel={() => setPendingPromotion(null)}
+        />
+      ) : null}
     </div>
   )
 }
