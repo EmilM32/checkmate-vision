@@ -93,7 +93,9 @@ export function PVLines() {
         <div className="rounded-md bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
           {engineState.isAnalyzing
             ? t("analysis.analyzing")
-            : t("analysis.noAnalysis")}
+            : engineState.batch.status === "running"
+              ? t("analysis.livePausedDuringBatch")
+              : t("analysis.noAnalysis")}
         </div>
       ) : (
         linesWithSan.map((line) => (
