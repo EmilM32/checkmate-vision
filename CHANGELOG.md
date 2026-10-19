@@ -19,6 +19,8 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   analysed game, shows its lines at once instead of searching again.
 - Engine load and crash errors are shown in the analysis panel with a retry button.
 - "Inaccuracy" (`?!`) move class.
+- Game summary after a full analysis: accuracy per player (Lichess' formula) and the
+  number of brilliant, great, inaccurate, mistaken and blundered moves.
 
 ### Fixed
 - Engine scores were read from the side-to-move perspective as if they were White's:
