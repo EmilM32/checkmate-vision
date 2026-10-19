@@ -54,6 +54,14 @@ const OPENING_THRESHOLDS = {
   mistake: 250,
 } as const
 
+// Beyond this margin a position is decided; differences above it (and
+// between mates of different length) do not change the move quality.
+const DECISIVE_SCORE_CP = 1000
+
+function direction(playedBy: "white" | "black"): 1 | -1 {
+  return playedBy === "white" ? 1 : -1
+}
+
 function normalizeCpDelta(
   scoreBefore: EngineScore,
   scoreAfter: EngineScore,
@@ -62,8 +70,7 @@ function normalizeCpDelta(
   if (!scoreBefore || !scoreAfter) return null
   if (scoreBefore.type !== "cp" || scoreAfter.type !== "cp") return null
 
-  const direction = playedBy === "white" ? 1 : -1
-  return (scoreBefore.value - scoreAfter.value) * direction
+  return (scoreBefore.value - scoreAfter.value) * direction(playedBy)
 }
 
 function normalizeMateDelta(
@@ -74,8 +81,24 @@ function normalizeMateDelta(
   if (!scoreBefore || !scoreAfter) return null
   if (scoreBefore.type !== "mate" || scoreAfter.type !== "mate") return null
 
-  const direction = playedBy === "white" ? 1 : -1
-  return (scoreBefore.value - scoreAfter.value) * direction
+  return (scoreBefore.value - scoreAfter.value) * direction(playedBy)
+}
+
+// Scores are from White's perspective. `mate 0` after a move means the mover
+// delivered checkmate, so it resolves in the mover's favour.
+function toComparableCp(
+  score: Exclude<EngineScore, null>,
+  playedBy: "white" | "black"
+): number {
+  if (score.type === "cp") {
+    return Math.max(
+      -DECISIVE_SCORE_CP,
+      Math.min(DECISIVE_SCORE_CP, score.value)
+    )
+  }
+
+  const sign = score.value === 0 ? direction(playedBy) : Math.sign(score.value)
+  return sign * DECISIVE_SCORE_CP
 }
 
 function toLossInCp(
@@ -83,20 +106,11 @@ function toLossInCp(
   scoreAfter: EngineScore,
   playedBy: "white" | "black"
 ): number {
-  const cpDelta = normalizeCpDelta(scoreBefore, scoreAfter, playedBy)
-  if (cpDelta !== null) return cpDelta
+  if (!scoreBefore || !scoreAfter) return 0
 
-  const mateDelta = normalizeMateDelta(scoreBefore, scoreAfter, playedBy)
-  if (mateDelta !== null) {
-    // In mate mode, larger positive delta means bigger worsening.
-    return mateDelta * 100
-  }
-
-  // Crossing cp <-> mate is treated as a large swing.
-  const beforeCp = scoreBefore?.type === "cp" ? scoreBefore.value : 0
-  const afterCp = scoreAfter?.type === "cp" ? scoreAfter.value : 0
-  const direction = playedBy === "white" ? 1 : -1
-  return (beforeCp - afterCp) * direction
+  const before = toComparableCp(scoreBefore, playedBy)
+  const after = toComparableCp(scoreAfter, playedBy)
+  return (before - after) * direction(playedBy)
 }
 
 function getThresholds(

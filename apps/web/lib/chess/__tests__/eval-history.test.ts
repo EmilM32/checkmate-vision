@@ -9,7 +9,7 @@ describe("buildEvalChartData", () => {
     expect(points[0]?.eval).toBe(0)
   })
 
-  it("maps cp score to white perspective and clamps to +/-10", () => {
+  it("maps white-perspective cp score to pawns and clamps to +/-10", () => {
     const points = buildEvalChartData([
       {
         san: "e4",
@@ -29,22 +29,37 @@ describe("buildEvalChartData", () => {
       },
     ])
 
-    expect(points[1]?.eval).toBeCloseTo(-1.2, 4)
+    expect(points[1]?.eval).toBeCloseTo(1.2, 4)
     expect(points[2]?.eval).toBe(10)
   })
 
-  it("maps mate score to +/-10 using side-to-move perspective", () => {
+  it("maps mate score to +/-10 from white perspective", () => {
     const points = buildEvalChartData([
       {
         san: "Qh5",
         fen: "rnbqkbnr/pppppppp/8/7Q/8/8/PPPPPPPP/RNB1KBNR b KQkq - 0 1",
         scoreBefore: null,
-        scoreAfter: { type: "mate", value: 2 },
+        scoreAfter: { type: "mate", value: -2 },
         delta: 0,
         classification: "great",
       },
     ])
 
     expect(points[1]?.eval).toBe(-10)
+  })
+
+  it("resolves a checkmated position from the side to move", () => {
+    const points = buildEvalChartData([
+      {
+        san: "Qxf7#",
+        fen: "r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4",
+        scoreBefore: { type: "mate", value: 1 },
+        scoreAfter: { type: "mate", value: 0 },
+        delta: null,
+        classification: "best",
+      },
+    ])
+
+    expect(points[1]?.eval).toBe(10)
   })
 })

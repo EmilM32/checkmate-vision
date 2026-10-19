@@ -133,8 +133,11 @@ describe("parseBestMoveLine", () => {
     expect(result).toEqual({ move: "d2d4", ponder: null })
   })
 
-  it("returns null for bestmove (none)", () => {
-    expect(parseBestMoveLine("bestmove (none)")).toBeNull()
+  it("reports bestmove (none) as a finished search without a move", () => {
+    expect(parseBestMoveLine("bestmove (none)")).toEqual({
+      move: null,
+      ponder: null,
+    })
   })
 
   it("returns null for non-bestmove lines", () => {

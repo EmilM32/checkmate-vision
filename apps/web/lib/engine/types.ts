@@ -11,6 +11,6 @@ export type ParsedInfoLine = {
 }
 
 export type ParsedBestMove = {
-  move: string
+  move: string | null
   ponder: string | null
 }

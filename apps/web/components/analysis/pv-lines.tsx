@@ -102,6 +102,7 @@ export function PVLines() {
             className="flex items-baseline gap-2 rounded-md bg-muted/50 px-3 py-1.5 font-mono text-xs"
           >
             <span
+              data-testid="pv-score"
               className={`shrink-0 font-bold ${scoreColorClass(line.score)}`}
             >
               {formatScore(line.score)}
