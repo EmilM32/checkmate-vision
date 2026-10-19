@@ -41,7 +41,7 @@ export function AnalysisPanelPlaceholder() {
   const batch = engineState.batch
   const canAnalyze = useMemo(
     () => state.history.length > 0 && batch.status !== "running",
-    [state.history.length, batch.status],
+    [state.history.length, batch.status]
   )
 
   function handleAnalyzeBatch() {
@@ -140,7 +140,9 @@ export function AnalysisPanelPlaceholder() {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {t("inputs.firstLoadPgn")}
+              {state.history.length > 0
+                ? t("analysisLegend.analyzeGameDesc")
+                : t("inputs.firstLoadPgn")}
             </TooltipContent>
           </Tooltip>
         </div>
