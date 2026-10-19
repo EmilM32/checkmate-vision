@@ -93,7 +93,6 @@ export type EngineAction =
   | { type: "ENGINE_OUTPUT"; info: ParsedInfoLine }
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
   | { type: "ENGINE_TERMINAL_POSITION"; score: EngineScore }
-  | { type: "ENGINE_CLEAR_ANALYSIS" }
   | { type: "ENGINE_READY" }
   | { type: "ENGINE_ERROR"; error: string }
   | { type: "ENGINE_RETRY_REQUEST" }
@@ -115,6 +114,7 @@ export type EngineAction =
   | { type: "ENGINE_BATCH_ERROR"; error: string }
   | { type: "ENGINE_BATCH_CLEAR" }
   | { type: "ENGINE_RESTORE_STATE"; payload: PersistableEngineState }
+  | { type: "ENGINE_LIVE_RESET" }
   | { type: "ENGINE_RESET" }
 
 // ── Constants ──
@@ -191,17 +191,6 @@ export function engineReducer(
 
     case "ENGINE_RETRY_REQUEST":
       return { ...state, retryRequested: true }
-
-    case "ENGINE_CLEAR_ANALYSIS":
-      return {
-        ...state,
-        evaluation: null,
-        depth: 0,
-        nps: 0,
-        bestMove: null,
-        pvLines: [],
-        isAnalyzing: false,
-      }
 
     case "ENGINE_BESTMOVE":
       return {
@@ -313,6 +302,15 @@ export function engineReducer(
         ...state,
         guessRevealed: action.payload.guessRevealed === true,
         isAnalyzing: false,
+      }
+
+    case "ENGINE_LIVE_RESET":
+      // The live engine stopped; game analysis runs in its own workers and
+      // carries on. Keep the failure visible until the engine starts again.
+      return {
+        ...initialEngineState,
+        batch: state.batch,
+        error: state.error,
       }
 
     case "ENGINE_RESET":

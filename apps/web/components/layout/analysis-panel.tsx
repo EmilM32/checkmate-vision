@@ -177,7 +177,9 @@ export function AnalysisPanelPlaceholder() {
             />
           </div>
           {batch.lastError ? (
-            <p className="mt-1 text-xs text-destructive">{batch.lastError}</p>
+            <p className="mt-1 text-xs text-destructive">
+              {t(batch.lastError)}
+            </p>
           ) : null}
         </div>
 

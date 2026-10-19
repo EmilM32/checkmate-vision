@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { NavigationControls } from "@/components/navigation/navigation-controls"
 
 const goToMove = vi.fn()
-const cancelBatchAnalysis = vi.fn()
 
 type GameStateMock = {
   currentMoveIndex: number
@@ -24,12 +23,6 @@ vi.mock("@/hooks/use-game", () => ({
   }),
 }))
 
-vi.mock("@/hooks/use-engine", () => ({
-  useEngine: () => ({
-    cancelBatchAnalysis,
-  }),
-}))
-
 describe("NavigationControls", () => {
   afterEach(() => {
     cleanup()
@@ -44,7 +37,6 @@ describe("NavigationControls", () => {
       ],
     }
     goToMove.mockReset()
-    cancelBatchAnalysis.mockReset()
   })
 
   it("disables first/prev buttons at start", () => {
@@ -76,13 +68,11 @@ describe("NavigationControls", () => {
     fireEvent.click(prev)
     fireEvent.click(next)
     fireEvent.click(last)
-
-    expect(cancelBatchAnalysis).toHaveBeenCalledTimes(2)
     expect(goToMove).toHaveBeenNthCalledWith(1, 0)
     expect(goToMove).toHaveBeenNthCalledWith(2, 1)
   })
 
-  it("clicking controls cancels batch and navigates", () => {
+  it("clicking controls navigates", () => {
     gameState = {
       ...gameState,
       currentMoveIndex: 0,
@@ -95,8 +85,6 @@ describe("NavigationControls", () => {
     const last = buttons[3]!
     fireEvent.click(next)
     fireEvent.click(last)
-
-    expect(cancelBatchAnalysis).toHaveBeenCalledTimes(2)
     expect(goToMove).toHaveBeenNthCalledWith(1, 1)
     expect(goToMove).toHaveBeenNthCalledWith(2, 2)
   })
@@ -118,7 +106,6 @@ describe("NavigationControls", () => {
     expect(goToMove).toHaveBeenNthCalledWith(2, 2)
     expect(goToMove).toHaveBeenNthCalledWith(3, 0)
     expect(goToMove).toHaveBeenNthCalledWith(4, 2)
-    expect(cancelBatchAnalysis).toHaveBeenCalledTimes(4)
   })
 
   it("ignores keyboard shortcuts while typing in form fields", () => {
@@ -133,6 +120,5 @@ describe("NavigationControls", () => {
     fireEvent.keyDown(input, { key: "ArrowRight" })
 
     expect(goToMove).not.toHaveBeenCalled()
-    expect(cancelBatchAnalysis).not.toHaveBeenCalled()
   })
 })

@@ -9,32 +9,28 @@ import {
   ChevronsRight,
 } from "lucide-react"
 
-import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 
 export function NavigationControls() {
   const { state, goToMove } = useGame()
-  const { cancelBatchAnalysis } = useEngine()
 
   const atStart = state.currentMoveIndex === 0
   const atEnd = state.currentMoveIndex === state.history.length
 
-  const goFirst = useCallback(() => {
-    cancelBatchAnalysis()
-    goToMove(0)
-  }, [cancelBatchAnalysis, goToMove])
-  const goPrev = useCallback(() => {
-    cancelBatchAnalysis()
-    goToMove(state.currentMoveIndex - 1)
-  }, [cancelBatchAnalysis, goToMove, state.currentMoveIndex])
-  const goNext = useCallback(() => {
-    cancelBatchAnalysis()
-    goToMove(state.currentMoveIndex + 1)
-  }, [cancelBatchAnalysis, goToMove, state.currentMoveIndex])
-  const goLast = useCallback(() => {
-    cancelBatchAnalysis()
-    goToMove(state.history.length)
-  }, [cancelBatchAnalysis, goToMove, state.history.length])
+  // Game analysis runs in its own workers, so browsing does not cancel it.
+  const goFirst = useCallback(() => goToMove(0), [goToMove])
+  const goPrev = useCallback(
+    () => goToMove(state.currentMoveIndex - 1),
+    [goToMove, state.currentMoveIndex]
+  )
+  const goNext = useCallback(
+    () => goToMove(state.currentMoveIndex + 1),
+    [goToMove, state.currentMoveIndex]
+  )
+  const goLast = useCallback(
+    () => goToMove(state.history.length),
+    [goToMove, state.history.length]
+  )
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
