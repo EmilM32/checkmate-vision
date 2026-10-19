@@ -85,6 +85,11 @@ describe("UciEngine", () => {
         2: { type: "cp", value: 45 },
         3: null,
       },
+      lines: [
+        { id: 1, score: { type: "cp", value: 30 }, pv: ["e7e5"] },
+        { id: 2, score: { type: "cp", value: 45 }, pv: ["c7c5"] },
+      ],
+      depth: 18,
     })
   })
 
@@ -94,6 +99,8 @@ describe("UciEngine", () => {
 
     await expect(engine.search(BLACK_MATED, LIMITS)).resolves.toEqual({
       scores: { 1: { type: "mate", value: 0 }, 2: null, 3: null },
+      lines: [],
+      depth: 0,
     })
     expect(worker.commands).toHaveLength(commandCount)
   })

@@ -53,6 +53,9 @@ export type EngineState = {
   bestMove: string | null
   pvLines: EngineLine[]
   isAnalyzing: boolean
+  // Depth of cached lines on display; live output below it is not shown,
+  // so a fresh search does not replace deep cached lines with shallow ones.
+  cachedDepth: number
   guessRevealed: boolean
   batch: BatchAnalysisState
   // i18n key of the last engine failure (load timeout, worker crash).
@@ -71,6 +74,7 @@ export const initialEngineState: EngineState = {
   bestMove: null,
   pvLines: [],
   isAnalyzing: false,
+  cachedDepth: 0,
   guessRevealed: false,
   batch: {
     requestId: 0,
@@ -93,6 +97,13 @@ export type EngineAction =
   | { type: "ENGINE_OUTPUT"; info: ParsedInfoLine }
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
   | { type: "ENGINE_TERMINAL_POSITION"; score: EngineScore }
+  | {
+      type: "ENGINE_SHOW_CACHED"
+      depth: number
+      lines: EngineLine[]
+      // The cached search is final; no live search follows.
+      final: boolean
+    }
   | { type: "ENGINE_READY" }
   | { type: "ENGINE_ERROR"; error: string }
   | { type: "ENGINE_RETRY_REQUEST" }
@@ -136,11 +147,16 @@ export function engineReducer(
         nps: 0,
         pvLines: [],
         bestMove: null,
+        cachedDepth: 0,
         guessRevealed: false,
       }
 
     case "ENGINE_OUTPUT": {
       const { info } = action
+      if (info.depth < state.cachedDepth) {
+        return { ...state, nps: info.nps }
+      }
+
       const newLines = [...state.pvLines]
       const lineIndex = newLines.findIndex((l) => l.id === info.multipv)
       const newLine: EngineLine = {
@@ -167,6 +183,18 @@ export function engineReducer(
         pvLines: newLines,
       }
     }
+
+    case "ENGINE_SHOW_CACHED":
+      return {
+        ...state,
+        depth: action.depth,
+        nps: 0,
+        pvLines: action.lines,
+        evaluation: action.lines[0]?.score ?? state.evaluation,
+        bestMove: action.lines[0]?.pv[0] ?? null,
+        isAnalyzing: !action.final,
+        cachedDepth: action.depth,
+      }
 
     case "ENGINE_TERMINAL_POSITION":
       return {

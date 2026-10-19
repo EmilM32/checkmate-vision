@@ -7,6 +7,7 @@ import { EngineProvider, useEngineContext } from "@/context/engine-context"
 import { GameProvider, useGameContext } from "@/context/game-context"
 import { UIProvider, useUIContext } from "@/context/ui-context"
 import { useEngineWorker } from "@/hooks/use-engine-worker"
+import { analysisCache } from "@/lib/engine/analysis-cache"
 
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 const AFTER_E4_FEN =
@@ -90,6 +91,7 @@ function startEngine(harness: ReturnType<typeof renderEngineHarness>) {
 
 describe("useEngineWorker", () => {
   beforeEach(() => {
+    analysisCache.clear()
     vi.useFakeTimers()
     FakeStockfish.instances = []
     vi.stubGlobal("Worker", FakeStockfish)
@@ -213,6 +215,112 @@ describe("useEngineWorker", () => {
       scoreBefore: { type: "cp", value: 30 },
       scoreAfter: { type: "cp", value: 35 },
       classification: "best",
+    })
+  })
+
+  describe("analysis cache", () => {
+    function emitLines(
+      harness: ReturnType<typeof renderEngineHarness>,
+      depth: number,
+      scores: string[]
+    ) {
+      scores.forEach((score, index) => {
+        emit(
+          harness,
+          `info depth ${depth} multipv ${index + 1} score ${score} pv e2e4`
+        )
+      })
+    }
+
+    it("reuses a complete result when returning to a position", () => {
+      const harness = renderEngineHarness()
+      startEngine(harness)
+      emitLines(harness, 22, ["cp 30", "cp 20", "cp 10"])
+      emit(harness, "bestmove e2e4")
+
+      act(() => {
+        harness.current.game.setPositionFromFen(AFTER_E4_FEN)
+      })
+      flushTimers()
+      emit(harness, "bestmove e7e5")
+      act(() => {
+        harness.current.game.setPositionFromFen(START_FEN)
+      })
+      flushTimers()
+
+      const positions = harness.stockfish.commands.filter(
+        (command) => command === `position fen ${START_FEN}`
+      )
+      expect(positions).toHaveLength(1)
+      expect(harness.current.engine.state).toMatchObject({
+        isAnalyzing: false,
+        depth: 22,
+        evaluation: { type: "cp", value: 30 },
+      })
+      expect(harness.current.engine.state.pvLines).toHaveLength(3)
+    })
+
+    it("shows game-analysis lines until the live search goes deeper", () => {
+      analysisCache.set(AFTER_E4_FEN, {
+        depth: 18,
+        complete: false,
+        lines: [{ id: 1, score: { type: "cp", value: 35 }, pv: ["e7e5"] }],
+      })
+      const harness = renderEngineHarness()
+      startEngine(harness)
+      act(() => {
+        harness.current.game.setPositionFromFen(AFTER_E4_FEN)
+      })
+      flushTimers()
+      emit(harness, "bestmove e2e4")
+
+      // Shown at once, and the live search still runs.
+      expect(harness.stockfish.commands.at(-2)).toBe(
+        `position fen ${AFTER_E4_FEN}`
+      )
+      expect(harness.current.engine.state.evaluation).toEqual({
+        type: "cp",
+        value: 35,
+      })
+
+      emit(harness, "info depth 10 multipv 1 score cp -80 pv d7d5")
+      expect(harness.current.engine.state.evaluation).toEqual({
+        type: "cp",
+        value: 35,
+      })
+
+      emit(harness, "info depth 19 multipv 1 score cp -40 pv e7e5")
+      expect(harness.current.engine.state.evaluation).toEqual({
+        type: "cp",
+        value: 40,
+      })
+    })
+
+    it("pauses in a hidden tab and resumes when visible", () => {
+      let hidden = false
+      Object.defineProperty(document, "hidden", {
+        configurable: true,
+        get: () => hidden,
+      })
+      const harness = renderEngineHarness()
+      startEngine(harness)
+
+      hidden = true
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"))
+      })
+      expect(harness.stockfish.commands.at(-1)).toBe("stop")
+      emit(harness, "info depth 9 multipv 1 score cp 25 pv e2e4")
+      emit(harness, "bestmove e2e4")
+
+      hidden = false
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"))
+      })
+      expect(harness.stockfish.commands.slice(-2)).toEqual([
+        `position fen ${START_FEN}`,
+        "go depth 22 movetime 12000",
+      ])
     })
   })
 

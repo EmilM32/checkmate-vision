@@ -6,6 +6,7 @@ import { useEngineContext } from "@/context/engine-context"
 import { useGameContext } from "@/context/game-context"
 import type { BatchAnalysisItem } from "@/context/engine-context"
 import { buildMoveAnalysis, getPvGapCp } from "@/lib/chess/move-analysis"
+import { analysisCache } from "@/lib/engine/analysis-cache"
 import { ENGINE_URL } from "@/lib/engine/engine-url"
 import {
   analyzeGamePositions,
@@ -88,6 +89,12 @@ export function useGameAnalysis() {
 
     const onPosition = (item: BatchAnalysisItem, result: SearchResult) => {
       results.set(item.moveIndex, result)
+      // Lets the live view show these lines at once while browsing the game.
+      analysisCache.set(item.fen, {
+        depth: result.depth,
+        lines: result.lines,
+        complete: false,
+      })
       annotate(item.moveIndex)
       annotate(item.moveIndex + 1)
       completed += 1

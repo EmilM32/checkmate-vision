@@ -22,7 +22,11 @@ function items(count: number): BatchAnalysisItem[] {
 }
 
 function result(value: number): SearchResult {
-  return { scores: { 1: { type: "cp", value }, 2: null, 3: null } }
+  return {
+    scores: { 1: { type: "cp", value }, 2: null, 3: null },
+    lines: [{ id: 1, score: { type: "cp", value }, pv: ["e2e4"] }],
+    depth: 18,
+  }
 }
 
 /** Engines whose searches the test finishes explicitly. */
