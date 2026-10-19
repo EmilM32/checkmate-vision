@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { classifyMove, computeMoveDelta } from "@/lib/chess/classification"
+import {
+  classifyMove,
+  computeMoveDelta,
+  getWinChance,
+} from "@/lib/chess/classification"
 
 describe("computeMoveDelta", () => {
   it("computes cp delta for white", () => {
@@ -33,154 +37,189 @@ describe("computeMoveDelta", () => {
   })
 })
 
+describe("getWinChance", () => {
+  it("is even at 0 and symmetric for both sides", () => {
+    expect(getWinChance({ type: "cp", value: 0 }, "white")).toBe(50)
+    expect(getWinChance({ type: "cp", value: 150 }, "white")).toBeCloseTo(
+      100 - getWinChance({ type: "cp", value: 150 }, "black")
+    )
+  })
+
+  it("saturates for decided positions and mates", () => {
+    expect(getWinChance({ type: "cp", value: 900 }, "white")).toBeGreaterThan(
+      95
+    )
+    expect(getWinChance({ type: "mate", value: 3 }, "white")).toBe(100)
+    expect(getWinChance({ type: "mate", value: 3 }, "black")).toBe(0)
+    // Checkmate delivered by the mover.
+    expect(getWinChance({ type: "mate", value: 0 }, "black")).toBe(100)
+  })
+})
+
 describe("classifyMove", () => {
+  const cp = (value: number) => ({ type: "cp" as const, value })
+
   it("returns best for only legal move", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 0 },
-      scoreAfter: { type: "cp", value: 0 },
-      playedBy: "white",
-      isOnlyLegalMove: true,
-    })
-
-    expect(result).toBe("best")
+    expect(
+      classifyMove({
+        scoreBefore: cp(300),
+        scoreAfter: cp(-300),
+        playedBy: "white",
+        isOnlyLegalMove: true,
+      })
+    ).toBe("best")
   })
 
-  it("returns brilliant for sacrifice and near-best", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 120 },
-      scoreAfter: { type: "cp", value: 100 },
-      playedBy: "white",
-      isMaterialSacrifice: true,
-      isNearBest: true,
-    })
-
-    expect(result).toBe("brilliant")
+  it.each([
+    [40, 35, "best"],
+    [200, 170, "good"],
+    [20, -40, "inaccuracy"],
+    [260, 100, "mistake"],
+    [350, 40, "blunder"],
+  ] as const)("rates %i -> %i cp as %s", (before, after, expected) => {
+    expect(
+      classifyMove({
+        scoreBefore: cp(before),
+        scoreAfter: cp(after),
+        playedBy: "white",
+      })
+    ).toBe(expected)
   })
 
-  it("returns great for tactical zero-loss move", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 60 },
-      scoreAfter: { type: "cp", value: 60 },
-      playedBy: "white",
-      pvGapCp: 80,
-    })
-
-    expect(result).toBe("great")
+  it("weighs the same loss less once the position is decided", () => {
+    expect(
+      classifyMove({
+        scoreBefore: cp(0),
+        scoreAfter: cp(-150),
+        playedBy: "white",
+      })
+    ).toBe("mistake")
+    expect(
+      classifyMove({
+        scoreBefore: cp(900),
+        scoreAfter: cp(750),
+        playedBy: "white",
+      })
+    ).toBe("good")
   })
 
-  it("returns best for 0-10 cp outside tactical great", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 40 },
-      scoreAfter: { type: "cp", value: 35 },
-      playedBy: "white",
-      pvGapCp: 20,
-    })
-
-    expect(result).toBe("best")
+  it("returns great when the second-best move would have given up the win", () => {
+    expect(
+      classifyMove({
+        scoreBefore: cp(250),
+        scoreAfter: cp(250),
+        playedBy: "white",
+        secondBestScore: cp(50),
+      })
+    ).toBe("great")
   })
 
-  it("returns good for small inaccuracy", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 200 },
-      scoreAfter: { type: "cp", value: 170 },
-      playedBy: "white",
-    })
-
-    expect(result).toBe("good")
+  it("returns best when the alternatives were about as good", () => {
+    expect(
+      classifyMove({
+        scoreBefore: cp(60),
+        scoreAfter: cp(60),
+        playedBy: "white",
+        secondBestScore: cp(20),
+      })
+    ).toBe("best")
   })
 
-  it("softens early opening swings near equality", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 20 },
-      scoreAfter: { type: "cp", value: -40 },
-      playedBy: "white",
-      plyIndex: 1,
-    })
-
-    expect(result).toBe("good")
+  it("returns brilliant for a sound sacrifice", () => {
+    expect(
+      classifyMove({
+        scoreBefore: cp(120),
+        scoreAfter: cp(110),
+        playedBy: "white",
+        sacrificedMaterial: 3,
+      })
+    ).toBe("brilliant")
   })
 
-  it("softens early opening swings near equality for black", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: -10 },
-      scoreAfter: { type: "cp", value: 60 },
-      playedBy: "black",
-      plyIndex: 2,
-    })
-
-    expect(result).toBe("good")
+  it("calls a sacrifice that forces mate brilliant", () => {
+    expect(
+      classifyMove({
+        scoreBefore: { type: "mate", value: 2 },
+        scoreAfter: { type: "mate", value: 1 },
+        playedBy: "white",
+        sacrificedMaterial: 9,
+      })
+    ).toBe("brilliant")
   })
 
-  it("keeps larger opening losses as mistakes", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 30 },
-      scoreAfter: { type: "cp", value: -130 },
-      playedBy: "white",
-      plyIndex: 1,
-    })
-
-    expect(result).toBe("mistake")
+  it("does not call a move great when the alternative wins too", () => {
+    // +8 versus +4: a big gap, but both are winning.
+    expect(
+      classifyMove({
+        scoreBefore: cp(800),
+        scoreAfter: cp(800),
+        playedBy: "white",
+        secondBestScore: cp(400),
+      })
+    ).toBe("best")
   })
 
-  it("does not apply opening leniency later in the game", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 20 },
-      scoreAfter: { type: "cp", value: -40 },
-      playedBy: "white",
-      plyIndex: 10,
-    })
-
-    expect(result).toBe("mistake")
+  it("calls the only move that holds a lost position great", () => {
+    expect(
+      classifyMove({
+        scoreBefore: cp(150),
+        scoreAfter: cp(150),
+        playedBy: "black",
+        secondBestScore: cp(400),
+      })
+    ).toBe("great")
   })
 
-  it("returns mistake for medium loss", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 260 },
-      scoreAfter: { type: "cp", value: 100 },
-      playedBy: "white",
-    })
-
-    expect(result).toBe("mistake")
+  it("does not call a sacrifice brilliant when it leaves the mover worse", () => {
+    expect(
+      classifyMove({
+        scoreBefore: cp(200),
+        scoreAfter: cp(200),
+        playedBy: "black",
+        sacrificedMaterial: 3,
+      })
+    ).toBe("best")
   })
 
-  it("returns blunder for large loss", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 350 },
-      scoreAfter: { type: "cp", value: 40 },
-      playedBy: "white",
-    })
-
-    expect(result).toBe("blunder")
+  it("does not call a sacrifice brilliant when it loses", () => {
+    expect(
+      classifyMove({
+        scoreBefore: cp(50),
+        scoreAfter: cp(-250),
+        playedBy: "white",
+        sacrificedMaterial: 3,
+      })
+    ).toBe("blunder")
   })
 
   it("treats a faster forced mate as best", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "mate", value: 5 },
-      scoreAfter: { type: "mate", value: 1 },
-      playedBy: "white",
-    })
-
-    expect(result).toBe("best")
+    expect(
+      classifyMove({
+        scoreBefore: { type: "mate", value: 5 },
+        scoreAfter: { type: "mate", value: 1 },
+        playedBy: "white",
+      })
+    ).toBe("best")
   })
 
   it("treats a slower but still forced mate as best", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "mate", value: -2 },
-      scoreAfter: { type: "mate", value: -4 },
-      playedBy: "black",
-    })
-
-    expect(result).toBe("best")
+    expect(
+      classifyMove({
+        scoreBefore: { type: "mate", value: -2 },
+        scoreAfter: { type: "mate", value: -4 },
+        playedBy: "black",
+      })
+    ).toBe("best")
   })
 
   it("does not punish finding a forced mate", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 300 },
-      scoreAfter: { type: "mate", value: 3 },
-      playedBy: "white",
-    })
-
-    expect(result).toBe("best")
+    expect(
+      classifyMove({
+        scoreBefore: cp(300),
+        scoreAfter: { type: "mate", value: 3 },
+        playedBy: "white",
+      })
+    ).toBe("best")
   })
 
   it("treats delivering checkmate (mate 0 after the move) as best", () => {
@@ -194,33 +233,32 @@ describe("classifyMove", () => {
   })
 
   it("flags allowing a forced mate as a blunder", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 40 },
-      scoreAfter: { type: "mate", value: -2 },
-      playedBy: "white",
-    })
-
-    expect(result).toBe("blunder")
+    expect(
+      classifyMove({
+        scoreBefore: cp(40),
+        scoreAfter: { type: "mate", value: -2 },
+        playedBy: "white",
+      })
+    ).toBe("blunder")
   })
 
   it("flags a black move that hands white a winning score as a blunder", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: -20 },
-      scoreAfter: { type: "cp", value: 600 },
-      playedBy: "black",
-    })
-
-    expect(result).toBe("blunder")
+    expect(
+      classifyMove({
+        scoreBefore: cp(-20),
+        scoreAfter: cp(600),
+        playedBy: "black",
+      })
+    ).toBe("blunder")
   })
 
   it("rates a black move that keeps white's score unchanged as best", () => {
-    const result = classifyMove({
-      scoreBefore: { type: "cp", value: 30 },
-      scoreAfter: { type: "cp", value: 30 },
-      playedBy: "black",
-      pvGapCp: 10,
-    })
-
-    expect(result).toBe("best")
+    expect(
+      classifyMove({
+        scoreBefore: cp(30),
+        scoreAfter: cp(30),
+        playedBy: "black",
+      })
+    ).toBe("best")
   })
 })

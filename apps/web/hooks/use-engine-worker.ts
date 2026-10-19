@@ -3,11 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useEngineContext } from "@/context"
 import { useGameContext } from "@/context"
-import {
-  buildMoveAnalysis,
-  getPvGapCp,
-  getTerminalScore,
-} from "@/lib/chess/move-analysis"
+import { buildMoveAnalysis, getTerminalScore } from "@/lib/chess/move-analysis"
 import { analysisCache } from "@/lib/engine/analysis-cache"
 import { getSideToMove, toWhitePerspective } from "@/lib/engine/eval"
 import { parseInfoLine, parseBestMoveLine } from "@/lib/engine/parser"
@@ -32,6 +28,17 @@ type PendingMoveClassification = {
   fenBefore: string
   fenAfter: string
   scoreBefore: EngineScore
+}
+
+// The search of the position before the move left its lines in the cache
+// (stopped early if the move interrupted it); the last best score is the
+// fallback.
+function getLinesBefore(pending: PendingMoveClassification): EngineLine[] {
+  const cached = analysisCache.get(pending.fenBefore)
+  if (cached) return cached.lines
+  return pending.scoreBefore
+    ? [{ id: 1, score: pending.scoreBefore, pv: [] }]
+    : []
 }
 
 /** The live engine: analyses the position on the board as it changes. */
@@ -252,15 +259,10 @@ export function useEngineWorker() {
           annotateMoveRef.current(
             pendingMove.moveIndex,
             buildMoveAnalysis({
-              ply: pendingMove.moveIndex,
               fenBefore: pendingMove.fenBefore,
               fenAfter: pendingMove.fenAfter,
-              scoreBefore: pendingMove.scoreBefore,
+              linesBefore: getLinesBefore(pendingMove),
               scoreAfter,
-              pvGapCp: getPvGapCp(
-                pvScoresRef.current[1],
-                pvScoresRef.current[2]
-              ),
             }),
             pendingMove.fenAfter
           )

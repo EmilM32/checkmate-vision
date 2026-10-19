@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest"
 
+import { Chess } from "chess.js"
+
+import type { EngineLine } from "@/context/engine-context"
 import {
   buildMoveAnalysis,
-  getPvGapCp,
+  getSacrificedMaterial,
   getTerminalScore,
 } from "@/lib/chess/move-analysis"
 
@@ -29,31 +32,51 @@ describe("getTerminalScore", () => {
   })
 })
 
-describe("getPvGapCp", () => {
-  it("measures the gap between the two best lines", () => {
-    expect(
-      getPvGapCp({ type: "cp", value: 40 }, { type: "cp", value: -35 })
-    ).toBe(75)
+function playMoves(...sans: string[]) {
+  const chess = new Chess()
+  let last = null
+  for (const san of sans) last = chess.move(san)
+  return last!
+}
+
+describe("getSacrificedMaterial", () => {
+  it("is zero for a quiet move", () => {
+    expect(getSacrificedMaterial(playMoves("e4"))).toBe(0)
   })
 
-  it("is unknown without a second line or with mate scores", () => {
-    expect(getPvGapCp({ type: "cp", value: 40 }, null)).toBeNull()
+  it("counts a piece given for a pawn", () => {
+    // Nxf7: the knight takes a pawn and can be taken by the king.
     expect(
-      getPvGapCp({ type: "mate", value: 2 }, { type: "cp", value: 300 })
-    ).toBeNull()
+      getSacrificedMaterial(
+        playMoves("e4", "e5", "Nf3", "d6", "Ng5", "h6", "Nxf7")
+      )
+    ).toBe(2)
   })
+
+  it("does not count an even trade", () => {
+    expect(
+      getSacrificedMaterial(
+        playMoves("e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Bxc6")
+      )
+    ).toBe(0)
+    expect(getSacrificedMaterial(playMoves("e4", "d5", "exd5"))).toBe(0)
+  })
+})
+
+const line = (id: 1 | 2 | 3, value: number, move: string): EngineLine => ({
+  id,
+  score: { type: "cp", value },
+  pv: [move],
 })
 
 describe("buildMoveAnalysis", () => {
   it("derives the mover from the position before the move", () => {
     const analysis = buildMoveAnalysis({
-      ply: 2,
       fenBefore: AFTER_E4,
       fenAfter: AFTER_E4_E5,
-      scoreBefore: { type: "cp", value: 30 },
+      linesBefore: [line(1, 30, "c7c5")],
       // Black's move handed White a winning position.
       scoreAfter: { type: "cp", value: 600 },
-      pvGapCp: null,
     })
 
     expect(analysis.classification).toBe("blunder")
@@ -61,15 +84,47 @@ describe("buildMoveAnalysis", () => {
     expect(analysis.delta).toBe(570)
   })
 
-  it("leaves the move unclassified without both scores", () => {
+  it("calls the engine's only good move great", () => {
     expect(
       buildMoveAnalysis({
-        ply: 1,
         fenBefore: START,
         fenAfter: AFTER_E4,
-        scoreBefore: null,
+        linesBefore: [line(1, 250, "e2e4"), line(2, 50, "d2d4")],
+        scoreAfter: { type: "cp", value: 250 },
+      }).classification
+    ).toBe("great")
+  })
+
+  it("does not call a move great when the engine preferred another", () => {
+    expect(
+      buildMoveAnalysis({
+        fenBefore: START,
+        fenAfter: AFTER_E4,
+        linesBefore: [line(1, 250, "d2d4"), line(2, 50, "c2c4")],
+        scoreAfter: { type: "cp", value: 250 },
+      }).classification
+    ).toBe("best")
+  })
+
+  it("calls a sound sacrifice brilliant", () => {
+    const move = playMoves("e4", "e5", "Nf3", "d6", "Ng5", "h6", "Nxf7")
+    expect(
+      buildMoveAnalysis({
+        fenBefore: move.before,
+        fenAfter: move.after,
+        linesBefore: [line(1, 80, "g5f7")],
+        scoreAfter: { type: "cp", value: 80 },
+      }).classification
+    ).toBe("brilliant")
+  })
+
+  it("leaves the move unclassified without engine lines", () => {
+    expect(
+      buildMoveAnalysis({
+        fenBefore: START,
+        fenAfter: AFTER_E4,
+        linesBefore: [],
         scoreAfter: { type: "cp", value: 30 },
-        pvGapCp: null,
       }).classification
     ).toBeNull()
   })

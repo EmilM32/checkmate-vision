@@ -18,6 +18,7 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 - Engine results are cached per position: revisiting a position, or browsing an
   analysed game, shows its lines at once instead of searching again.
 - Engine load and crash errors are shown in the analysis panel with a retry button.
+- "Inaccuracy" (`?!`) move class.
 
 ### Fixed
 - Engine scores were read from the side-to-move perspective as if they were White's:
@@ -36,6 +37,15 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   scrolls there, and the toolbar wraps instead of overflowing.
 
 ### Changed
+- Moves are classified by the loss of win chance (Lichess' model) instead of raw
+  centipawns, so the same loss weighs less in a decided position; thresholds 2 / 5 / 10 /
+  20 points for best, good, inaccuracy and mistake. The opening leniency is gone.
+- "Great" now means the engine's only move: the second best would have lost at least
+  10 points and turned a win into a draw or a draw into a loss (it was measured on the
+  opponent's replies before).
+- "Brilliant" now detects real sacrifices (a piece or the exchange left to be taken),
+  played without loss; before, it compared the mover's own material and never fired.
+- Session schema v3: classifications saved by v2 are dropped on load (scores are kept).
 - Session schema v2: analysis saved by earlier versions is discarded on load (the game is
   kept).
 - Stockfish 19 (lite NNUE, single-threaded, ~2 MB) replaces Stockfish 10: about 3-4x
