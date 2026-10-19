@@ -8,6 +8,24 @@ export type ValidationResult = ValidationSuccess | ValidationError
 export type ParsedMove = {
   san: string
   fen: string
+  // Mover's remaining clock time in seconds, from a `[%clk h:mm:ss]` comment.
+  clock: number | null
+}
+
+export type GameMeta = {
+  white: string | null
+  black: string | null
+  whiteElo: string | null
+  blackElo: string | null
+  result: string | null
+}
+
+export const EMPTY_GAME_META: GameMeta = {
+  white: null,
+  black: null,
+  whiteElo: null,
+  blackElo: null,
+  result: null,
 }
 
 export type ParsedGame = {
@@ -15,6 +33,7 @@ export type ParsedGame = {
   finalFen: string
   pgn: string
   moves: ParsedMove[]
+  meta: GameMeta
 }
 
 type ParseResultSuccess = { ok: true; data: ParsedGame }
@@ -60,6 +79,36 @@ export function validatePgn(pgn: string): ValidationResult {
   }
 }
 
+const CLOCK_RE = /\[%clk\s+(\d+):(\d{1,2}):(\d{1,2}(?:\.\d+)?)\]/
+
+export function parseClockComment(comment: string | undefined): number | null {
+  if (!comment) return null
+  const match = CLOCK_RE.exec(comment)
+  if (!match) return null
+
+  const [, hours, minutes, seconds] = match
+  return Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds)
+}
+
+// PGN uses "?" (and "????" variants) for unknown tag values.
+function headerValue(headers: Record<string, string>, key: string) {
+  const value = headers[key]?.trim()
+  if (!value || /^[?-]+$/.test(value)) return null
+  return value
+}
+
+function readGameMeta(headers: Record<string, string>): GameMeta {
+  const result = headerValue(headers, "Result")
+
+  return {
+    white: headerValue(headers, "White"),
+    black: headerValue(headers, "Black"),
+    whiteElo: headerValue(headers, "WhiteElo"),
+    blackElo: headerValue(headers, "BlackElo"),
+    result: result === "*" ? null : result,
+  }
+}
+
 export function parsePgn(pgn: string): ParsePgnResult {
   const validation = validatePgn(pgn)
   if (!validation.ok) {
@@ -67,25 +116,27 @@ export function parsePgn(pgn: string): ParsePgnResult {
   }
 
   try {
-    const normalizedPgn = normalizeInput(pgn)
     const chess = new Chess()
-    chess.loadPgn(normalizedPgn)
+    chess.loadPgn(normalizeInput(pgn))
 
-    const replay = new Chess()
-    const parsedMoves: ParsedMove[] = []
-    const sanMoves = chess.history()
-    for (const san of sanMoves) {
-      replay.move(san)
-      parsedMoves.push({ san, fen: replay.fen() })
-    }
+    const history = chess.history({ verbose: true })
+    const commentsByFen = new Map(
+      chess.getComments().map(({ fen, comment }) => [fen, comment])
+    )
 
     return {
       ok: true,
       data: {
-        initialFen: new Chess().fen(),
+        // Games may start from a custom position ([SetUp "1"] / [FEN]).
+        initialFen: history[0]!.before,
         finalFen: chess.fen(),
         pgn: chess.pgn(),
-        moves: parsedMoves,
+        moves: history.map((move) => ({
+          san: move.san,
+          fen: move.after,
+          clock: parseClockComment(commentsByFen.get(move.after)),
+        })),
+        meta: readGameMeta(chess.getHeaders()),
       },
     }
   } catch {

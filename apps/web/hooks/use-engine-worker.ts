@@ -355,7 +355,7 @@ export function useEngineWorker() {
               batch.previousScore = scoreAfter
             } else {
               const playedBy: "white" | "black" =
-                item.moveIndex % 2 === 1 ? "white" : "black"
+                getSideToMove(item.fenBefore) === "w" ? "white" : "black"
               const scoreBefore = batch.previousScore
               const isOnlyWinningMoveInLosingPosition =
                 isLosingScore(scoreBefore, playedBy) &&
