@@ -47,14 +47,21 @@ The architecture follows three state layers:
 
 ## Core Features
 
-- Interactive chessboard with legal move handling and move navigation.
-- FEN and PGN input for loading positions and full games.
-- In-browser Stockfish analysis via worker (no required analysis backend).
-- Evaluation display and game evaluation history chart.
-- Multi-PV visualization (candidate lines and first-move overlays).
-- Move quality classification pipeline for post-move feedback.
+- Interactive chessboard with legal move handling, promotion piece picker and move navigation.
+- FEN and PGN input, including games set up from a FEN (`[SetUp]`/`[FEN]`), player
+  names/ratings/result from headers and `[%clk]` clock comments.
+- Player bars with names, ratings, clocks, captured pieces and material lead.
+- In-browser Stockfish analysis via worker (no required analysis backend); scores are
+  always shown from White's perspective.
+- Evaluation bar and game evaluation history chart.
+- Multi-PV visualization (top 3 candidate lines and first-move arrows).
+- Game analysis that classifies every move (brilliant, great, best, good, mistake,
+  blunder) without disturbing the live analysis of the board position.
+- Board-control heatmap with per-square influence tracing.
+- Guess mode that hides the analysis until you reveal it.
 - Session persistence via localStorage (restore after refresh).
 - Export workflow for board visualization snapshots.
+- Polish and English UI.
 
 Note: The product vision and design spec cover additional visual/UX enhancements that may
 evolve incrementally across releases.
@@ -182,5 +189,7 @@ Persistence and privacy boundaries for v1:
 - `RELEASE_CHECKLIST.md`: release validation gates.
 - `CHANGELOG.md`: change history and release entries.
 - `apps/web/RELEASE_NOTES.md`: web-app release summary.
-- `.docs/prd.md`: product requirements and roadmap.
-- `.docs/design-vision.md`: target UX, architecture, and feature design.
+- `.github/workflows/ci.yml`: CI (typecheck, lint, test, build, e2e) on pull requests and `main`.
+
+Product requirements and design notes (`.docs/`) are kept locally and are not part of the
+repository.

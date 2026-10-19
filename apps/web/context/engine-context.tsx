@@ -156,9 +156,7 @@ export function engineReducer(
       }
 
       const shouldUpdateEval =
-        info.multipv === 1 &&
-        info.score &&
-        info.depth >= MIN_EVAL_DISPLAY_DEPTH
+        info.multipv === 1 && info.score && info.depth >= MIN_EVAL_DISPLAY_DEPTH
 
       return {
         ...state,

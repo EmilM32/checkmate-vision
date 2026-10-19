@@ -11,10 +11,7 @@ import { parsePgn } from "@/lib/chess/fen-pgn"
 export function PGNInput() {
   const { t } = useI18n()
   const { loadPgnGame } = useGame()
-  const {
-    state: engineState,
-    clearBatchAnalysis,
-  } = useEngine()
+  const { state: engineState, clearBatchAnalysis } = useEngine()
 
   const [value, setValue] = useState("")
   const [error, setError] = useState<string | null>(null)

@@ -164,7 +164,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const makeMove = useCallback(
     (from: string, to: string, promotion?: string): boolean => {
       const chess = chessRef.current
-      let { history, currentMoveIndex } = state
+      const { currentMoveIndex } = state
+      let { history } = state
 
       // If navigated back, truncate future moves and rebuild chess state
       if (currentMoveIndex < history.length) {
