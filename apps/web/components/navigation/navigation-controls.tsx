@@ -11,8 +11,10 @@ import {
 
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
+import { useI18n } from "@/hooks/use-i18n"
 
 export function NavigationControls() {
+  const { t } = useI18n()
   const { state, goToMove } = useGame()
   const { cancelBatchAnalysis } = useEngine()
 
@@ -73,6 +75,8 @@ export function NavigationControls() {
         className="size-8"
         disabled={atStart}
         onClick={goFirst}
+        aria-label={t("navigation.first")}
+        title={t("navigation.first")}
       >
         <ChevronsLeft className="size-4" />
       </Button>
@@ -82,6 +86,8 @@ export function NavigationControls() {
         className="size-8"
         disabled={atStart}
         onClick={goPrev}
+        aria-label={t("navigation.previous")}
+        title={t("navigation.previous")}
       >
         <ChevronLeft className="size-4" />
       </Button>
@@ -91,6 +97,8 @@ export function NavigationControls() {
         className="size-8"
         disabled={atEnd}
         onClick={goNext}
+        aria-label={t("navigation.next")}
+        title={t("navigation.next")}
       >
         <ChevronRight className="size-4" />
       </Button>
@@ -100,6 +108,8 @@ export function NavigationControls() {
         className="size-8"
         disabled={atEnd}
         onClick={goLast}
+        aria-label={t("navigation.last")}
+        title={t("navigation.last")}
       >
         <ChevronsRight className="size-4" />
       </Button>
