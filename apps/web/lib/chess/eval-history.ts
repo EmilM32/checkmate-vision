@@ -1,6 +1,7 @@
 import type { MoveEntry } from "@/context/game-context"
 import type { EngineScore } from "@/context/engine-context"
 import type { MoveClassification } from "@/lib/chess/classification"
+import { getSideToMove } from "@/lib/engine/eval"
 
 export type EvalChartPoint = {
   moveIndex: number
@@ -14,19 +15,17 @@ function clampPawns(value: number): number {
   return Math.max(-10, Math.min(10, value))
 }
 
-function toWhitePerspectivePawns(score: EngineScore, fenAfter: string): number {
+// Scores are stored from White's perspective; `mate 0` means the side to move
+// in `fenAfter` is checkmated.
+function toChartPawns(score: EngineScore, fenAfter: string): number {
   if (!score) return 0
 
-  const sideToMove = fenAfter.split(" ")[1]
-  const whiteToMove = sideToMove === "w"
-
   if (score.type === "mate") {
-    const mateValue = score.value > 0 ? 10 : -10
-    return clampPawns(whiteToMove ? mateValue : -mateValue)
+    if (score.value === 0) return getSideToMove(fenAfter) === "w" ? -10 : 10
+    return score.value > 0 ? 10 : -10
   }
 
-  const cp = whiteToMove ? score.value : -score.value
-  return clampPawns(cp / 100)
+  return clampPawns(score.value / 100)
 }
 
 export function buildEvalChartData(history: MoveEntry[]): EvalChartPoint[] {
@@ -45,7 +44,7 @@ export function buildEvalChartData(history: MoveEntry[]): EvalChartPoint[] {
     points.push({
       moveIndex,
       moveLabel: `${Math.ceil(moveIndex / 2)}`,
-      eval: toWhitePerspectivePawns(move.scoreAfter, move.fen),
+      eval: toChartPawns(move.scoreAfter, move.fen),
       rawScore: move.scoreAfter,
       classification: move.classification,
     })

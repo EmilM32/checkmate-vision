@@ -35,18 +35,80 @@ class LocalStorageMock {
 }
 
 describe("session storage migration", () => {
-  it("accepts v1 payload", () => {
+  it("accepts current payload unchanged", () => {
     const payload = {
-      schemaVersion: 1,
+      schemaVersion: SESSION_SCHEMA_VERSION,
       savedAt: new Date().toISOString(),
       game: initialGameState,
       ui: initialUIState,
       engine: selectPersistableEngineState(initialEngineState),
     }
 
+    expect(migratePersistedSession(payload)).toEqual(payload)
+  })
+
+  it("keeps the game but drops stale analysis from v1 payload", () => {
+    const fenAfterE4 =
+      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+    const payload = {
+      schemaVersion: 1,
+      savedAt: new Date().toISOString(),
+      game: {
+        ...initialGameState,
+        fen: fenAfterE4,
+        history: [
+          {
+            san: "e4",
+            fen: fenAfterE4,
+            scoreBefore: { type: "cp", value: 30 },
+            scoreAfter: { type: "cp", value: -30 },
+            delta: 60,
+            classification: "good",
+          },
+        ],
+        currentMoveIndex: 1,
+        turn: "b",
+      },
+      ui: { ...initialUIState, engineEnabled: true },
+      engine: {
+        ...selectPersistableEngineState(initialEngineState),
+        evaluation: { type: "cp", value: -30 },
+        bestMove: "e7e5",
+        pvLines: [{ id: 1, score: { type: "cp", value: -30 }, pv: ["e7e5"] }],
+        batch: { ...initialEngineState.batch, requestId: 5, status: "done" },
+      },
+    }
+
     const migrated = migratePersistedSession(payload)
-    expect(migrated).not.toBeNull()
-    expect(migrated?.schemaVersion).toBe(1)
+
+    expect(migrated?.schemaVersion).toBe(SESSION_SCHEMA_VERSION)
+    expect(migrated?.game.fen).toBe(fenAfterE4)
+    expect(migrated?.game.history).toEqual([
+      {
+        san: "e4",
+        fen: fenAfterE4,
+        scoreBefore: null,
+        scoreAfter: null,
+        delta: null,
+        classification: null,
+      },
+    ])
+    expect(migrated?.ui.engineEnabled).toBe(true)
+    expect(migrated?.engine.evaluation).toBeNull()
+    expect(migrated?.engine.pvLines).toEqual([])
+    expect(migrated?.engine.batch).toEqual(initialEngineState.batch)
+  })
+
+  it("rejects payload with an unknown schema version", () => {
+    const payload = {
+      schemaVersion: 99,
+      savedAt: new Date().toISOString(),
+      game: initialGameState,
+      ui: initialUIState,
+      engine: selectPersistableEngineState(initialEngineState),
+    }
+
+    expect(migratePersistedSession(payload)).toBeNull()
   })
 
   it("migrates legacy payload without schema version", () => {

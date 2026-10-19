@@ -153,13 +153,74 @@ describe("classifyMove", () => {
     expect(result).toBe("blunder")
   })
 
-  it("handles mate edge case", () => {
+  it("treats a faster forced mate as best", () => {
     const result = classifyMove({
       scoreBefore: { type: "mate", value: 5 },
       scoreAfter: { type: "mate", value: 1 },
       playedBy: "white",
     })
 
+    expect(result).toBe("best")
+  })
+
+  it("treats a slower but still forced mate as best", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "mate", value: -2 },
+      scoreAfter: { type: "mate", value: -4 },
+      playedBy: "black",
+    })
+
+    expect(result).toBe("best")
+  })
+
+  it("does not punish finding a forced mate", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "cp", value: 300 },
+      scoreAfter: { type: "mate", value: 3 },
+      playedBy: "white",
+    })
+
+    expect(result).toBe("best")
+  })
+
+  it("treats delivering checkmate (mate 0 after the move) as best", () => {
+    expect(
+      classifyMove({
+        scoreBefore: { type: "mate", value: -1 },
+        scoreAfter: { type: "mate", value: 0 },
+        playedBy: "black",
+      })
+    ).toBe("best")
+  })
+
+  it("flags allowing a forced mate as a blunder", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "cp", value: 40 },
+      scoreAfter: { type: "mate", value: -2 },
+      playedBy: "white",
+    })
+
     expect(result).toBe("blunder")
+  })
+
+  it("flags a black move that hands white a winning score as a blunder", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "cp", value: -20 },
+      scoreAfter: { type: "cp", value: 600 },
+      playedBy: "black",
+    })
+
+    expect(result).toBe("blunder")
+  })
+
+  it("rates a black move that keeps white's score unchanged as best", () => {
+    const result = classifyMove({
+      scoreBefore: { type: "cp", value: 30 },
+      scoreAfter: { type: "cp", value: 30 },
+      playedBy: "black",
+      pvGapCp: 10,
+    })
+
+    expect(result).toBe("best")
   })
 })

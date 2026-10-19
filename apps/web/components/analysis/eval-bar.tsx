@@ -3,24 +3,23 @@
 import { AnimatePresence, motion } from "framer-motion"
 
 import { useEngine } from "@/hooks/use-engine"
+import { useGame } from "@/hooks/use-game"
 import { useUI } from "@/hooks/use-ui"
-import { evalToPercent, formatEval } from "@/lib/engine/eval"
+import { evalToPercent, formatEval, isWhiteBetter } from "@/lib/engine/eval"
 
 export function EvalBar() {
   const { state } = useEngine()
   const { state: uiState } = useUI()
+  const { state: gameState } = useGame()
   const analysisVisible = !uiState.guessMode || state.guessRevealed
 
-  const pct = evalToPercent(state.evaluation)
+  const pct = evalToPercent(state.evaluation, gameState.turn)
   const label = formatEval(state.evaluation)
-  const isWhiteBetter =
-    !state.evaluation || state.evaluation.type === "cp"
-      ? (state.evaluation?.value ?? 0) >= 0
-      : state.evaluation.value > 0
+  const whiteBetter = isWhiteBetter(state.evaluation, gameState.turn)
 
   const whiteOnBottom = !uiState.boardFlipped
   const evalDir = whiteOnBottom ? "0deg" : "180deg"
-  const labelOnTop = isWhiteBetter === whiteOnBottom
+  const labelOnTop = whiteBetter === whiteOnBottom
 
   if (!uiState.engineEnabled) {
     return (
@@ -68,14 +67,15 @@ export function EvalBar() {
           transition={{ duration: 0.5, ease: "easeInOut" }}
         >
           <motion.span
-            key={isWhiteBetter ? "white" : "black"}
+            data-testid="eval-label"
+            key={whiteBetter ? "white" : "black"}
             initial={{ opacity: 0, y: labelOnTop ? -4 : 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: labelOnTop ? 4 : -4 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
             className={`absolute left-1/2 -translate-x-1/2 text-[10px] leading-none font-bold ${
               labelOnTop ? "top-1.5" : "bottom-1.5"
-            } ${isWhiteBetter ? "text-zinc-100" : "text-zinc-900"}`}
+            } ${whiteBetter ? "text-zinc-100" : "text-zinc-900"}`}
           >
             {label}
           </motion.span>

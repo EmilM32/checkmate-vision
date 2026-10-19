@@ -53,7 +53,10 @@ export function parseBestMoveLine(line: string): ParsedBestMove | null {
 
   const tokens = line.split(" ")
   const move = tokens[1]
-  if (!move || move === "(none)") return null
+  if (!move) return null
+  // "(none)" is sent when the position has no legal moves (mate/stalemate).
+  // It still terminates the search, so it must be reported.
+  if (move === "(none)") return { move: null, ponder: null }
 
   const ponder = tokens[2] === "ponder" ? (tokens[3] ?? null) : null
   return { move, ponder }

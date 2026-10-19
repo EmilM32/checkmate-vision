@@ -94,6 +94,7 @@ export type EngineAction =
   | { type: "ENGINE_START_ANALYSIS" }
   | { type: "ENGINE_OUTPUT"; info: ParsedInfoLine }
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
+  | { type: "ENGINE_TERMINAL_POSITION"; score: EngineScore }
   | { type: "ENGINE_REVEAL_ANALYSIS" }
   | { type: "ENGINE_CONCEAL_ANALYSIS" }
   | {
@@ -166,6 +167,16 @@ export function engineReducer(
         pvLines: newLines,
       }
     }
+
+    case "ENGINE_TERMINAL_POSITION":
+      return {
+        ...state,
+        evaluation: action.score,
+        depth: 0,
+        nps: 0,
+        pvLines: [],
+        bestMove: null,
+      }
 
     case "ENGINE_BESTMOVE":
       return {

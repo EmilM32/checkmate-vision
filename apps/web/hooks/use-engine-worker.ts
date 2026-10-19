@@ -9,6 +9,7 @@ import {
   computeMoveDelta,
   type ClassificationInput,
 } from "@/lib/chess/classification"
+import { getSideToMove, toWhitePerspective } from "@/lib/engine/eval"
 import { parseInfoLine, parseBestMoveLine } from "@/lib/engine/parser"
 import { serializeCommand } from "@/lib/engine/worker"
 import type { BatchAnalysisItem, EngineScore } from "@/context/engine-context"
@@ -30,6 +31,7 @@ const PIECE_VALUES = {
 
 type PendingMoveClassification = {
   moveIndex: number
+  fenAfter: string
   playedBy: "white" | "black"
   scoreBefore: EngineScore
   isOnlyLegalMove: boolean
@@ -51,6 +53,20 @@ function countLegalMoves(fen: string): number {
     return new Chess(fen).moves().length
   } catch {
     return 0
+  }
+}
+
+// Positions without legal moves are never sent to Stockfish: it answers them
+// with a depth-0 info line and "bestmove (none)", which carry no useful lines.
+function getTerminalScore(fen: string): EngineScore {
+  try {
+    const chess = new Chess(fen)
+    if (chess.moves().length > 0) return null
+    return chess.isCheck()
+      ? { type: "mate", value: 0 }
+      : { type: "cp", value: 0 }
+  } catch {
+    return null
   }
 }
 
@@ -125,6 +141,8 @@ export function useEngineWorker() {
   const statusRef = useRef<EngineWorkerStatus>("idle")
   const annotateMoveRef = useRef(annotateMove)
   const fenRef = useRef(gameState.fen)
+  const searchFenRef = useRef<string | null>(null)
+  const handleMessageRef = useRef<((e: MessageEvent) => void) | null>(null)
   const latestEvalRef = useRef<EngineScore>(null)
   const pvScoresRef = useRef<{
     1: EngineScore
@@ -163,9 +181,25 @@ export function useEngineWorker() {
 
       dispatch({ type: "ENGINE_START_ANALYSIS" })
       pvScoresRef.current = { 1: null, 2: null, 3: null }
+      searchFenRef.current = fen
       setStatus("analyzing")
       statusRef.current = "analyzing"
       isAnalyzingRef.current = true
+
+      const terminalScore = getTerminalScore(fen)
+      if (terminalScore) {
+        pvScoresRef.current[1] = terminalScore
+        dispatch({ type: "ENGINE_TERMINAL_POSITION", score: terminalScore })
+        // Finish asynchronously, like a real search, so the regular
+        // bestmove flow (classification, batch, pending FEN) runs.
+        setTimeout(() => {
+          if (workerRef.current !== worker) return
+          handleMessageRef.current?.(
+            new MessageEvent("message", { data: "bestmove (none)" })
+          )
+        }, 0)
+        return
+      }
 
       worker.postMessage(serializeCommand({ type: "position", fen }))
       worker.postMessage(
@@ -255,8 +289,15 @@ export function useEngineWorker() {
         return
       }
 
-      const info = parseInfoLine(line)
-      if (info) {
+      const parsedInfo = parseInfoLine(line)
+      if (parsedInfo) {
+        const info = {
+          ...parsedInfo,
+          score: toWhitePerspective(
+            parsedInfo.score,
+            getSideToMove(searchFenRef.current ?? fenRef.current)
+          ),
+        }
         pvScoresRef.current[info.multipv] = info.score
         if (info.multipv === 1 && info.score) {
           latestEvalRef.current = info.score
@@ -357,7 +398,9 @@ export function useEngineWorker() {
         const pendingMove = pendingMoveRef.current
         const scoreAfter = pvScoresRef.current[1]
 
-        if (pendingMove) {
+        // Only the search of the position reached by the move describes it;
+        // a search stopped because of that move belongs to the previous one.
+        if (pendingMove && pendingMove.fenAfter === searchFenRef.current) {
           const pvGapCp = getPvGapCp(
             pvScoresRef.current[1],
             pvScoresRef.current[2]
@@ -437,6 +480,7 @@ export function useEngineWorker() {
     }
     workerRef.current?.terminate()
     workerRef.current = null
+    searchFenRef.current = null
     isAnalyzingRef.current = false
     waitingForStopRef.current = false
     pendingFenRef.current = null
@@ -498,6 +542,7 @@ export function useEngineWorker() {
       if (moveEntry) {
         pendingMoveRef.current = {
           moveIndex,
+          fenAfter: moveEntry.fen,
           playedBy,
           scoreBefore: latestEvalRef.current,
           isOnlyLegalMove: countLegalMoves(previous.fen) === 1,
@@ -518,6 +563,7 @@ export function useEngineWorker() {
   }, [gameState.fen, dispatch])
 
   useEffect(() => {
+    handleMessageRef.current = handleMessage
     if (workerRef.current) {
       workerRef.current.onmessage = handleMessage
     }

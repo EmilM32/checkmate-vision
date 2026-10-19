@@ -1,22 +1,28 @@
-import type {
-  EngineState,
-  PersistableEngineState,
+import {
+  initialEngineState,
+  type EngineState,
+  type PersistableEngineState,
 } from "@/context/engine-context"
 import type { GameState } from "@/context/game-context"
 import type { UIState } from "@/context/ui-context"
 
 export const SESSION_STORAGE_KEY = "checkmate-vision:session"
-export const SESSION_SCHEMA_VERSION = 1
+export const SESSION_SCHEMA_VERSION = 2
 
-export type PersistedSessionV1 = {
-  schemaVersion: 1
+type PersistedSessionShape<Version extends number> = {
+  schemaVersion: Version
   savedAt: string
   game: GameState
   ui: UIState
   engine: PersistableEngineState
 }
 
-type PersistedSession = PersistedSessionV1
+// v1 stored engine scores from the side-to-move perspective (and move
+// classifications derived from them); v2 stores them from White's perspective.
+export type PersistedSessionV1 = PersistedSessionShape<1>
+export type PersistedSessionV2 = PersistedSessionShape<2>
+
+type PersistedSession = PersistedSessionV2
 
 type PersistedSessionInput = {
   game: GameState
@@ -34,9 +40,12 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
 
-function isPersistedSessionV1(value: unknown): value is PersistedSessionV1 {
+function isPersistedSessionOfVersion<Version extends number>(
+  value: unknown,
+  version: Version
+): value is PersistedSessionShape<Version> {
   if (!isObject(value)) return false
-  if (value.schemaVersion !== 1) return false
+  if (value.schemaVersion !== version) return false
   return (
     isObject(value.game) &&
     isObject(value.ui) &&
@@ -45,7 +54,42 @@ function isPersistedSessionV1(value: unknown): value is PersistedSessionV1 {
   )
 }
 
-function migrateLegacySession(value: unknown): PersistedSessionV1 | null {
+// Scores saved before v2 use a different perspective and cannot be trusted,
+// so the analysis is dropped and recomputed; the game itself is kept.
+function dropStaleAnalysis(
+  game: GameState,
+  ui: UIState,
+  engine: PersistableEngineState
+): PersistedSessionV2 {
+  return {
+    schemaVersion: 2,
+    savedAt: new Date().toISOString(),
+    game: {
+      ...game,
+      history: (Array.isArray(game.history) ? game.history : []).map(
+        (move) => ({
+          ...move,
+          scoreBefore: null,
+          scoreAfter: null,
+          delta: null,
+          classification: null,
+        })
+      ),
+    },
+    ui,
+    engine: {
+      ...engine,
+      evaluation: null,
+      depth: 0,
+      nps: 0,
+      bestMove: null,
+      pvLines: [],
+      batch: initialEngineState.batch,
+    },
+  }
+}
+
+function migrateLegacySession(value: unknown): PersistedSessionV2 | null {
   if (!isObject(value)) return null
 
   const legacy = value as LegacyPersistedSession
@@ -57,20 +101,26 @@ function migrateLegacySession(value: unknown): PersistedSessionV1 | null {
     return null
   }
 
-  return {
-    schemaVersion: SESSION_SCHEMA_VERSION,
-    savedAt: new Date().toISOString(),
-    game: legacy.game as GameState,
-    ui: legacy.ui as UIState,
-    engine: legacy.engine as PersistableEngineState,
-  }
+  return dropStaleAnalysis(
+    legacy.game as GameState,
+    legacy.ui as UIState,
+    legacy.engine as PersistableEngineState
+  )
 }
 
 export function migratePersistedSession(
   value: unknown
 ): PersistedSession | null {
-  if (isPersistedSessionV1(value)) {
+  if (isPersistedSessionOfVersion(value, 2)) {
     return value
+  }
+
+  if (isPersistedSessionOfVersion(value, 1)) {
+    return dropStaleAnalysis(value.game, value.ui, value.engine)
+  }
+
+  if (isObject(value) && "schemaVersion" in value) {
+    return null
   }
 
   return migrateLegacySession(value)
@@ -122,7 +172,7 @@ export function writePersistedSession(session: PersistedSessionInput): void {
   if (!isBrowserStorageAvailable()) return
 
   const payload: PersistedSession = {
-    schemaVersion: SESSION_SCHEMA_VERSION,
+    schemaVersion: 2,
     savedAt: new Date().toISOString(),
     ...session,
   }
