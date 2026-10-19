@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { useGame } from "@/hooks/use-game"
@@ -13,9 +13,12 @@ export function FENInput() {
   const [value, setValue] = useState(state.fen)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  // Follow the board, but keep what the user typed until the position changes.
+  const [syncedFen, setSyncedFen] = useState(state.fen)
+  if (syncedFen !== state.fen) {
+    setSyncedFen(state.fen)
     setValue(state.fen)
-  }, [state.fen])
+  }
 
   function handleApplyFen() {
     setError(null)

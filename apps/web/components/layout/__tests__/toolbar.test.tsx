@@ -2,7 +2,7 @@ import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { ToolbarPlaceholder } from "@/components/layout/toolbar"
+import { Toolbar } from "@/components/layout/toolbar"
 
 const dispatch = vi.fn()
 const revealAnalysis = vi.fn()
@@ -67,7 +67,7 @@ vi.mock("@/hooks/use-i18n", () => ({
   }),
 }))
 
-describe("ToolbarPlaceholder", () => {
+describe("Toolbar", () => {
   afterEach(() => {
     cleanup()
   })
@@ -93,13 +93,13 @@ describe("ToolbarPlaceholder", () => {
   })
 
   it("shows heatmap mode switch while heatmap is enabled", () => {
-    render(<ToolbarPlaceholder onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
+    render(<Toolbar onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
 
     expect(screen.getByRole("button", { name: "NET" })).toBeTruthy()
   })
 
   it("cycles heatmap mode from net to split", () => {
-    render(<ToolbarPlaceholder onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
+    render(<Toolbar onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
 
     fireEvent.click(screen.getByRole("button", { name: "NET" }))
 
@@ -115,7 +115,7 @@ describe("ToolbarPlaceholder", () => {
       showHeatmap: false,
     }
 
-    render(<ToolbarPlaceholder onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
+    render(<Toolbar onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
 
     expect(screen.queryByRole("button", { name: "NET" })).toBeNull()
   })

@@ -117,5 +117,11 @@
     "r": "Rook",
     "b": "Bishop",
     "n": "Knight"
+  },
+  "navigation": {
+    "first": "First move",
+    "previous": "Previous move",
+    "next": "Next move",
+    "last": "Last move"
   }
 }

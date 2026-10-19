@@ -11,7 +11,8 @@ import { cn } from "@workspace/ui/lib/utils"
 
 export const metadata: Metadata = {
   title: "CheckMate Vision",
-  description: "Template scaffold for chess analysis app",
+  description:
+    "Visual chess analysis in the browser: Stockfish evaluation, candidate lines, board control heatmap and move classification.",
 }
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" })

@@ -23,6 +23,10 @@ vi.mock("@/hooks/use-game", () => ({
   }),
 }))
 
+vi.mock("@/hooks/use-i18n", () => ({
+  useI18n: () => ({ t: (key: string) => key }),
+}))
+
 describe("NavigationControls", () => {
   afterEach(() => {
     cleanup()
@@ -120,5 +124,20 @@ describe("NavigationControls", () => {
     fireEvent.keyDown(input, { key: "ArrowRight" })
 
     expect(goToMove).not.toHaveBeenCalled()
+  })
+
+  it("labels the navigation buttons for assistive technology", () => {
+    render(<NavigationControls />)
+
+    expect(
+      screen
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label"))
+    ).toEqual([
+      "navigation.first",
+      "navigation.previous",
+      "navigation.next",
+      "navigation.last",
+    ])
   })
 })

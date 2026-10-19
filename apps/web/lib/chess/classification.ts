@@ -21,9 +21,19 @@ export const CLASSIFICATION_COLORS: Record<MoveClassification, string> = {
   brilliant: "#26c6da",
   great: "#66bb6a",
   best: "#a5d6a7",
-  good: "#e0e0e0",
+  good: "#9ca3af",
   mistake: "#ffa726",
   blunder: "#ef5350",
+}
+
+// Standard annotation symbols; "best" and "good" moves carry none.
+export const CLASSIFICATION_SYMBOLS: Record<MoveClassification, string> = {
+  brilliant: "!!",
+  great: "!",
+  best: "",
+  good: "",
+  mistake: "?",
+  blunder: "??",
 }
 
 export type ClassificationInput = {
