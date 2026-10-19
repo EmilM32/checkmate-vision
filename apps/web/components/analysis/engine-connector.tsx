@@ -2,11 +2,13 @@
 
 import { useEffect } from "react"
 import { useEngineWorker } from "@/hooks/use-engine-worker"
+import { useGameAnalysis } from "@/hooks/use-game-analysis"
 import { useEngineContext } from "@/context/engine-context"
 import { useUIContext } from "@/context/ui-context"
 
 export function EngineConnector() {
   const { start, stop } = useEngineWorker()
+  useGameAnalysis()
   const { state: uiState } = useUIContext()
   const { state: engineState } = useEngineContext()
 

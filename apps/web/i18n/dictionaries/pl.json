@@ -60,7 +60,6 @@
     "engineLines": "Linie silnika",
     "analyzing": "Analizowanie...",
     "noAnalysis": "Brak analizy",
-    "livePausedDuringBatch": "Wstrzymane na czas analizy partii",
     "engineOff": "Silnik wylaczony",
     "engineRunningTip": "Silnik dziala — kliknij, aby zatrzymac",
     "engineStartTip": "Uruchom analize silnika",
@@ -79,7 +78,6 @@
   "errors": {
     "engineLoadFailed": "Nie udalo sie zaladowac silnika.",
     "engineCrashed": "Silnik niespodziewanie przestal dzialac.",
-    "engineNotReady": "Wlacz silnik, aby przeanalizowac partie.",
     "fenEmpty": "FEN nie moze byc pusty.",
     "fenInvalid": "Nieprawidlowy format FEN.",
     "pgnEmpty": "PGN nie moze byc pusty.",

@@ -79,6 +79,39 @@ test.describe("engine analysis", () => {
     })
   })
 
+  test("analyses a game while the live engine keeps running", async ({
+    page,
+  }) => {
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+    await page.getByRole("button", { name: "Analizuj partie" }).click()
+
+    // Browsing does not cancel game analysis, and the live engine analyses
+    // the browsed position meanwhile.
+    await page.keyboard.press("Home")
+    await expect(
+      page.locator("[data-testid=pv-score]:visible").first()
+    ).toBeVisible({ timeout: 30_000 })
+
+    await expect(
+      page.locator("span:visible", { hasText: /^Analiza zakonczona$/ })
+    ).toBeVisible({ timeout: 45_000 })
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const session = localStorage.getItem("checkmate-vision:session")
+          return session
+            ? JSON.parse(session).game.history.map(
+                (move: { classification: string | null }) => move.classification
+              )
+            : []
+        })
+      )
+      .toEqual(expect.arrayContaining(["blunder"]))
+  })
+
   test("keeps analysing after a checkmate position", async ({ page }) => {
     await setFen(
       page,

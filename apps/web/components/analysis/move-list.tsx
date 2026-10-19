@@ -111,7 +111,7 @@ function MoveButton({
 export function MoveList() {
   const { t } = useI18n()
   const { state, goToMove } = useGame()
-  const { state: engineState, cancelBatchAnalysis } = useEngine()
+  const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
   const activeRef = useRef<HTMLButtonElement>(null)
@@ -129,10 +129,7 @@ export function MoveList() {
   }
 
   const rows = buildMoveRows(state.history, state.initialFen)
-  const handleSelect = (ply: number) => {
-    cancelBatchAnalysis()
-    goToMove(ply)
-  }
+  const handleSelect = (ply: number) => goToMove(ply)
 
   const renderCell = (entry: PlyEntry | undefined) =>
     entry ? (
