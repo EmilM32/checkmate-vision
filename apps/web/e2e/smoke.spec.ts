@@ -110,6 +110,18 @@ test.describe("engine analysis", () => {
         })
       )
       .toEqual(expect.arrayContaining(["blunder"]))
+
+    // Black's 3...Nf6?? allowed mate: White plays clearly better.
+    const accuracy = async (side: string) =>
+      Number(
+        await page
+          .locator(`[data-testid=accuracy-${side}]:visible`)
+          .textContent()
+      )
+    await expect(
+      page.locator("[data-testid=game-summary]:visible")
+    ).toBeVisible()
+    expect(await accuracy("white")).toBeGreaterThan(await accuracy("black"))
   })
 
   test("keeps analysing after a checkmate position", async ({ page }) => {

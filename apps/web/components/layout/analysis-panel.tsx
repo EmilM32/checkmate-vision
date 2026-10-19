@@ -18,6 +18,7 @@ import {
 
 import { FENInput } from "@/components/inputs/fen-input"
 import { PGNInput } from "@/components/inputs/pgn-input"
+import { GameSummary } from "@/components/analysis/game-summary"
 import { MoveList } from "@/components/analysis/move-list"
 import { PVLines } from "@/components/analysis/pv-lines"
 import { useEngine } from "@/hooks/use-engine"
@@ -181,6 +182,9 @@ export function AnalysisPanel() {
               {t(batch.lastError)}
             </p>
           ) : null}
+          <div className="mt-2 empty:hidden">
+            <GameSummary />
+          </div>
         </div>
         <div className="h-48 overflow-hidden px-4 py-3 lg:h-auto lg:min-h-32 lg:flex-1">
           <MoveList />

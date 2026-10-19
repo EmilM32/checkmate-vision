@@ -87,6 +87,10 @@
     "fenSetFailed": "Nie udalo sie ustawic pozycji FEN.",
     "gameLoadFailed": "Nie udalo sie zaladowac partii."
   },
+  "summary": {
+    "title": "Podsumowanie partii",
+    "accuracy": "celnosc"
+  },
   "classification": {
     "brilliant": "Genialny",
     "great": "Swietny",

@@ -87,6 +87,10 @@
     "fenSetFailed": "Could not set FEN position.",
     "gameLoadFailed": "Could not load game."
   },
+  "summary": {
+    "title": "Game summary",
+    "accuracy": "accuracy"
+  },
   "classification": {
     "brilliant": "Brilliant",
     "great": "Great",
