@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react"
 import { useEngineContext } from "@/context/engine-context"
 import { useGameContext } from "@/context/game-context"
 import type { BatchAnalysisItem } from "@/context/engine-context"
-import { buildMoveAnalysis, getPvGapCp } from "@/lib/chess/move-analysis"
+import { buildMoveAnalysis } from "@/lib/chess/move-analysis"
 import { analysisCache } from "@/lib/engine/analysis-cache"
 import { ENGINE_URL } from "@/lib/engine/engine-url"
 import {
@@ -19,7 +19,7 @@ import {
   type SearchResult,
 } from "@/lib/engine/uci-engine"
 
-// Two lines are enough for the gap that marks "great" moves; the time cap
+// Two lines are enough to tell an only move ("great"); the time cap
 // bounds a whole game (endgames otherwise take 10+ s per position).
 const GAME_SEARCH = { depth: 18, movetimeMs: 1_500 }
 const GAME_ENGINE_OPTIONS = {
@@ -76,12 +76,10 @@ export function useGameAnalysis() {
       annotateMoveRef.current(
         moveIndex,
         buildMoveAnalysis({
-          ply: moveIndex,
           fenBefore: item.fenBefore,
           fenAfter: item.fen,
-          scoreBefore: before.scores[1],
+          linesBefore: before.lines,
           scoreAfter: after.scores[1],
-          pvGapCp: getPvGapCp(after.scores[1], after.scores[2]),
         }),
         item.fen
       )

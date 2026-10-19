@@ -97,6 +97,29 @@ describe("session storage migration", () => {
     expect(migrated?.engine).toEqual({ guessRevealed: false })
   })
 
+  it("keeps v2 scores but drops classifications from the old model", () => {
+    const fenAfterE4 =
+      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+    const move = {
+      san: "e4",
+      fen: fenAfterE4,
+      scoreBefore: { type: "cp" as const, value: 30 },
+      scoreAfter: { type: "cp" as const, value: 30 },
+      delta: 0,
+      classification: "great" as const,
+    }
+    const migrated = migratePersistedSession({
+      schemaVersion: 2,
+      savedAt: new Date().toISOString(),
+      game: { ...initialGameState, fen: fenAfterE4, history: [move] },
+      ui: initialUIState,
+      engine: selectPersistableEngineState(initialEngineState),
+    })
+
+    expect(migrated?.schemaVersion).toBe(SESSION_SCHEMA_VERSION)
+    expect(migrated?.game.history).toEqual([{ ...move, classification: null }])
+  })
+
   it("rejects payload with an unknown schema version", () => {
     const payload = {
       schemaVersion: 99,

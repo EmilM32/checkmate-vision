@@ -92,6 +92,7 @@
     "great": "Swietny",
     "best": "Najlepszy",
     "good": "Dobry",
+    "inaccuracy": "Niedokladnosc",
     "mistake": "Pomylka",
     "blunder": "Blunder"
   },
@@ -100,7 +101,7 @@
     "engineDesc": "Wlacza lub wylacza analize silnika Stockfish. Gdy aktywny, silnik ocenia biezaca pozycje i pokazuje najlepsze linie.",
     "guessDesc": "Ukrywa ocene silnika, strzalki i linie, abys mogl samodzielnie znalezc najlepszy ruch przed podejrzeniem odpowiedzi.",
     "revealDesc": "Tymczasowo odkrywa ukryta analize dla biezacej pozycji. Analiza ukrywa sie ponownie po przejsciu do nowej pozycji.",
-    "analyzeGameDesc": "Uruchamia silnik dla kazdej pozycji w zaladowanej partii, klasyfikujac kazdy ruch (genialny, swietny, najlepszy, dobry, pomylka, blunder).",
+    "analyzeGameDesc": "Uruchamia silnik dla kazdej pozycji w zaladowanej partii, klasyfikujac kazdy ruch (genialny, swietny, najlepszy, dobry, niedokladnosc, pomylka, blunder).",
     "engineActive": "Silnik dziala",
     "guessRevealed": "Tryb zgadywania — analiza odkryta",
     "guessHidden": "Tryb zgadywania — analiza ukryta"

@@ -92,6 +92,7 @@
     "great": "Great",
     "best": "Best",
     "good": "Good",
+    "inaccuracy": "Inaccuracy",
     "mistake": "Mistake",
     "blunder": "Blunder"
   },
@@ -100,7 +101,7 @@
     "engineDesc": "Toggles Stockfish engine analysis. When active, the engine evaluates the current position and shows the top candidate lines.",
     "guessDesc": "Hides engine evaluation, arrows, and best-move lines so you can try to find the best move yourself before peeking.",
     "revealDesc": "Temporarily reveals the hidden analysis for the current position. Analysis hides again when you move to a new position.",
-    "analyzeGameDesc": "Runs the engine through every position in the loaded game, classifying each move (brilliant, great, best, good, mistake, blunder).",
+    "analyzeGameDesc": "Runs the engine through every position in the loaded game, classifying each move (brilliant, great, best, good, inaccuracy, mistake, blunder).",
     "engineActive": "Engine is running",
     "guessRevealed": "Guess mode — analysis revealed",
     "guessHidden": "Guess mode — analysis hidden"

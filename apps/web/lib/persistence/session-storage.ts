@@ -6,7 +6,7 @@ import type { GameState } from "@/context/game-context"
 import type { UIState } from "@/context/ui-context"
 
 export const SESSION_STORAGE_KEY = "checkmate-vision:session"
-export const SESSION_SCHEMA_VERSION = 2
+export const SESSION_SCHEMA_VERSION = 3
 
 type PersistedSessionShape<Version extends number> = {
   schemaVersion: Version
@@ -17,11 +17,13 @@ type PersistedSessionShape<Version extends number> = {
 }
 
 // v1 stored engine scores from the side-to-move perspective (and move
-// classifications derived from them); v2 stores them from White's perspective.
+// classifications derived from them); v2 stores them from White's perspective;
+// v3 classifies moves by win chance.
 export type PersistedSessionV1 = PersistedSessionShape<1>
 export type PersistedSessionV2 = PersistedSessionShape<2>
+export type PersistedSessionV3 = PersistedSessionShape<3>
 
-type PersistedSession = PersistedSessionV2
+type PersistedSession = PersistedSessionV3
 
 type PersistedSessionInput = {
   game: GameState
@@ -54,23 +56,25 @@ function isPersistedSessionOfVersion<Version extends number>(
 }
 
 // Scores saved before v2 use a different perspective and cannot be trusted,
-// so the analysis is dropped and recomputed; the game itself is kept.
+// so the analysis is dropped and recomputed; the game itself is kept. From
+// v2 the scores stay and only the classifications are dropped.
 function dropStaleAnalysis(
   game: GameState,
   ui: UIState,
-  engine: PersistableEngineState
-): PersistedSessionV2 {
+  engine: PersistableEngineState,
+  keepScores = false
+): PersistedSessionV3 {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     savedAt: new Date().toISOString(),
     game: {
       ...game,
       history: (Array.isArray(game.history) ? game.history : []).map(
         (move) => ({
           ...move,
-          scoreBefore: null,
-          scoreAfter: null,
-          delta: null,
+          ...(keepScores
+            ? {}
+            : { scoreBefore: null, scoreAfter: null, delta: null }),
           classification: null,
         })
       ),
@@ -80,7 +84,7 @@ function dropStaleAnalysis(
   }
 }
 
-function migrateLegacySession(value: unknown): PersistedSessionV2 | null {
+function migrateLegacySession(value: unknown): PersistedSessionV3 | null {
   if (!isObject(value)) return null
 
   const legacy = value as LegacyPersistedSession
@@ -102,8 +106,12 @@ function migrateLegacySession(value: unknown): PersistedSessionV2 | null {
 export function migratePersistedSession(
   value: unknown
 ): PersistedSession | null {
-  if (isPersistedSessionOfVersion(value, 2)) {
+  if (isPersistedSessionOfVersion(value, 3)) {
     return value
+  }
+
+  if (isPersistedSessionOfVersion(value, 2)) {
+    return dropStaleAnalysis(value.game, value.ui, value.engine, true)
   }
 
   if (isPersistedSessionOfVersion(value, 1)) {
@@ -155,7 +163,7 @@ export function writePersistedSession(session: PersistedSessionInput): void {
   if (!isBrowserStorageAvailable()) return
 
   const payload: PersistedSession = {
-    schemaVersion: 2,
+    schemaVersion: SESSION_SCHEMA_VERSION,
     savedAt: new Date().toISOString(),
     ...session,
   }
