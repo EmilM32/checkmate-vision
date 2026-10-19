@@ -62,12 +62,45 @@ export const initialGameState: GameState = {
 
 // ── Reducer ──
 
-type GameAction = { type: "SET_STATE"; payload: GameState }
+type GameAction =
+  | { type: "SET_STATE"; payload: GameState }
+  | {
+      type: "ANNOTATE_MOVE"
+      index: number
+      patch: MoveAnalysisPatch
+      expectedFen?: string
+    }
 
-function gameReducer(_state: GameState, action: GameAction): GameState {
+// Annotations arrive asynchronously from the engine, sometimes several before
+// React re-renders, so they are applied to the latest state in the reducer.
+function annotateHistory(
+  state: GameState,
+  index: number,
+  patch: MoveAnalysisPatch,
+  expectedFen?: string
+): GameState {
+  const move = state.history[index - 1]
+  if (!move) return state
+  // Analysis computed for a position that is no longer at this index
+  // (the game changed meanwhile) must not be attached to another move.
+  if (expectedFen !== undefined && move.fen !== expectedFen) return state
+
+  const history = [...state.history]
+  history[index - 1] = { ...move, ...patch }
+  return { ...state, history }
+}
+
+function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "SET_STATE":
       return action.payload
+    case "ANNOTATE_MOVE":
+      return annotateHistory(
+        state,
+        action.index,
+        action.patch,
+        action.expectedFen
+      )
   }
 }
 
@@ -174,32 +207,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const annotateMove = useCallback(
     (index: number, patch: MoveAnalysisPatch, expectedFen?: string) => {
-      const { history, currentMoveIndex } = state
-      if (index < 1 || index > history.length) return
-
-      const historyIndex = index - 1
-      const move = history[historyIndex]
-      if (!move) return
-      // Analysis computed for a position that is no longer at this index
-      // (the game changed meanwhile) must not be attached to another move.
-      if (expectedFen !== undefined && move.fen !== expectedFen) return
-
-      const nextHistory = [...history]
-      nextHistory[historyIndex] = {
-        ...move,
-        ...patch,
-      }
-
-      dispatch({
-        type: "SET_STATE",
-        payload: {
-          ...state,
-          history: nextHistory,
-          currentMoveIndex,
-        },
-      })
+      dispatch({ type: "ANNOTATE_MOVE", index, patch, expectedFen })
     },
-    [state]
+    []
   )
 
   const setPositionFromFen = useCallback((fen: string): boolean => {

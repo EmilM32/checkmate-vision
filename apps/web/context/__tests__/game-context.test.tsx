@@ -134,6 +134,34 @@ describe("GameContext", () => {
     expect(updated?.delta).toBe(35)
   })
 
+  it("keeps every annotation issued before a re-render", () => {
+    const harness = renderGameHarness()
+    playMoves(harness)
+
+    // The engine can report two results before React re-renders; both calls
+    // then come from the same (stale) API object.
+    const api = harness.getApi()
+    act(() => {
+      api.annotateMove(1, movePatch())
+      api.annotateMove(2, { ...movePatch(), classification: "blunder" })
+    })
+
+    const { history } = harness.getApi().state
+    expect(history[0]?.classification).toBe("good")
+    expect(history[1]?.classification).toBe("blunder")
+  })
+
+  it("ignores annotations for a position no longer at that index", () => {
+    const harness = renderGameHarness()
+    playMoves(harness)
+
+    act(() => {
+      harness.getApi().annotateMove(1, movePatch(), "not-the-fen-of-e4")
+    })
+
+    expect(harness.getApi().state.history[0]?.classification).toBeNull()
+  })
+
   it("setPositionFromFen replaces position and clears move history", () => {
     const harness = renderGameHarness()
     const fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"

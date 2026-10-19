@@ -21,8 +21,15 @@ export type EngineWorkerStatus = "idle" | "initializing" | "ready" | "analyzing"
 type SearchMode = "live" | "batch"
 
 const DEBOUNCE_MS = 150
-const ANALYSIS_DEPTH = 20
-const MULTI_PV = 3
+// Live analysis streams results, so it can search deeper and show three
+// lines. Game analysis waits for every position: it only needs the gap
+// between the two best lines and a shallower search keeps it to a few
+// seconds per position in the single-threaded WASM build.
+const SEARCH_SETTINGS: Record<SearchMode, { depth: number; multiPv: number }> =
+  {
+    live: { depth: 20, multiPv: 3 },
+    batch: { depth: 16, multiPv: 2 },
+  }
 
 const PIECE_VALUES = {
   p: 1,
@@ -147,6 +154,7 @@ export function useEngineWorker() {
   const fenRef = useRef(gameState.fen)
   const searchFenRef = useRef<string | null>(null)
   const searchModeRef = useRef<SearchMode>("live")
+  const engineMultiPvRef = useRef<number | null>(null)
   const liveFenRef = useRef<string | null>(null)
   const handleMessageRef = useRef<((e: MessageEvent) => void) | null>(null)
   const latestEvalRef = useRef<EngineScore>(null)
@@ -214,13 +222,22 @@ export function useEngineWorker() {
         return
       }
 
+      const settings = SEARCH_SETTINGS[mode]
+      // Options may only change while the engine is idle, which is always
+      // the case here: a search starts only after the previous bestmove.
+      if (engineMultiPvRef.current !== settings.multiPv) {
+        engineMultiPvRef.current = settings.multiPv
+        worker.postMessage(
+          serializeCommand({
+            type: "setoption",
+            name: "MultiPV",
+            value: settings.multiPv,
+          })
+        )
+      }
       worker.postMessage(serializeCommand({ type: "position", fen }))
       worker.postMessage(
-        serializeCommand({
-          type: "go",
-          depth: ANALYSIS_DEPTH,
-          multipv: MULTI_PV,
-        })
+        serializeCommand({ type: "go", depth: settings.depth })
       )
     },
     [dispatch]
@@ -297,7 +314,24 @@ export function useEngineWorker() {
       const line = typeof e.data === "string" ? e.data : String(e.data)
 
       if (line === "uciok") {
-        workerRef.current?.postMessage(serializeCommand({ type: "isready" }))
+        const worker = workerRef.current
+        // Stockfish 10 defaults to Contempt 24, which biases every score
+        // towards the side to move and made evaluations swing by ~0.7 pawns
+        // from ply to ply. Analysis needs an unbiased evaluation.
+        worker?.postMessage(
+          serializeCommand({ type: "setoption", name: "Contempt", value: 0 })
+        )
+        // MultiPV is an engine option; "go ... multipv" is not valid UCI and
+        // was silently ignored, leaving a single line.
+        engineMultiPvRef.current = SEARCH_SETTINGS.live.multiPv
+        worker?.postMessage(
+          serializeCommand({
+            type: "setoption",
+            name: "MultiPV",
+            value: SEARCH_SETTINGS.live.multiPv,
+          })
+        )
+        worker?.postMessage(serializeCommand({ type: "isready" }))
         return
       }
 
@@ -506,6 +540,7 @@ export function useEngineWorker() {
     workerRef.current = null
     searchFenRef.current = null
     searchModeRef.current = "live"
+    engineMultiPvRef.current = null
     liveFenRef.current = null
     isAnalyzingRef.current = false
     waitingForStopRef.current = false
