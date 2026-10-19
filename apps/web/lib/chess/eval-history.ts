@@ -1,6 +1,8 @@
+import { DEFAULT_POSITION } from "chess.js"
 import type { MoveEntry } from "@/context/game-context"
 import type { EngineScore } from "@/context/engine-context"
 import type { MoveClassification } from "@/lib/chess/classification"
+import { formatPlyLabel, getMoveNumbering } from "@/lib/chess/move-numbering"
 import { getSideToMove } from "@/lib/engine/eval"
 
 export type EvalChartPoint = {
@@ -28,7 +30,12 @@ function toChartPawns(score: EngineScore, fenAfter: string): number {
   return clampPawns(score.value / 100)
 }
 
-export function buildEvalChartData(history: MoveEntry[]): EvalChartPoint[] {
+export function buildEvalChartData(
+  history: MoveEntry[],
+  initialFen: string = DEFAULT_POSITION
+): EvalChartPoint[] {
+  const numbering = getMoveNumbering(initialFen)
+
   const points: EvalChartPoint[] = [
     {
       moveIndex: 0,
@@ -43,7 +50,7 @@ export function buildEvalChartData(history: MoveEntry[]): EvalChartPoint[] {
     const moveIndex = index + 1
     points.push({
       moveIndex,
-      moveLabel: `${Math.ceil(moveIndex / 2)}`,
+      moveLabel: `${formatPlyLabel(moveIndex, numbering)} ${move.san}`,
       eval: toChartPawns(move.scoreAfter, move.fen),
       rawScore: move.scoreAfter,
       classification: move.classification,

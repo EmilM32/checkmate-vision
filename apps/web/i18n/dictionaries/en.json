@@ -107,5 +107,13 @@
     "label": "Language",
     "pl": "PL",
     "en": "EN"
+  },
+  "promotion": {
+    "choose": "Choose promotion piece",
+    "cancel": "Cancel promotion",
+    "q": "Queen",
+    "r": "Rook",
+    "b": "Bishop",
+    "n": "Knight"
   }
 }

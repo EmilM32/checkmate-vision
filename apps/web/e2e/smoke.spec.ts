@@ -96,3 +96,64 @@ test.describe("engine analysis", () => {
     })
   })
 })
+
+test.describe("game import and moves", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/")
+    await openImportInputs(page)
+  })
+
+  test("loads a PGN set up from FEN with player headers", async ({ page }) => {
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill(
+        [
+          '[White "Alice"]',
+          '[Black "Bob"]',
+          '[WhiteElo "2100"]',
+          '[Result "1/2-1/2"]',
+          '[SetUp "1"]',
+          '[FEN "4k3/8/8/8/8/8/4P3/4K3 b - - 0 40"]',
+          "",
+          "40... Kd7 { [%clk 0:01:30] } 41. e4 { [%clk 0:02:05] } Ke6 1/2-1/2",
+        ].join("\n")
+      )
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+
+    await expect(page.getByText("Alice", { exact: true })).toBeVisible()
+    await expect(page.getByText("Bob", { exact: true })).toBeVisible()
+    await expect(page.getByText("(2100)")).toBeVisible()
+    await expect(page.getByText("1:30")).toBeVisible()
+
+    const moveList = page.locator("ol:visible").first()
+    await expect(moveList.locator("li").first()).toHaveText(/^40\.…Kd7$/)
+    await expect(moveList.locator("li").nth(1)).toHaveText(/^41\.e4Ke6$/)
+    await expect(
+      page.locator("p:visible", { hasText: /^1\/2-1\/2$/ })
+    ).toBeVisible()
+  })
+
+  test("lets the player choose the promotion piece", async ({ page }) => {
+    await setFen(page, "8/4P1k1/8/8/8/8/8/4K3 w - - 0 1")
+
+    const from = await page.locator('[data-square="e7"]').boundingBox()
+    const to = await page.locator('[data-square="e8"]').boundingBox()
+    if (!from || !to) throw new Error("board squares not found")
+
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+      steps: 10,
+    })
+    await page.mouse.up()
+
+    const picker = page.getByRole("dialog", { name: "Wybierz figure promocji" })
+    await expect(picker).toBeVisible()
+    await picker.getByRole("button", { name: "Skoczek" }).click()
+
+    await expect(picker).toBeHidden()
+    await expect(
+      page.locator("ol:visible button", { hasText: "e8=N+" }).first()
+    ).toBeVisible()
+  })
+})
