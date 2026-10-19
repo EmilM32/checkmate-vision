@@ -79,6 +79,7 @@
   "errors": {
     "engineLoadFailed": "Nie udalo sie zaladowac silnika.",
     "engineCrashed": "Silnik niespodziewanie przestal dzialac.",
+    "engineNotReady": "Wlacz silnik, aby przeanalizowac partie.",
     "fenEmpty": "FEN nie moze byc pusty.",
     "fenInvalid": "Nieprawidlowy format FEN.",
     "pgnEmpty": "PGN nie moze byc pusty.",
@@ -118,5 +119,11 @@
     "r": "Wieza",
     "b": "Goniec",
     "n": "Skoczek"
+  },
+  "navigation": {
+    "first": "Pierwszy ruch",
+    "previous": "Poprzedni ruch",
+    "next": "Nastepny ruch",
+    "last": "Ostatni ruch"
   }
 }

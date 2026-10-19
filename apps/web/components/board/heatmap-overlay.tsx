@@ -507,6 +507,11 @@ export function HeatmapLegend() {
   const { state: gameState } = useGame()
   const { t } = useI18n()
 
+  const influenceDetails = useMemo(() => {
+    if (!uiState.showHeatmap || !uiState.selectedInfluenceSquare) return null
+    return buildSquareInfluence(gameState.fen, uiState.selectedInfluenceSquare)
+  }, [gameState.fen, uiState.selectedInfluenceSquare, uiState.showHeatmap])
+
   if (!uiState.showHeatmap) return null
 
   const modeLabel =
@@ -521,10 +526,6 @@ export function HeatmapLegend() {
     uiState.heatmapMode === "net"
       ? t("heatmap.netExample")
       : t("heatmap.splitExample")
-  const influenceDetails = useMemo(() => {
-    if (!uiState.showHeatmap || !uiState.selectedInfluenceSquare) return null
-    return buildSquareInfluence(gameState.fen, uiState.selectedInfluenceSquare)
-  }, [gameState.fen, uiState.selectedInfluenceSquare, uiState.showHeatmap])
 
   return (
     <div className="w-full overflow-y-auto rounded-md border border-border/70 bg-background/88 p-3 text-[11px] shadow-md">

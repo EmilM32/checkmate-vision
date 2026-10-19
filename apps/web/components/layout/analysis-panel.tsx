@@ -25,7 +25,7 @@ import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 
-export function AnalysisPanelPlaceholder() {
+export function AnalysisPanel() {
   const { t } = useI18n()
   const { state } = useGame()
   const {
@@ -41,7 +41,7 @@ export function AnalysisPanelPlaceholder() {
   const batch = engineState.batch
   const canAnalyze = useMemo(
     () => state.history.length > 0 && batch.status !== "running",
-    [state.history.length, batch.status],
+    [state.history.length, batch.status]
   )
 
   function handleAnalyzeBatch() {
@@ -140,14 +140,14 @@ export function AnalysisPanelPlaceholder() {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {t("inputs.firstLoadPgn")}
+              {state.history.length > 0
+                ? t("analysisLegend.analyzeGameDesc")
+                : t("inputs.firstLoadPgn")}
             </TooltipContent>
           </Tooltip>
         </div>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden p-0">
-        {/* TODO: Top 3 linie silnika (Principal Variations)
-            — dane z EngineContext.pvLines, aktualizowane w real-time przez Stockfish worker */}
         <div className="border-b border-border/50 px-4 py-3">
           <PVLines />
         </div>
@@ -177,13 +177,11 @@ export function AnalysisPanelPlaceholder() {
             />
           </div>
           {batch.lastError ? (
-            <p className="mt-1 text-xs text-destructive">{batch.lastError}</p>
+            <p className="mt-1 text-xs text-destructive">
+              {t(batch.lastError)}
+            </p>
           ) : null}
         </div>
-
-        {/* TODO: Lista ruchow partii (scrollowalna)
-            — klikniecie na ruch -> GameContext.goToMove(index)
-            — kolorowanie ruchow wg klasyfikacji (blunder=czerwony, brilliant=cyjan, itp.) */}
         <div className="min-h-32 flex-1 overflow-hidden px-4 py-3">
           <MoveList />
         </div>

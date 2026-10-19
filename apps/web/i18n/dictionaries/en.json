@@ -79,6 +79,7 @@
   "errors": {
     "engineLoadFailed": "The engine could not be loaded.",
     "engineCrashed": "The engine stopped unexpectedly.",
+    "engineNotReady": "Turn on the engine to analyze the game.",
     "fenEmpty": "FEN cannot be empty.",
     "fenInvalid": "Invalid FEN format.",
     "pgnEmpty": "PGN cannot be empty.",
@@ -118,5 +119,11 @@
     "r": "Rook",
     "b": "Bishop",
     "n": "Knight"
+  },
+  "navigation": {
+    "first": "First move",
+    "previous": "Previous move",
+    "next": "Next move",
+    "last": "Last move"
   }
 }

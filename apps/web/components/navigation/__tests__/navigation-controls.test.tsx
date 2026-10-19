@@ -24,6 +24,10 @@ vi.mock("@/hooks/use-game", () => ({
   }),
 }))
 
+vi.mock("@/hooks/use-i18n", () => ({
+  useI18n: () => ({ t: (key: string) => key }),
+}))
+
 vi.mock("@/hooks/use-engine", () => ({
   useEngine: () => ({
     cancelBatchAnalysis,
@@ -134,5 +138,20 @@ describe("NavigationControls", () => {
 
     expect(goToMove).not.toHaveBeenCalled()
     expect(cancelBatchAnalysis).not.toHaveBeenCalled()
+  })
+
+  it("labels the navigation buttons for assistive technology", () => {
+    render(<NavigationControls />)
+
+    expect(
+      screen
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label"))
+    ).toEqual([
+      "navigation.first",
+      "navigation.previous",
+      "navigation.next",
+      "navigation.last",
+    ])
   })
 })

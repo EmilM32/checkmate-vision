@@ -175,10 +175,13 @@ export function InteractiveChessboard() {
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [uiDispatch, uiState.selectedInfluenceSquare, uiState.showHeatmap])
 
-  useEffect(() => {
+  // Marks and a pending promotion belong to the position they were made in.
+  const [markedFen, setMarkedFen] = useState(state.fen)
+  if (markedFen !== state.fen) {
+    setMarkedFen(state.fen)
     setRightClickSquares((prev) => (prev.size > 0 ? new Set() : prev))
     setPendingPromotion(null)
-  }, [state.fen])
+  }
 
   const handlePieceDrop = useCallback(
     ({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs): boolean => {

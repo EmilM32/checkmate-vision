@@ -9,7 +9,11 @@ import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import type { MoveEntry } from "@/context/game-context"
-import { CLASSIFICATION_COLORS } from "@/lib/chess/classification"
+import {
+  CLASSIFICATION_COLORS,
+  CLASSIFICATION_LABEL_KEYS,
+  CLASSIFICATION_SYMBOLS,
+} from "@/lib/chess/classification"
 import {
   getMoveNumbering,
   getPlyColor,
@@ -58,24 +62,48 @@ function MoveButton({
   activeRef: RefObject<HTMLButtonElement | null>
   onSelect: (ply: number) => void
 }) {
-  const { classification } = entry.move
+  const { t } = useI18n()
+  const classification = showClassification ? entry.move.classification : null
+  const classificationLabel = classification
+    ? t(CLASSIFICATION_LABEL_KEYS[classification])
+    : null
 
   return (
     <button
       ref={isActive ? activeRef : undefined}
       onClick={() => onSelect(entry.ply)}
-      className={`cursor-pointer rounded px-1 text-left ${
+      title={classificationLabel ?? undefined}
+      aria-label={
+        classificationLabel
+          ? `${entry.move.san}, ${classificationLabel}`
+          : undefined
+      }
+      aria-current={isActive ? "step" : undefined}
+      className={`flex cursor-pointer items-center gap-1 rounded px-1 text-left ${
         isActive
           ? "bg-accent text-accent-foreground"
           : "text-foreground hover:bg-muted"
       }`}
-      style={
-        showClassification && classification && !isActive
-          ? { color: CLASSIFICATION_COLORS[classification] }
-          : undefined
-      }
     >
+      <span
+        aria-hidden="true"
+        className="size-1.5 shrink-0 rounded-full"
+        style={{
+          backgroundColor: classification
+            ? CLASSIFICATION_COLORS[classification]
+            : "transparent",
+        }}
+      />
       {entry.move.san}
+      {classification && CLASSIFICATION_SYMBOLS[classification] ? (
+        <span
+          aria-hidden="true"
+          className="font-bold"
+          style={{ color: CLASSIFICATION_COLORS[classification] }}
+        >
+          {CLASSIFICATION_SYMBOLS[classification]}
+        </span>
+      ) : null}
     </button>
   )
 }
