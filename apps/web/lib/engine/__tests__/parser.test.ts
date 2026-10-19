@@ -45,8 +45,7 @@ describe("parseInfoLine", () => {
   })
 
   it("parses negative cp score", () => {
-    const line =
-      "info depth 12 multipv 1 score cp -150 nps 800000 pv a7a6 b2b4"
+    const line = "info depth 12 multipv 1 score cp -150 nps 800000 pv a7a6 b2b4"
     const result = parseInfoLine(line)
 
     expect(result).toEqual({
@@ -59,8 +58,7 @@ describe("parseInfoLine", () => {
   })
 
   it("parses multipv 3", () => {
-    const line =
-      "info depth 10 multipv 3 score cp -20 nps 600000 pv g1f3 d7d5"
+    const line = "info depth 10 multipv 3 score cp -20 nps 600000 pv g1f3 d7d5"
     const result = parseInfoLine(line)
 
     expect(result).toEqual({

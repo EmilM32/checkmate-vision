@@ -76,6 +76,7 @@
     "batchIdle": "Batch analysis inactive"
   },
   "errors": {
+    "engineNotReady": "Turn on the engine to analyze the game.",
     "fenEmpty": "FEN cannot be empty.",
     "fenInvalid": "Invalid FEN format.",
     "pgnEmpty": "PGN cannot be empty.",

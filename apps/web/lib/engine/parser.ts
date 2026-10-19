@@ -1,4 +1,8 @@
-import type { EngineScore, ParsedBestMove, ParsedInfoLine } from "@/lib/engine/types"
+import type {
+  EngineScore,
+  ParsedBestMove,
+  ParsedInfoLine,
+} from "@/lib/engine/types"
 
 export function parseInfoLine(line: string): ParsedInfoLine | null {
   if (!line.startsWith("info ")) return null

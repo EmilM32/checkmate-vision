@@ -13,7 +13,7 @@ import {
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 
-type ToolbarPlaceholderProps = {
+type ToolbarProps = {
   onExport: () => void
   onNewAnalysis: () => void
 }
@@ -26,10 +26,7 @@ const TOOLBAR_ITEMS = [
   { key: "flip", icon: FlipVertical },
 ] as const
 
-export function ToolbarPlaceholder({
-  onExport,
-  onNewAnalysis,
-}: ToolbarPlaceholderProps) {
+export function Toolbar({ onExport, onNewAnalysis }: ToolbarProps) {
   const { locale, setLocale, isSwitchingLocale, t } = useI18n()
   const { state: uiState, dispatch } = useUI()
 

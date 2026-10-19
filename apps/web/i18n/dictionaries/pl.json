@@ -76,6 +76,7 @@
     "batchIdle": "Analiza batch nieaktywna"
   },
   "errors": {
+    "engineNotReady": "Wlacz silnik, aby przeanalizowac partie.",
     "fenEmpty": "FEN nie moze byc pusty.",
     "fenInvalid": "Nieprawidlowy format FEN.",
     "pgnEmpty": "PGN nie moze byc pusty.",

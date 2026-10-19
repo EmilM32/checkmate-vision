@@ -612,7 +612,7 @@ export function useEngineWorker() {
     if (!workerRef.current) {
       dispatch({
         type: "ENGINE_BATCH_ERROR",
-        error: "Silnik nie jest gotowy.",
+        error: "errors.engineNotReady",
       })
       return
     }

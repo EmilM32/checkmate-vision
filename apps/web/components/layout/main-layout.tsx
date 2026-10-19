@@ -12,13 +12,13 @@ import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 
 import { MoveList } from "@/components/analysis/move-list"
 import { EvalBar } from "@/components/analysis/eval-bar"
-import { EvalChartPlaceholder } from "@/components/analysis/eval-chart"
+import { EvalChart } from "@/components/analysis/eval-chart"
 import { PlayerBar } from "@/components/board/player-bar"
 import { HeatmapLegend } from "@/components/board/heatmap-overlay"
 import { AnalysisLegend } from "@/components/layout/analysis-legend"
-import { AnalysisPanelPlaceholder } from "@/components/layout/analysis-panel"
-import { BoardPanelPlaceholder } from "@/components/layout/board-panel"
-import { ToolbarPlaceholder } from "@/components/layout/toolbar"
+import { AnalysisPanel } from "@/components/layout/analysis-panel"
+import { BoardPanel } from "@/components/layout/board-panel"
+import { Toolbar } from "@/components/layout/toolbar"
 import { NavigationControls } from "@/components/navigation/navigation-controls"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
@@ -33,7 +33,7 @@ function MobileTabContent({ activeTab }: { activeTab: MobileTab }) {
   const { t } = useI18n()
 
   if (activeTab === "analysis") {
-    return <AnalysisPanelPlaceholder />
+    return <AnalysisPanel />
   }
 
   if (activeTab === "moves") {
@@ -49,10 +49,10 @@ function MobileTabContent({ activeTab }: { activeTab: MobileTab }) {
     )
   }
 
-  return <EvalChartPlaceholder />
+  return <EvalChart />
 }
 
-export function MainLayoutPlaceholder() {
+export function MainLayout() {
   const { t } = useI18n()
   const [mobileTab, setMobileTab] = useState<MobileTab>("analysis")
   const boardExportRef = useRef<HTMLElement>(null)
@@ -103,7 +103,7 @@ export function MainLayoutPlaceholder() {
                   <div className="flex items-stretch">
                     <EvalBar />
                     <div className="min-w-0 flex-1">
-                      <BoardPanelPlaceholder exportRef={boardExportRef} />
+                      <BoardPanel exportRef={boardExportRef} />
                     </div>
                   </div>
                   <div className="pl-7">
@@ -114,7 +114,7 @@ export function MainLayoutPlaceholder() {
 
               <div className="flex w-full flex-wrap items-center justify-between gap-2 px-1 py-1 lg:hidden">
                 <NavigationControls />
-                <ToolbarPlaceholder
+                <Toolbar
                   onExport={handleExport}
                   onNewAnalysis={handleNewAnalysis}
                 />
@@ -130,7 +130,7 @@ export function MainLayoutPlaceholder() {
                     transition={{ duration: 0.2, ease: "easeOut" }}
                     className="w-full overflow-hidden"
                   >
-                    <EvalChartPlaceholder />
+                    <EvalChart />
                   </motion.div>
                 ) : null}
               </AnimatePresence>
@@ -177,7 +177,7 @@ export function MainLayoutPlaceholder() {
 
           <div className="hidden w-full flex-wrap items-center justify-between gap-2 px-1 py-1 lg:flex">
             <NavigationControls />
-            <ToolbarPlaceholder
+            <Toolbar
               onExport={handleExport}
               onNewAnalysis={handleNewAnalysis}
             />
@@ -186,7 +186,7 @@ export function MainLayoutPlaceholder() {
 
         <div className="hidden w-85 shrink-0 lg:block">
           <div className="h-full overflow-y-auto pr-1">
-            <AnalysisPanelPlaceholder />
+            <AnalysisPanel />
           </div>
         </div>
       </motion.div>

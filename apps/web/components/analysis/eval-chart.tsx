@@ -42,7 +42,7 @@ function EvalDot(
   return <Dot cx={cx} cy={cy} r={3} fill={color} stroke={color} />
 }
 
-export function EvalChartPlaceholder() {
+export function EvalChart() {
   const { t } = useI18n()
   const { state, goToMove } = useGame()
   const { state: engineState } = useEngine()
