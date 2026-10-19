@@ -3,7 +3,7 @@ export type EngineCommand =
   | { type: "isready" }
   | { type: "position"; fen: string }
   | { type: "setoption"; name: string; value: string | number }
-  | { type: "go"; depth: number }
+  | { type: "go"; depth: number; movetimeMs?: number }
   | { type: "stop" }
 
 export function serializeCommand(command: EngineCommand) {
@@ -17,7 +17,10 @@ export function serializeCommand(command: EngineCommand) {
     case "setoption":
       return `setoption name ${command.name} value ${command.value}`
     case "go":
-      return `go depth ${command.depth}`
+      // With both limits the engine stops at whichever is reached first.
+      return command.movetimeMs === undefined
+        ? `go depth ${command.depth}`
+        : `go depth ${command.depth} movetime ${command.movetimeMs}`
     case "stop":
       return "stop"
     default:

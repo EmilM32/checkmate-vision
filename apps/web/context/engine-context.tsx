@@ -55,18 +55,14 @@ export type EngineState = {
   isAnalyzing: boolean
   guessRevealed: boolean
   batch: BatchAnalysisState
+  // i18n key of the last engine failure (load timeout, worker crash).
+  error: string | null
+  retryRequested: boolean
 }
 
-export type PersistableEngineState = Pick<
-  EngineState,
-  | "evaluation"
-  | "depth"
-  | "nps"
-  | "bestMove"
-  | "pvLines"
-  | "guessRevealed"
-  | "batch"
->
+// Only user choices are persisted: engine output is recomputed as soon as
+// the engine runs again, and a persisted batch could not resume anyway.
+export type PersistableEngineState = Pick<EngineState, "guessRevealed">
 
 export const initialEngineState: EngineState = {
   evaluation: null,
@@ -86,6 +82,8 @@ export const initialEngineState: EngineState = {
     cancelRequested: false,
     lastError: null,
   },
+  error: null,
+  retryRequested: false,
 }
 
 // ── Actions ──
@@ -96,6 +94,9 @@ export type EngineAction =
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
   | { type: "ENGINE_TERMINAL_POSITION"; score: EngineScore }
   | { type: "ENGINE_CLEAR_ANALYSIS" }
+  | { type: "ENGINE_READY" }
+  | { type: "ENGINE_ERROR"; error: string }
+  | { type: "ENGINE_RETRY_REQUEST" }
   | { type: "ENGINE_REVEAL_ANALYSIS" }
   | { type: "ENGINE_CONCEAL_ANALYSIS" }
   | {
@@ -176,6 +177,20 @@ export function engineReducer(
         pvLines: [],
         bestMove: null,
       }
+
+    case "ENGINE_READY":
+      return { ...state, error: null, retryRequested: false }
+
+    case "ENGINE_ERROR":
+      return {
+        ...state,
+        error: action.error,
+        isAnalyzing: false,
+        retryRequested: false,
+      }
+
+    case "ENGINE_RETRY_REQUEST":
+      return { ...state, retryRequested: true }
 
     case "ENGINE_CLEAR_ANALYSIS":
       return {
@@ -293,14 +308,16 @@ export function engineReducer(
       }
 
     case "ENGINE_RESTORE_STATE":
+      // Sessions saved by earlier versions also carry engine output; ignore it.
       return {
         ...state,
-        ...action.payload,
+        guessRevealed: action.payload.guessRevealed === true,
         isAnalyzing: false,
       }
 
     case "ENGINE_RESET":
-      return initialEngineState
+      // Keep the failure visible until the engine starts successfully.
+      return { ...initialEngineState, error: state.error }
   }
 }
 

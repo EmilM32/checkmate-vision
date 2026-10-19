@@ -40,3 +40,5 @@ npm-debug.log*
 .claude
 skills-lock.json
 .docs
+# Stockfish engine copied from node_modules by apps/web postinstall
+apps/web/public/stockfish/

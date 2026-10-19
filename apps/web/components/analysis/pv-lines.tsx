@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { Chess } from "chess.js"
+import { Button } from "@workspace/ui/components/button"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
@@ -47,7 +48,7 @@ function scoreColorClass(score: EngineScore | null): string {
 
 export function PVLines() {
   const { t } = useI18n()
-  const { state: engineState } = useEngine()
+  const { state: engineState, retryEngine } = useEngine()
   const { state: gameState } = useGame()
   const { state: uiState } = useUI()
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
@@ -63,6 +64,25 @@ export function PVLines() {
     return (
       <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
         {t("analysis.engineOff")}
+      </div>
+    )
+  }
+
+  if (engineState.error) {
+    return (
+      <div
+        role="alert"
+        className="flex items-center justify-between gap-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive"
+      >
+        <span>{t(engineState.error)}</span>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 shrink-0"
+          onClick={retryEngine}
+        >
+          {t("common.retry")}
+        </Button>
       </div>
     )
   }

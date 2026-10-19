@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   engineReducer,
   initialEngineState,
+  type PersistableEngineState,
   type BatchAnalysisItem,
 } from "@/context/engine-context"
 
@@ -95,18 +96,11 @@ describe("engineReducer batch analysis", () => {
   })
 
   it("preserves evaluation when starting fresh analysis", () => {
-    const withEval = engineReducer(initialEngineState, {
-      type: "ENGINE_RESTORE_STATE",
-      payload: {
-        evaluation: { type: "cp", value: 150 },
-        depth: 20,
-        nps: 1000000,
-        bestMove: "e2e4",
-        pvLines: [],
-        guessRevealed: false,
-        batch: initialEngineState.batch,
-      },
-    })
+    const withEval = {
+      ...initialEngineState,
+      evaluation: { type: "cp", value: 150 } as const,
+      depth: 20,
+    }
 
     const restarted = engineReducer(withEval, { type: "ENGINE_START_ANALYSIS" })
     expect(restarted.evaluation).toEqual({ type: "cp", value: 150 })
@@ -116,18 +110,11 @@ describe("engineReducer batch analysis", () => {
   })
 
   it("ignores low-depth evaluation updates", () => {
-    const withEval = engineReducer(initialEngineState, {
-      type: "ENGINE_RESTORE_STATE",
-      payload: {
-        evaluation: { type: "cp", value: 150 },
-        depth: 20,
-        nps: 0,
-        bestMove: null,
-        pvLines: [],
-        guessRevealed: false,
-        batch: initialEngineState.batch,
-      },
-    })
+    const withEval = {
+      ...initialEngineState,
+      evaluation: { type: "cp", value: 150 } as const,
+      depth: 20,
+    }
 
     const afterLowDepth = engineReducer(withEval, {
       type: "ENGINE_OUTPUT",
@@ -160,65 +147,53 @@ describe("engineReducer batch analysis", () => {
     expect(afterHighDepth.evaluation).toEqual({ type: "cp", value: 80 })
   })
 
-  it("restores persisted engine snapshot", () => {
+  it("restores only the guess reveal from a persisted snapshot", () => {
+    // Sessions saved by earlier versions also contain engine output.
+    const legacyPayload = {
+      guessRevealed: true,
+      evaluation: { type: "cp", value: 45 },
+      bestMove: "e2e4",
+      batch: { ...initialEngineState.batch, requestId: 321, status: "running" },
+    }
+
     const restored = engineReducer(initialEngineState, {
       type: "ENGINE_RESTORE_STATE",
-      payload: {
-        evaluation: { type: "cp", value: 45 },
-        depth: 16,
-        nps: 890000,
-        bestMove: "e2e4",
-        pvLines: [
-          {
-            id: 1,
-            score: { type: "cp", value: 45 },
-            pv: ["e2e4", "e7e5"],
-          },
-        ],
-        guessRevealed: true,
-        batch: {
-          requestId: 321,
-          queue: [],
-          total: 0,
-          completed: 0,
-          currentMoveIndex: null,
-          status: "done",
-          cancelRequested: false,
-          lastError: null,
-        },
-      },
+      payload: legacyPayload as PersistableEngineState,
     })
 
-    expect(restored.depth).toBe(16)
-    expect(restored.bestMove).toBe("e2e4")
     expect(restored.guessRevealed).toBe(true)
+    expect(restored.evaluation).toBeNull()
+    expect(restored.bestMove).toBeNull()
+    expect(restored.batch).toEqual(initialEngineState.batch)
     expect(restored.isAnalyzing).toBe(false)
   })
 
-  it("resets full engine state", () => {
-    const dirty = engineReducer(initialEngineState, {
-      type: "ENGINE_RESTORE_STATE",
-      payload: {
-        evaluation: { type: "cp", value: 120 },
-        depth: 10,
-        nps: 1000,
-        bestMove: "d2d4",
-        pvLines: [],
-        guessRevealed: true,
-        batch: {
-          requestId: 2,
-          queue: [],
-          total: 0,
-          completed: 0,
-          currentMoveIndex: null,
-          status: "done",
-          cancelRequested: false,
-          lastError: null,
-        },
-      },
-    })
+  it("resets engine state but keeps the last failure visible", () => {
+    const dirty = {
+      ...initialEngineState,
+      evaluation: { type: "cp", value: 120 } as const,
+      bestMove: "d2d4",
+      guessRevealed: true,
+      error: "errors.engineCrashed",
+    }
 
     const reset = engineReducer(dirty, { type: "ENGINE_RESET" })
-    expect(reset).toEqual(initialEngineState)
+    expect(reset).toEqual({
+      ...initialEngineState,
+      error: "errors.engineCrashed",
+    })
+  })
+
+  it("clears the failure once the engine is ready", () => {
+    const failed = engineReducer(initialEngineState, {
+      type: "ENGINE_ERROR",
+      error: "errors.engineLoadFailed",
+    })
+    const retrying = engineReducer(failed, { type: "ENGINE_RETRY_REQUEST" })
+    expect(retrying.retryRequested).toBe(true)
+
+    const ready = engineReducer(retrying, { type: "ENGINE_READY" })
+    expect(ready.error).toBeNull()
+    expect(ready.retryRequested).toBe(false)
   })
 })

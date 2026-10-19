@@ -1,5 +1,6 @@
 {
   "common": {
+    "retry": "Sprobuj ponownie",
     "fen": "FEN",
     "pgn": "PGN",
     "moves": "Ruchy",
@@ -76,6 +77,8 @@
     "batchIdle": "Analiza batch nieaktywna"
   },
   "errors": {
+    "engineLoadFailed": "Nie udalo sie zaladowac silnika.",
+    "engineCrashed": "Silnik niespodziewanie przestal dzialac.",
     "engineNotReady": "Wlacz silnik, aby przeanalizowac partie.",
     "fenEmpty": "FEN nie moze byc pusty.",
     "fenInvalid": "Nieprawidlowy format FEN.",

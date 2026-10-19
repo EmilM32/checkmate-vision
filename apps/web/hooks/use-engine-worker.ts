@@ -11,6 +11,7 @@ import {
 } from "@/lib/chess/classification"
 import { getSideToMove, toWhitePerspective } from "@/lib/engine/eval"
 import { parseInfoLine, parseBestMoveLine } from "@/lib/engine/parser"
+import { ENGINE_URL } from "@/lib/engine/engine-url"
 import { serializeCommand } from "@/lib/engine/worker"
 import type { BatchAnalysisItem, EngineScore } from "@/context/engine-context"
 
@@ -22,14 +23,18 @@ type SearchMode = "live" | "batch"
 
 const DEBOUNCE_MS = 150
 // Live analysis streams results, so it can search deeper and show three
-// lines. Game analysis waits for every position: it only needs the gap
-// between the two best lines and a shallower search keeps it to a few
-// seconds per position in the single-threaded WASM build.
-const SEARCH_SETTINGS: Record<SearchMode, { depth: number; multiPv: number }> =
-  {
-    live: { depth: 20, multiPv: 3 },
-    batch: { depth: 16, multiPv: 2 },
-  }
+// lines; the time cap stops it from running for minutes in endgames, where
+// depth grows slowly. Game analysis waits for every position: it only needs
+// the gap between the two best lines, and the time cap bounds a whole game.
+type SearchSettings = { depth: number; movetimeMs: number; multiPv: number }
+const SEARCH_SETTINGS: Record<SearchMode, SearchSettings> = {
+  live: { depth: 22, movetimeMs: 12_000, multiPv: 3 },
+  batch: { depth: 18, movetimeMs: 1_500, multiPv: 2 },
+}
+const HASH_MB = 32
+// The lite engine is ~1.9 MB; on a slow connection it can take a while, but
+// a worker that never answers "uci" should not leave the UI spinning.
+const ENGINE_START_TIMEOUT_MS = 20_000
 
 const PIECE_VALUES = {
   p: 1,
@@ -149,6 +154,7 @@ export function useEngineWorker() {
   const waitingForStopRef = useRef(false)
   const pendingFenRef = useRef<string | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const statusRef = useRef<EngineWorkerStatus>("idle")
   const annotateMoveRef = useRef(annotateMove)
   const fenRef = useRef(gameState.fen)
@@ -237,7 +243,11 @@ export function useEngineWorker() {
       }
       worker.postMessage(serializeCommand({ type: "position", fen }))
       worker.postMessage(
-        serializeCommand({ type: "go", depth: settings.depth })
+        serializeCommand({
+          type: "go",
+          depth: settings.depth,
+          movetimeMs: settings.movetimeMs,
+        })
       )
     },
     [dispatch]
@@ -315,11 +325,8 @@ export function useEngineWorker() {
 
       if (line === "uciok") {
         const worker = workerRef.current
-        // Stockfish 10 defaults to Contempt 24, which biases every score
-        // towards the side to move and made evaluations swing by ~0.7 pawns
-        // from ply to ply. Analysis needs an unbiased evaluation.
         worker?.postMessage(
-          serializeCommand({ type: "setoption", name: "Contempt", value: 0 })
+          serializeCommand({ type: "setoption", name: "Hash", value: HASH_MB })
         )
         // MultiPV is an engine option; "go ... multipv" is not valid UCI and
         // was silently ignored, leaving a single line.
@@ -336,6 +343,11 @@ export function useEngineWorker() {
       }
 
       if (line === "readyok") {
+        if (startTimeoutRef.current) {
+          clearTimeout(startTimeoutRef.current)
+          startTimeoutRef.current = null
+        }
+        dispatch({ type: "ENGINE_READY" })
         setStatus("ready")
         statusRef.current = "ready"
         startAnalysis(fenRef.current)
@@ -515,26 +527,14 @@ export function useEngineWorker() {
     [dispatch, startAnalysis, beginBatch, startBatchAtIndex, resumeLiveAnalysis]
   )
 
-  const init = useCallback(() => {
-    if (workerRef.current) return
-
-    setStatus("initializing")
-    statusRef.current = "initializing"
-
-    const worker = new Worker("/stockfish/stockfish.wasm.js")
-    workerRef.current = worker
-    worker.onmessage = handleMessage
-    worker.onerror = (err) => {
-      console.error("Stockfish worker error:", err)
-    }
-
-    worker.postMessage(serializeCommand({ type: "uci" }))
-  }, [handleMessage])
-
   const terminate = useCallback(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
       debounceTimerRef.current = null
+    }
+    if (startTimeoutRef.current) {
+      clearTimeout(startTimeoutRef.current)
+      startTimeoutRef.current = null
     }
     workerRef.current?.terminate()
     workerRef.current = null
@@ -562,6 +562,47 @@ export function useEngineWorker() {
     statusRef.current = "idle"
     dispatch({ type: "ENGINE_RESET" })
   }, [dispatch])
+
+  const fail = useCallback(
+    (error: string, cause?: unknown) => {
+      console.error("Stockfish engine failure:", error, cause)
+      terminate()
+      dispatch({ type: "ENGINE_ERROR", error })
+    },
+    [dispatch, terminate]
+  )
+
+  const init = useCallback(() => {
+    if (workerRef.current) return
+
+    setStatus("initializing")
+    statusRef.current = "initializing"
+
+    let worker: Worker
+    try {
+      worker = new Worker(ENGINE_URL)
+    } catch (cause) {
+      fail("errors.engineLoadFailed", cause)
+      return
+    }
+
+    workerRef.current = worker
+    worker.onmessage = handleMessage
+    worker.onerror = (event) => {
+      event.preventDefault()
+      fail(
+        statusRef.current === "initializing"
+          ? "errors.engineLoadFailed"
+          : "errors.engineCrashed",
+        event.message
+      )
+    }
+    startTimeoutRef.current = setTimeout(() => {
+      fail("errors.engineLoadFailed", "start timeout")
+    }, ENGINE_START_TIMEOUT_MS)
+
+    worker.postMessage(serializeCommand({ type: "uci" }))
+  }, [fail, handleMessage])
 
   // React to FEN changes with debounce
   useEffect(() => {

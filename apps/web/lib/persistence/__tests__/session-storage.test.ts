@@ -94,9 +94,7 @@ describe("session storage migration", () => {
       },
     ])
     expect(migrated?.ui.engineEnabled).toBe(true)
-    expect(migrated?.engine.evaluation).toBeNull()
-    expect(migrated?.engine.pvLines).toEqual([])
-    expect(migrated?.engine.batch).toEqual(initialEngineState.batch)
+    expect(migrated?.engine).toEqual({ guessRevealed: false })
   })
 
   it("rejects payload with an unknown schema version", () => {

@@ -42,6 +42,10 @@ function SessionPersistenceBridge() {
     })
   }, [restoreState, uiDispatch, engineDispatch])
 
+  // Depend on the persisted engine fields only: live engine output changes
+  // several times a second and would keep postponing the debounced save.
+  const { guessRevealed } = selectPersistableEngineState(engineState)
+
   useEffect(() => {
     if (!hasHydratedRef.current) return
 
@@ -49,12 +53,12 @@ function SessionPersistenceBridge() {
       writePersistedSession({
         game: gameState,
         ui: uiState,
-        engine: selectPersistableEngineState(engineState),
+        engine: { guessRevealed },
       })
     }, AUTOSAVE_DELAY_MS)
 
     return () => window.clearTimeout(timeoutId)
-  }, [gameState, uiState, engineState])
+  }, [gameState, uiState, guessRevealed])
 
   return null
 }

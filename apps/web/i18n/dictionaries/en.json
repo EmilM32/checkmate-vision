@@ -1,5 +1,6 @@
 {
   "common": {
+    "retry": "Try again",
     "fen": "FEN",
     "pgn": "PGN",
     "moves": "Moves",
@@ -76,6 +77,8 @@
     "batchIdle": "Batch analysis inactive"
   },
   "errors": {
+    "engineLoadFailed": "The engine could not be loaded.",
+    "engineCrashed": "The engine stopped unexpectedly.",
     "engineNotReady": "Turn on the engine to analyze the game.",
     "fenEmpty": "FEN cannot be empty.",
     "fenInvalid": "Invalid FEN format.",

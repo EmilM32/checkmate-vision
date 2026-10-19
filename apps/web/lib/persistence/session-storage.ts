@@ -1,7 +1,6 @@
-import {
-  initialEngineState,
-  type EngineState,
-  type PersistableEngineState,
+import type {
+  EngineState,
+  PersistableEngineState,
 } from "@/context/engine-context"
 import type { GameState } from "@/context/game-context"
 import type { UIState } from "@/context/ui-context"
@@ -77,15 +76,7 @@ function dropStaleAnalysis(
       ),
     },
     ui,
-    engine: {
-      ...engine,
-      evaluation: null,
-      depth: 0,
-      nps: 0,
-      bestMove: null,
-      pvLines: [],
-      batch: initialEngineState.batch,
-    },
+    engine: { guessRevealed: engine.guessRevealed === true },
   }
 }
 
@@ -135,15 +126,7 @@ function isBrowserStorageAvailable() {
 export function selectPersistableEngineState(
   engineState: EngineState
 ): PersistableEngineState {
-  return {
-    evaluation: engineState.evaluation,
-    depth: engineState.depth,
-    nps: engineState.nps,
-    bestMove: engineState.bestMove,
-    pvLines: engineState.pvLines,
-    guessRevealed: engineState.guessRevealed,
-    batch: engineState.batch,
-  }
+  return { guessRevealed: engineState.guessRevealed }
 }
 
 export function readPersistedSession(): PersistedSession | null {

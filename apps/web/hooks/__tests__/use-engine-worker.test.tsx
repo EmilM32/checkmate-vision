@@ -2,8 +2,10 @@ import React from "react"
 import { act, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { EngineConnector } from "@/components/analysis/engine-connector"
 import { EngineProvider, useEngineContext } from "@/context/engine-context"
 import { GameProvider, useGameContext } from "@/context/game-context"
+import { UIProvider, useUIContext } from "@/context/ui-context"
 import { useEngineWorker } from "@/hooks/use-engine-worker"
 
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -31,6 +33,10 @@ class FakeStockfish {
 
   emit(line: string) {
     this.onmessage?.(new MessageEvent("message", { data: line }))
+  }
+
+  crash(message: string) {
+    this.onerror?.(new ErrorEvent("error", { message }))
   }
 }
 
@@ -137,7 +143,7 @@ describe("useEngineWorker", () => {
 
     expect(harness.stockfish.commands).toEqual([
       "uci",
-      "setoption name Contempt value 0",
+      "setoption name Hash value 32",
       "setoption name MultiPV value 3",
       "isready",
     ])
@@ -206,7 +212,7 @@ describe("useEngineWorker", () => {
     // round-trip.
     expect(harness.stockfish.commands.slice(commandCount)).toEqual([
       `position fen ${START_FEN}`,
-      "go depth 20",
+      "go depth 22 movetime 12000",
     ])
   })
 
@@ -261,15 +267,15 @@ describe("useEngineWorker", () => {
       expect(lastCommands(harness, 3)).toEqual([
         "setoption name MultiPV value 2",
         `position fen ${START_FEN}`,
-        "go depth 16",
+        "go depth 18 movetime 1500",
       ])
 
       emit(harness, "info depth 12 multipv 1 score cp 90 pv d2d4")
       emit(harness, "bestmove d2d4")
       expect(lastCommands(harness, 3)).toEqual([
-        "go depth 16",
+        "go depth 18 movetime 1500",
         `position fen ${AFTER_E4_FEN}`,
-        "go depth 16",
+        "go depth 18 movetime 1500",
       ])
       emit(harness, "info depth 12 multipv 1 score cp -10 pv c7c5")
 
@@ -290,7 +296,7 @@ describe("useEngineWorker", () => {
       expect(lastCommands(harness, 3)).toEqual([
         "setoption name MultiPV value 3",
         `position fen ${AFTER_E4_FEN}`,
-        "go depth 20",
+        "go depth 22 movetime 12000",
       ])
       expect(harness.current.engine.state.isAnalyzing).toBe(true)
     })
@@ -314,7 +320,7 @@ describe("useEngineWorker", () => {
       expect(harness.current.engine.state.batch.status).toBe("cancelled")
       expect(lastCommands(harness)).toEqual([
         `position fen ${START_FEN}`,
-        "go depth 20",
+        "go depth 22 movetime 12000",
       ])
     })
 
@@ -349,6 +355,85 @@ describe("useEngineWorker", () => {
       expect(lastCommands(harness, 2)[0]).toBe(
         `position fen ${harness.current.game.state.fen}`
       )
+    })
+  })
+
+  describe("failures", () => {
+    it("reports a worker that fails while loading", () => {
+      const harness = renderEngineHarness()
+      act(() => {
+        harness.current.worker.start()
+      })
+      act(() => {
+        harness.stockfish.crash("wasm fetch failed")
+      })
+
+      expect(harness.current.engine.state.error).toBe("errors.engineLoadFailed")
+      expect(harness.current.worker.status).toBe("idle")
+    })
+
+    it("reports an engine that never becomes ready", () => {
+      const harness = renderEngineHarness()
+      act(() => {
+        harness.current.worker.start()
+      })
+      emit(harness, "uciok")
+      act(() => {
+        vi.advanceTimersByTime(20_000)
+      })
+
+      expect(harness.current.engine.state.error).toBe("errors.engineLoadFailed")
+    })
+
+    it("reports a crash after the engine was running", () => {
+      const harness = renderEngineHarness()
+      startEngine(harness)
+      act(() => {
+        harness.stockfish.crash("RuntimeError: unreachable")
+      })
+
+      expect(harness.current.engine.state.error).toBe("errors.engineCrashed")
+      expect(harness.current.engine.state.isAnalyzing).toBe(false)
+    })
+
+    it("restarts the engine on retry and clears the error once ready", () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <GameProvider>
+          <EngineProvider>
+            <UIProvider>
+              <EngineConnector />
+              {children}
+            </UIProvider>
+          </EngineProvider>
+        </GameProvider>
+      )
+      const { result } = renderHook(
+        () => ({ engine: useEngineContext(), ui: useUIContext() }),
+        { wrapper }
+      )
+
+      act(() => {
+        result.current.ui.dispatch({ type: "UI_TOGGLE_ENGINE" })
+      })
+      act(() => {
+        FakeStockfish.instances.at(-1)!.crash("boom")
+      })
+      expect(result.current.engine.state.error).toBe("errors.engineLoadFailed")
+
+      act(() => {
+        result.current.engine.dispatch({ type: "ENGINE_RETRY_REQUEST" })
+      })
+      expect(FakeStockfish.instances).toHaveLength(2)
+      // The message stays until the new engine is actually ready.
+      expect(result.current.engine.state.error).toBe("errors.engineLoadFailed")
+
+      act(() => {
+        FakeStockfish.instances[1]!.emit("uciok")
+      })
+      act(() => {
+        FakeStockfish.instances[1]!.emit("readyok")
+      })
+      expect(result.current.engine.state.error).toBeNull()
     })
   })
 })
