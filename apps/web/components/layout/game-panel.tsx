@@ -23,11 +23,17 @@ export function GamePanel() {
   const { state: uiState } = useUI()
 
   return (
-    <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden py-0">
-      <CardHeader className="border-b border-border/50 py-4">
-        <CardTitle>{t("common.game")}</CardTitle>
+    // Same card and header spacing as the analysis panel, so both titles
+    // sit at the same height, centred above their dividers.
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden">
+      <CardHeader className="border-b border-border/50">
+        {/* h-7: the height of the analysis panel's title row (its theme
+            and language buttons). */}
+        <div className="flex h-7 items-center">
+          <CardTitle>{t("common.game")}</CardTitle>
+        </div>
       </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4">
         <AnimatePresence initial={false}>
           {uiState.showEvalChart ? (
             <motion.div
