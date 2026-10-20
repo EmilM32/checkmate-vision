@@ -127,6 +127,13 @@ test.describe("engine analysis", () => {
     ).toBeVisible()
     expect(await accuracy("white")).toBeGreaterThan(await accuracy("black"))
 
+    // Shift + → jumps from the start to the first error (?!, ? or ??).
+    await page.keyboard.press("Home")
+    await page.keyboard.press("Shift+ArrowRight")
+    await expect(
+      page.locator('ol:visible button[aria-current="step"]')
+    ).toContainText("?")
+
     // Guess mode hides the answers, the summary included.
     await page.getByRole("button", { name: "Zgaduj", exact: true }).click()
     await expect(

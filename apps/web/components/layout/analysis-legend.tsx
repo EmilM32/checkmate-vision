@@ -1,6 +1,7 @@
 "use client"
 
-import { Cpu, Eye, EyeOff, MoveRight, Play } from "lucide-react"
+import { Fragment } from "react"
+import { Cpu, Eye, EyeOff, Keyboard, MoveRight, Play } from "lucide-react"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useI18n } from "@/hooks/use-i18n"
@@ -74,6 +75,23 @@ export function AnalysisLegend() {
           {t("inputs.analyzeGame")}
         </p>
         <p className="mt-1">{t("analysisLegend.analyzeGameDesc")}</p>
+      </div>
+
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+        <p className="inline-flex items-center gap-1.5 font-semibold text-foreground">
+          <Keyboard className="size-3" />
+          {t("analysisLegend.keysTitle")}
+        </p>
+        <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
+          {(["moves", "ends", "errors", "theme"] as const).map((key) => (
+            <Fragment key={key}>
+              <dt className="font-mono text-foreground">
+                {t(`analysisLegend.keys.${key}.keys`)}
+              </dt>
+              <dd>{t(`analysisLegend.keys.${key}.action`)}</dd>
+            </Fragment>
+          ))}
+        </dl>
       </div>
 
       {(uiState.engineEnabled || uiState.guessMode) && (
