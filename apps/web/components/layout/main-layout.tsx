@@ -16,6 +16,7 @@ import { EvalChart } from "@/components/analysis/eval-chart"
 import { PlayerBar } from "@/components/board/player-bar"
 import { AnalysisPanel } from "@/components/layout/analysis-panel"
 import { BoardPanel } from "@/components/layout/board-panel"
+import { GamePanel } from "@/components/layout/game-panel"
 import { Toolbar } from "@/components/layout/toolbar"
 import { NavigationControls } from "@/components/navigation/navigation-controls"
 import { useEngine } from "@/hooks/use-engine"
@@ -87,17 +88,23 @@ export function MainLayout() {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="flex w-full flex-col gap-3 lg:h-full lg:flex-row lg:items-stretch lg:justify-center lg:gap-4"
       >
+        {/* Wide screens: chart and moves left of the board. */}
+        <div className="hidden w-64 shrink-0 min-[1800px]:w-96 xl:block 2xl:w-80">
+          <GamePanel />
+        </div>
+
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
           <div className="flex min-h-0 min-w-0 flex-1 gap-4">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {/* Size container: the board group takes the largest square
                   that fits next to the eval bar (w-7) and between the two
-                  player bars (h-9 each), whatever the rest of the layout.
+                  player bars (h-9 each) and, from lg, the controls row
+                  (2.5rem), whatever the rest of the layout.
                   Below lg the page scrolls instead: the board follows the
                   width, capped so it stays within the viewport height
                   together with the bars and the controls under it. */}
               <div className="[container-type:inline-size] flex justify-center lg:[container-type:size] lg:min-h-0 lg:flex-1 lg:items-center">
-                <div className="flex w-[min(100cqw,calc(100svh-9rem+1.75rem))] flex-col lg:w-[min(100cqw,calc(100cqh-4.5rem+1.75rem))]">
+                <div className="flex w-[min(100cqw,calc(100svh-9rem+1.75rem))] flex-col lg:w-[min(100cqw,calc(100cqh-7rem+1.75rem))]">
                   <div className="pl-7">
                     <PlayerBar color={topPlayerColor} />
                   </div>
@@ -109,6 +116,14 @@ export function MainLayout() {
                   </div>
                   <div className="pl-7">
                     <PlayerBar color={bottomPlayerColor} />
+                  </div>
+                  {/* Controls span the board's width, not the column's. */}
+                  <div className="hidden h-10 items-center justify-between gap-2 pt-2 pl-7 lg:flex">
+                    <NavigationControls />
+                    <Toolbar
+                      onExport={handleExport}
+                      onNewAnalysis={handleNewAnalysis}
+                    />
                   </div>
                 </div>
               </div>
@@ -129,7 +144,7 @@ export function MainLayout() {
                     animate={{ height: "9rem", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="w-full overflow-hidden"
+                    className="w-full overflow-hidden xl:hidden"
                   >
                     <EvalChart />
                   </motion.div>
@@ -168,17 +183,9 @@ export function MainLayout() {
               </div>
             </div>
           </div>
-
-          <div className="hidden w-full flex-wrap items-center justify-between gap-2 px-1 py-1 lg:flex">
-            <NavigationControls />
-            <Toolbar
-              onExport={handleExport}
-              onNewAnalysis={handleNewAnalysis}
-            />
-          </div>
         </div>
 
-        <div className="hidden w-85 shrink-0 lg:block">
+        <div className="hidden w-85 shrink-0 min-[1800px]:w-96 lg:block">
           <div className="h-full overflow-y-auto pr-1">
             <AnalysisPanel />
           </div>

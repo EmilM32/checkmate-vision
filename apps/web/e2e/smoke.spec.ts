@@ -239,3 +239,29 @@ test.describe("mobile layout", () => {
     expect(overflow).toBeLessThanOrEqual(0)
   })
 })
+
+test.describe("wide layout", () => {
+  test.use({ viewport: { width: 1440, height: 900 } })
+
+  test("keeps the board size when the evaluation chart opens", async ({
+    page,
+  }) => {
+    await page.goto("/")
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Nf3 Nc6")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+
+    // Moves are listed in the game panel left of the board.
+    await expect(page.getByText("Partia", { exact: true })).toBeVisible()
+    await expect(
+      page.locator("ol:visible button", { hasText: /^Nc6$/ })
+    ).toHaveCount(1)
+
+    const board = page.locator("main section").first()
+    const before = (await board.boundingBox())!.width
+    await page.getByRole("button", { name: "Wykres", exact: true }).click()
+    await expect(page.locator(".recharts-surface:visible")).toBeVisible()
+    expect((await board.boundingBox())!.width).toBe(before)
+  })
+})

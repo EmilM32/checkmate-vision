@@ -52,6 +52,10 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   scrolls there, and the toolbar wraps instead of overflowing.
 
 ### Changed
+- Three columns from 1280 px: a "Game" panel left of the board holds the evaluation chart
+  and the full move list, so opening the chart no longer shrinks the board (at 1440×900
+  the board is 744 px with the chart open, 596 px before). The navigation and toolbar
+  row spans the board's width; side panels widen from 1800 px.
 - Each engine line in the analysis panel has a bar in its arrow's colour (green best,
   blue second, orange third), and the help popover explains the arrows.
 - Engine arrows are drawn as one filled shape each, with a head sized to the board (it
