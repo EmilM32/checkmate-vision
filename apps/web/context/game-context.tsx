@@ -29,6 +29,10 @@ export type MoveEntry = {
   classification: MoveClassification | null
   // Mover's remaining clock time in seconds (from PGN `[%clk]` comments).
   clock?: number | null
+  // The engine's preferred move in the position before (UCI) and its score,
+  // from game analysis.
+  bestMove?: string | null
+  bestScore?: EngineScore
 }
 
 export type MoveAnalysisPatch = {
@@ -36,6 +40,8 @@ export type MoveAnalysisPatch = {
   scoreAfter: EngineScore
   delta: number | null
   classification: MoveClassification | null
+  bestMove?: string | null
+  bestScore?: EngineScore
 }
 
 // A side line played from the main line: its moves follow the first
@@ -198,6 +204,8 @@ type GameContextValue = {
   stepBack: () => void
   goToEnd: () => void
   deleteVariation: () => void
+  // Starts a variation with a UCI move from main-line position `branchIndex`.
+  startVariation: (branchIndex: number, uci: string) => boolean
   newGame: () => void
   restoreState: (snapshot: GameState) => boolean
 }
@@ -427,6 +435,41 @@ export function GameProvider({ children }: { children: ReactNode }) {
     })
   }, [state])
 
+  const startVariation = useCallback(
+    (branchIndex: number, uci: string): boolean => {
+      const chess = chessRef.current
+      const { history } = state
+      if (branchIndex < 0 || branchIndex > history.length) return false
+
+      replayMoves(chess, history, branchIndex, state.initialFen)
+      let move
+      try {
+        move = chess.move({
+          from: uci.slice(0, 2),
+          to: uci.slice(2, 4),
+          promotion: uci[4],
+        })
+      } catch {
+        return false
+      }
+
+      dispatch({
+        type: "SET_STATE",
+        payload: deriveState(chess, {
+          ...state,
+          currentMoveIndex: branchIndex,
+          variation: {
+            branchIndex,
+            moves: [newMoveEntry(move.san, move.after)],
+          },
+          variationIndex: 1,
+        }),
+      })
+      return true
+    },
+    [state]
+  )
+
   const undo = useCallback(() => {
     stepBack()
   }, [stepBack])
@@ -492,6 +535,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       stepBack,
       goToEnd,
       deleteVariation,
+      startVariation,
       newGame,
       restoreState,
     }),
@@ -508,6 +552,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       stepBack,
       goToEnd,
       deleteVariation,
+      startVariation,
       newGame,
       restoreState,
     ]

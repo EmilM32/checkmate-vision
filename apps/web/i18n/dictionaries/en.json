@@ -146,5 +146,13 @@
     "label": "Variation",
     "backToGame": "Back to the game",
     "delete": "Delete variation"
+  },
+  "moveCard": {
+    "title": "This move",
+    "eval": "Eval: {{before}} → {{after}}",
+    "winChanceLoss": "−{{points}} pts win chance",
+    "best": "Best was",
+    "wasBest": "The engine's best move.",
+    "playBest": "Play as variation"
   }
 }

@@ -27,7 +27,7 @@ import {
   getPlyColor,
   getPlyMoveNumber,
 } from "@/lib/chess/move-numbering"
-import { formatEval } from "@/lib/engine/eval"
+import { formatSignedEval } from "@/lib/engine/eval"
 
 const CHART_MARGIN_TOP = 8
 const X_AXIS_HEIGHT = 24
@@ -113,7 +113,7 @@ export function EvalChart() {
     const point = payload[0]?.payload
     if (!point) return null
 
-    const evalLabel = point.rawScore ? formatEval(point.rawScore) : "0.0"
+    const evalLabel = point.rawScore ? formatSignedEval(point.rawScore) : "0.0"
     const classificationLabel = point.classification
       ? t(CLASSIFICATION_LABEL_KEYS[point.classification])
       : t("analysis.noClassification")

@@ -53,3 +53,14 @@ export function formatEval(score: EngineScore): string {
   }
   return (Math.abs(score.value) / 100).toFixed(1)
 }
+
+/** "+1.5", "-0.8", "M+3", "M-2" (White's perspective), or "#" when mated. */
+export function formatSignedEval(score: EngineScore): string {
+  if (!score) return "—"
+  if (score.type === "mate") {
+    if (score.value === 0) return "#"
+    return `M${score.value > 0 ? "+" : ""}${score.value}`
+  }
+  const value = score.value / 100
+  return value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1)
+}

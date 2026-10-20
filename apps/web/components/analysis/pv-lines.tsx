@@ -10,6 +10,7 @@ import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import type { EngineScore } from "@/context/engine-context"
 import { getTerminalScore } from "@/lib/chess/move-analysis"
+import { formatSignedEval } from "@/lib/engine/eval"
 import { PV_LINE_COLORS, PV_LINE_LABEL_KEYS } from "@/lib/chess/pv-line-colors"
 
 function uciToSan(fen: string, uciMoves: string[]): string[] {
@@ -27,16 +28,6 @@ function uciToSan(fen: string, uciMoves: string[]): string[] {
     }
   }
   return san
-}
-
-function formatScore(score: EngineScore | null): string {
-  if (!score) return "—"
-  if (score.type === "mate") {
-    const sign = score.value > 0 ? "+" : ""
-    return `M${sign}${score.value}`
-  }
-  const value = score.value / 100
-  return value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1)
 }
 
 function scoreColorClass(score: EngineScore | null): string {
@@ -151,7 +142,7 @@ export function PVLines() {
               data-testid="pv-score"
               className={`shrink-0 font-bold ${scoreColorClass(line.score)}`}
             >
-              {formatScore(line.score)}
+              {formatSignedEval(line.score)}
             </span>
             <span className="truncate text-foreground/80">
               {line.san.join(" ") || "…"}

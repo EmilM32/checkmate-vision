@@ -16,6 +16,7 @@ export function useGame() {
     stepBack,
     goToEnd,
     deleteVariation,
+    startVariation,
     newGame,
     restoreState,
   } = useGameContext()
@@ -33,6 +34,7 @@ export function useGame() {
     stepBack,
     goToEnd,
     deleteVariation,
+    startVariation,
     newGame,
     restoreState,
   }
