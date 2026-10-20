@@ -1,14 +1,15 @@
 "use client"
 
-import { useEffect, useRef, type RefObject } from "react"
+import { Fragment, useEffect, useRef, type RefObject } from "react"
 
 import { ScrollArea } from "@workspace/ui/components/scroll-area"
+import { CornerUpLeft, X } from "lucide-react"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
-import type { MoveEntry } from "@/context/game-context"
+import type { MoveEntry, Variation } from "@/context/game-context"
 import {
   CLASSIFICATION_COLORS,
   CLASSIFICATION_LABEL_KEYS,
@@ -108,9 +109,86 @@ function MoveButton({
   )
 }
 
+// The side line under the main move it replaces, Lichess-style:
+// "(10... Nd7 11. Qb3 Qe7)", with buttons to return to the game or drop it.
+function VariationLine({
+  variation,
+  initialFen,
+  activeIndex,
+  activeRef,
+  onSelect,
+  onBack,
+  onDelete,
+}: {
+  variation: Variation
+  initialFen: string
+  activeIndex: number | null
+  activeRef: RefObject<HTMLButtonElement | null>
+  onSelect: (index: number) => void
+  onBack: () => void
+  onDelete: () => void
+}) {
+  const { t } = useI18n()
+  const numbering = getMoveNumbering(initialFen)
+
+  return (
+    <li
+      className="col-span-3 my-0.5 flex flex-wrap items-center gap-x-1 gap-y-0.5 rounded-md border-l-2 border-primary/50 bg-muted/40 py-1 pr-1 pl-2"
+      aria-label={t("variation.label")}
+      data-testid="variation"
+    >
+      {variation.moves.map((move, i) => {
+        const index = i + 1
+        const ply = variation.branchIndex + index
+        const isWhite = getPlyColor(ply, numbering) === "white"
+        const number = getPlyMoveNumber(ply, numbering)
+        const prefix = isWhite ? `${number}.` : i === 0 ? `${number}...` : null
+        const isActive = activeIndex === index
+        return (
+          <span key={index} className="inline-flex items-center gap-0.5">
+            {prefix ? (
+              <span className="text-muted-foreground">{prefix}</span>
+            ) : null}
+            <button
+              ref={isActive ? activeRef : undefined}
+              onClick={() => onSelect(index)}
+              aria-current={isActive ? "step" : undefined}
+              className={`cursor-pointer rounded px-1 ${
+                isActive
+                  ? "bg-accent text-accent-foreground"
+                  : "text-foreground/80 hover:bg-muted"
+              }`}
+            >
+              {move.san}
+            </button>
+          </span>
+        )
+      })}
+      <span className="ml-auto inline-flex items-center gap-0.5">
+        <button
+          onClick={onBack}
+          title={t("variation.backToGame")}
+          aria-label={t("variation.backToGame")}
+          className="cursor-pointer rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <CornerUpLeft className="size-3.5" />
+        </button>
+        <button
+          onClick={onDelete}
+          title={t("variation.delete")}
+          aria-label={t("variation.delete")}
+          className="cursor-pointer rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <X className="size-3.5" />
+        </button>
+      </span>
+    </li>
+  )
+}
+
 export function MoveList() {
   const { t } = useI18n()
-  const { state, goToMove } = useGame()
+  const { state, goToMove, goToVariationMove, deleteVariation } = useGame()
   const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
@@ -118,7 +196,7 @@ export function MoveList() {
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
-  }, [state.currentMoveIndex])
+  }, [state.currentMoveIndex, state.variationIndex])
 
   if (state.history.length === 0) {
     return (
@@ -130,12 +208,21 @@ export function MoveList() {
 
   const rows = buildMoveRows(state.history, state.initialFen)
   const handleSelect = (ply: number) => goToMove(ply)
+  // The variation is listed under the row of the main move it replaces.
+  const variation = state.variation
+  const variationRow = variation
+    ? (rows.find((row) =>
+        [row.white?.ply, row.black?.ply].includes(variation.branchIndex + 1)
+      ) ?? rows.at(-1))
+    : undefined
 
   const renderCell = (entry: PlyEntry | undefined) =>
     entry ? (
       <MoveButton
         entry={entry}
-        isActive={state.currentMoveIndex === entry.ply}
+        isActive={
+          state.variationIndex === null && state.currentMoveIndex === entry.ply
+        }
         showClassification={analysisVisible}
         activeRef={activeRef}
         onSelect={handleSelect}
@@ -148,16 +235,26 @@ export function MoveList() {
     <ScrollArea className="h-full">
       <ol className="grid grid-cols-[2.5rem_1fr_1fr] gap-y-0.5 font-mono text-xs">
         {rows.map((row) => (
-          <li
-            key={row.moveNumber}
-            className="col-span-3 grid grid-cols-subgrid"
-          >
-            <span className="pr-1 text-right text-muted-foreground">
-              {row.moveNumber}.
-            </span>
-            {renderCell(row.white)}
-            {row.black ? renderCell(row.black) : <span />}
-          </li>
+          <Fragment key={row.moveNumber}>
+            <li className="col-span-3 grid grid-cols-subgrid">
+              <span className="pr-1 text-right text-muted-foreground">
+                {row.moveNumber}.
+              </span>
+              {renderCell(row.white)}
+              {row.black ? renderCell(row.black) : <span />}
+            </li>
+            {variation && row === variationRow ? (
+              <VariationLine
+                variation={variation}
+                initialFen={state.initialFen}
+                activeIndex={state.variationIndex}
+                activeRef={activeRef}
+                onSelect={goToVariationMove}
+                onBack={() => goToMove(variation.branchIndex)}
+                onDelete={deleteVariation}
+              />
+            ) : null}
+          </Fragment>
         ))}
       </ol>
       {state.meta.result ? (

@@ -14,25 +14,21 @@ import { useI18n } from "@/hooks/use-i18n"
 
 export function NavigationControls() {
   const { t } = useI18n()
-  const { state, goToMove } = useGame()
+  const { state, goToMove, stepForward, stepBack, goToEnd } = useGame()
 
-  const atStart = state.currentMoveIndex === 0
-  const atEnd = state.currentMoveIndex === state.history.length
+  // Inside a variation the arrows walk the variation; its first move steps
+  // back to the main line.
+  const inVariation = state.variation !== null && state.variationIndex !== null
+  const atStart = !inVariation && state.currentMoveIndex === 0
+  const atEnd = inVariation
+    ? state.variationIndex === state.variation!.moves.length
+    : state.currentMoveIndex === state.history.length
 
   // Game analysis runs in its own workers, so browsing does not cancel it.
   const goFirst = useCallback(() => goToMove(0), [goToMove])
-  const goPrev = useCallback(
-    () => goToMove(state.currentMoveIndex - 1),
-    [goToMove, state.currentMoveIndex]
-  )
-  const goNext = useCallback(
-    () => goToMove(state.currentMoveIndex + 1),
-    [goToMove, state.currentMoveIndex]
-  )
-  const goLast = useCallback(
-    () => goToMove(state.history.length),
-    [goToMove, state.history.length]
-  )
+  const goPrev = stepBack
+  const goNext = stepForward
+  const goLast = goToEnd
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {

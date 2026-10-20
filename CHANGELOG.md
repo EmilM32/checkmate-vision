@@ -7,6 +7,10 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 ## [Unreleased]
 
 ### Added
+- Variations: a move played mid-game no longer deletes the rest of the game. A different
+  move starts a side line shown under the move it replaces (the game's own move just
+  steps forward); arrows and keys walk the variation, with buttons to return to the game
+  or delete it. One variation is kept at a time.
 - The board highlights the last move played, and an analysed move shows its class
   (!!, !, ?!, ?, ??) in the corner of its target square.
 - Promotion piece picker (queen, rook, bishop, knight) instead of automatic queening.

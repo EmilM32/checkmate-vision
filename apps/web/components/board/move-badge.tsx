@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 
+import { getCurrentLine } from "@/context/game-context"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
@@ -25,23 +26,14 @@ export function MoveBadge() {
   const { state: uiState } = useUI()
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
 
-  const move = state.history[state.currentMoveIndex - 1]
-  const classification = move?.classification ?? null
+  const line = useMemo(() => getCurrentLine(state), [state])
+  const classification = line.at(-1)?.classification ?? null
   const target = useMemo(() => {
-    const lastMove = getLastMove(
-      state.history,
-      state.currentMoveIndex,
-      state.initialFen
-    )
+    const lastMove = getLastMove(line, line.length, state.initialFen)
     return lastMove
       ? squareCenterUnits(lastMove.to, uiState.boardFlipped)
       : null
-  }, [
-    state.history,
-    state.currentMoveIndex,
-    state.initialFen,
-    uiState.boardFlipped,
-  ])
+  }, [line, state.initialFen, uiState.boardFlipped])
 
   if (!analysisVisible || !classification || !target) return null
   const symbol = CLASSIFICATION_SYMBOLS[classification]

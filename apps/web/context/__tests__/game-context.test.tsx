@@ -93,7 +93,7 @@ describe("GameContext", () => {
     expect(harness.getApi().state.currentMoveIndex).toBe(2)
   })
 
-  it("truncates future history when making move after navigating back", () => {
+  it("keeps the game and starts a variation for a different move mid-game", () => {
     const harness = renderGameHarness()
 
     playMoves(harness)
@@ -108,9 +108,116 @@ describe("GameContext", () => {
     })
 
     const state = harness.getApi().state
+    // The game itself is untouched.
+    expect(state.history.map((move) => move.san)).toEqual(["e4", "e5", "Nf3"])
+    expect(state.variation?.branchIndex).toBe(1)
+    expect(state.variation?.moves.map((move) => move.san)).toEqual(["d5"])
+    expect(state.variationIndex).toBe(1)
+    expect(state.currentMoveIndex).toBe(1)
+    expect(state.fen).toBe(
+      "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+    )
+  })
+
+  it("steps forward instead of branching when the game's move is played", () => {
+    const harness = renderGameHarness()
+
+    playMoves(harness)
+    act(() => {
+      harness.getApi().goToMove(1)
+    })
+    act(() => {
+      harness.getApi().makeMove("e7", "e5")
+    })
+
+    const state = harness.getApi().state
+    expect(state.variation).toBeNull()
     expect(state.currentMoveIndex).toBe(2)
     expect(state.history).toHaveLength(2)
-    expect(state.history[1]?.san).toBe("d5")
+  })
+
+  it("walks a variation and returns to the game from its first move", () => {
+    const harness = renderGameHarness()
+
+    playMoves(harness)
+    act(() => {
+      harness.getApi().goToMove(1)
+    })
+    act(() => {
+      harness.getApi().makeMove("c7", "c5")
+    })
+    act(() => {
+      harness.getApi().makeMove("g1", "f3")
+    })
+    expect(harness.getApi().state.variationIndex).toBe(2)
+
+    act(() => {
+      harness.getApi().stepBack()
+    })
+    expect(harness.getApi().state.variationIndex).toBe(1)
+
+    act(() => {
+      harness.getApi().stepBack()
+    })
+    const state = harness.getApi().state
+    // Back on the main line at the branch point; the variation stays listed.
+    expect(state.variationIndex).toBeNull()
+    expect(state.currentMoveIndex).toBe(1)
+    expect(state.variation?.moves).toHaveLength(2)
+
+    act(() => {
+      harness.getApi().goToVariationMove(2)
+    })
+    act(() => {
+      harness.getApi().goToEnd()
+    })
+    expect(harness.getApi().state.variationIndex).toBe(2)
+  })
+
+  it("replaces later variation moves when playing from inside it", () => {
+    const harness = renderGameHarness()
+
+    playMoves(harness)
+    act(() => {
+      harness.getApi().goToMove(1)
+    })
+    act(() => {
+      harness.getApi().makeMove("c7", "c5")
+    })
+    act(() => {
+      harness.getApi().makeMove("g1", "f3")
+    })
+    act(() => {
+      harness.getApi().goToVariationMove(1)
+    })
+    act(() => {
+      harness.getApi().makeMove("b1", "c3")
+    })
+
+    expect(
+      harness.getApi().state.variation?.moves.map((move) => move.san)
+    ).toEqual(["c5", "Nc3"])
+  })
+
+  it("deletes the variation and returns to its branch point", () => {
+    const harness = renderGameHarness()
+
+    playMoves(harness)
+    act(() => {
+      harness.getApi().goToMove(1)
+    })
+    act(() => {
+      harness.getApi().makeMove("c7", "c5")
+    })
+    act(() => {
+      harness.getApi().deleteVariation()
+    })
+
+    const state = harness.getApi().state
+    expect(state.variation).toBeNull()
+    expect(state.variationIndex).toBeNull()
+    expect(state.currentMoveIndex).toBe(1)
+    expect(state.history).toHaveLength(2)
   })
 
   it("annotateMove updates only valid move indexes", () => {
