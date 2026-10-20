@@ -153,38 +153,40 @@ export function AnalysisPanel() {
           <PVLines />
         </div>
 
-        <div className="border-b border-border/50 px-4 py-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              {batch.status === "running"
-                ? t("analysis.batchRunning", {
-                    completed: batch.completed,
-                    total: batch.total,
-                  })
-                : batch.status === "done"
-                  ? t("analysis.batchDone")
-                  : batch.status === "cancelled"
-                    ? t("analysis.batchCancelled")
-                    : batch.status === "error"
-                      ? t("analysis.batchError")
-                      : t("analysis.batchIdle")}
-            </span>
-            <span>{progressPercent}%</span>
-          </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
-            <div
-              className="h-full bg-primary transition-[width] duration-200 ease-out"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-          {batch.lastError ? (
-            <p className="mt-1 text-xs text-destructive">
-              {t(batch.lastError)}
-            </p>
+        {/* Game analysis progress (hidden until one is started) and the
+            summary of a fully analysed game. */}
+        <div className="space-y-2 border-b border-border/50 px-4 py-2 empty:hidden">
+          {batch.status !== "idle" ? (
+            <div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>
+                  {batch.status === "running"
+                    ? t("analysis.batchRunning", {
+                        completed: batch.completed,
+                        total: batch.total,
+                      })
+                    : batch.status === "done"
+                      ? t("analysis.batchDone")
+                      : batch.status === "cancelled"
+                        ? t("analysis.batchCancelled")
+                        : t("analysis.batchError")}
+                </span>
+                <span>{progressPercent}%</span>
+              </div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
+                <div
+                  className="h-full bg-primary transition-[width] duration-200 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              {batch.lastError ? (
+                <p className="mt-1 text-xs text-destructive">
+                  {t(batch.lastError)}
+                </p>
+              ) : null}
+            </div>
           ) : null}
-          <div className="mt-2 empty:hidden">
-            <GameSummary />
-          </div>
+          <GameSummary />
         </div>
         <div className="h-48 overflow-hidden px-4 py-3 lg:h-auto lg:min-h-32 lg:flex-1">
           <MoveList />

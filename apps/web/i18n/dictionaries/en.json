@@ -60,6 +60,8 @@
     "engineLines": "Engine Lines",
     "analyzing": "Analyzing...",
     "noAnalysis": "No analysis",
+    "checkmate": "Checkmate – game over",
+    "stalemate": "Stalemate – draw",
     "engineOff": "Engine is off",
     "engineRunningTip": "Engine is running — click to stop",
     "engineStartTip": "Start engine analysis",
@@ -69,11 +71,10 @@
     "noClassification": "No classification",
     "move": "Move",
     "eval": "Eval",
-    "batchRunning": "Analyzing... {{completed}}/{{total}}",
-    "batchDone": "Analysis done",
-    "batchCancelled": "Analysis cancelled",
-    "batchError": "Analysis error",
-    "batchIdle": "Batch analysis inactive"
+    "batchRunning": "Game analysis... {{completed}}/{{total}}",
+    "batchDone": "Game analysis done",
+    "batchCancelled": "Game analysis cancelled",
+    "batchError": "Game analysis failed"
   },
   "errors": {
     "engineLoadFailed": "The engine could not be loaded.",

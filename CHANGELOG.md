@@ -23,6 +23,12 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   number of brilliant, great, inaccurate, mistaken and blundered moves.
 
 ### Fixed
+- Polish texts had no diacritics because the font was loaded without its `latin-ext`
+  subset; the Polish dictionary is now written properly (and uses Lichess' terms:
+  niedokładność / błąd / gruby błąd).
+- A finished game shows "Checkmate – game over" or "Stalemate – draw" instead of
+  "No analysis"; the idle "Batch analysis inactive 0%" bar is gone (progress appears
+  once a game analysis starts); board coordinates are bolder and higher-contrast.
 - Engine scores were read from the side-to-move perspective as if they were White's:
   the eval bar, engine lines and move classification were inverted with Black to move.
 - Move classification on a shared cp/mate scale (forced mates are no longer penalised).

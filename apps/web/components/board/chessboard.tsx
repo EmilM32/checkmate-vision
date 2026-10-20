@@ -54,6 +54,15 @@ function isTypingTarget(target: EventTarget | null): boolean {
   )
 }
 
+const COORDINATE_ON_DARK_STYLE: React.CSSProperties = {
+  color: "#f6e7cf",
+  fontWeight: 600,
+}
+const COORDINATE_ON_LIGHT_STYLE: React.CSSProperties = {
+  color: "#8b5a34",
+  fontWeight: 600,
+}
+
 export function InteractiveChessboard() {
   const { state, makeMove } = useGame()
   const { state: uiState, dispatch: uiDispatch } = useUI()
@@ -226,6 +235,10 @@ export function InteractiveChessboard() {
           onSquareMouseDown: handleSquareMouseDown,
           onSquareClick: handleSquareClick,
           animationDurationInMs: 200,
+          // Bolder, higher-contrast coordinates than the library default,
+          // so they stay legible under the heatmap tint.
+          darkSquareNotationStyle: COORDINATE_ON_DARK_STYLE,
+          lightSquareNotationStyle: COORDINATE_ON_LIGHT_STYLE,
         }}
       />
       {pendingPromotion ? (

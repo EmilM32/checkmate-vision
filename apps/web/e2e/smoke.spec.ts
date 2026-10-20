@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
 async function openImportInputs(page: Page) {
-  await page.getByRole("button", { name: "Importuj partie" }).click()
+  await page.getByRole("button", { name: "Importuj partię" }).click()
   await expect(page.getByRole("button", { name: "Ustaw FEN" })).toBeVisible()
 }
 
@@ -16,7 +16,7 @@ test.describe("AI-10 smoke", () => {
     await page.goto("/")
 
     await expect(
-      page.getByRole("button", { name: "Analizuj partie" })
+      page.getByRole("button", { name: "Analizuj partię" })
     ).toBeVisible()
 
     await openImportInputs(page)
@@ -35,7 +35,7 @@ test.describe("AI-10 smoke", () => {
     )
 
     await expect(page.getByRole("button", { name: "Ustaw FEN" })).toBeEnabled()
-    await expect(page.locator('button[title="Obroc"]:visible')).toBeVisible()
+    await expect(page.locator('button[title="Obróć"]:visible')).toBeVisible()
   })
 
   test("loads PGN and enables move navigation", async ({ page }) => {
@@ -86,7 +86,7 @@ test.describe("engine analysis", () => {
       .locator('textarea[placeholder="Wklej PGN..."]:visible')
       .fill("1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#")
     await page.getByRole("button", { name: "Wczytaj PGN" }).click()
-    await page.getByRole("button", { name: "Analizuj partie" }).click()
+    await page.getByRole("button", { name: "Analizuj partię" }).click()
 
     // Browsing does not cancel game analysis, and the live engine analyses
     // the browsed position meanwhile.
@@ -96,7 +96,7 @@ test.describe("engine analysis", () => {
     ).toBeVisible({ timeout: 30_000 })
 
     await expect(
-      page.locator("span:visible", { hasText: /^Analiza zakonczona$/ })
+      page.locator("span:visible", { hasText: /^Analiza partii zakończona$/ })
     ).toBeVisible({ timeout: 45_000 })
     await expect
       .poll(() =>
@@ -192,7 +192,7 @@ test.describe("game import and moves", () => {
     })
     await page.mouse.up()
 
-    const picker = page.getByRole("dialog", { name: "Wybierz figure promocji" })
+    const picker = page.getByRole("dialog", { name: "Wybierz figurę promocji" })
     await expect(picker).toBeVisible()
     await picker.getByRole("button", { name: "Skoczek" }).click()
 

@@ -9,6 +9,7 @@ import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import type { EngineScore } from "@/context/engine-context"
+import { getTerminalScore } from "@/lib/chess/move-analysis"
 
 function uciToSan(fen: string, uciMoves: string[]): string[] {
   const chess = new Chess(fen)
@@ -59,6 +60,10 @@ export function PVLines() {
       san: uciToSan(gameState.fen, line.pv),
     }))
   }, [engineState.pvLines, gameState.fen])
+  const terminalScore = useMemo(
+    () => getTerminalScore(gameState.fen),
+    [gameState.fen]
+  )
 
   if (!uiState.engineEnabled) {
     return (
@@ -83,6 +88,17 @@ export function PVLines() {
         >
           {t("common.retry")}
         </Button>
+      </div>
+    )
+  }
+
+  // No engine lines exist for a finished game; say why instead.
+  if (terminalScore) {
+    return (
+      <div className="rounded-md bg-muted/50 px-3 py-2 text-xs font-medium text-foreground/80">
+        {terminalScore.type === "mate"
+          ? t("analysis.checkmate")
+          : t("analysis.stalemate")}
       </div>
     )
   }
