@@ -311,4 +311,35 @@ test.describe("variations", () => {
     await variation.getByRole("button", { name: "Usuń wariant" }).click()
     await expect(variation).toHaveCount(0)
   })
+
+  test("judges your own move in a variation with the engine on", async ({
+    page,
+  }) => {
+    await page.goto("/")
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Nf3 Nc6")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+    await page.getByRole("button", { name: "Silnik", exact: true }).click()
+
+    // After 1. e4 e5 play 2. Qh5 instead of the game's Nf3.
+    await page.keyboard.press("Home")
+    await page.keyboard.press("ArrowRight")
+    await page.keyboard.press("ArrowRight")
+    await expect(
+      page.locator("[data-testid=pv-score]:visible").first()
+    ).toBeVisible({ timeout: 30_000 })
+    const from = (await page.locator('[data-square="d1"]').boundingBox())!
+    const to = (await page.locator('[data-square="h5"]').boundingBox())!
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+      steps: 10,
+    })
+    await page.mouse.up()
+
+    const card = page.locator("[data-testid=move-card]:visible")
+    await expect(card).toContainText("Qh5", { timeout: 40_000 })
+    await expect(card).toContainText("Wybór silnika")
+  })
 })

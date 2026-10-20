@@ -24,6 +24,8 @@ const HASH_MB = 32
 export const ENGINE_START_TIMEOUT_MS = 20_000
 
 type PendingMoveClassification = {
+  // A move of the game, or one played in a variation.
+  target: "main" | "variation"
   moveIndex: number
   fenBefore: string
   fenAfter: string
@@ -44,7 +46,11 @@ function getLinesBefore(pending: PendingMoveClassification): EngineLine[] {
 /** The live engine: analyses the position on the board as it changes. */
 export function useEngineWorker() {
   const { dispatch } = useEngineContext()
-  const { state: gameState, annotateMove } = useGameContext()
+  const {
+    state: gameState,
+    annotateMove,
+    annotateVariationMove,
+  } = useGameContext()
 
   const [status, setStatus] = useState<EngineWorkerStatus>("idle")
 
@@ -56,6 +62,7 @@ export function useEngineWorker() {
   const startTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const statusRef = useRef<EngineWorkerStatus>("idle")
   const annotateMoveRef = useRef(annotateMove)
+  const annotateVariationMoveRef = useRef(annotateVariationMove)
   const fenRef = useRef(gameState.fen)
   const searchFenRef = useRef<string | null>(null)
   const handleMessageRef = useRef<((e: MessageEvent) => void) | null>(null)
@@ -78,7 +85,8 @@ export function useEngineWorker() {
 
   useEffect(() => {
     annotateMoveRef.current = annotateMove
-  }, [annotateMove])
+    annotateVariationMoveRef.current = annotateVariationMove
+  }, [annotateMove, annotateVariationMove])
 
   useEffect(() => {
     fenRef.current = gameState.fen
@@ -256,16 +264,25 @@ export function useEngineWorker() {
         // Only the search of the position reached by the move describes it;
         // a search stopped because of that move belongs to the previous one.
         if (pendingMove && pendingMove.fenAfter === searchFenRef.current) {
-          annotateMoveRef.current(
-            pendingMove.moveIndex,
-            buildMoveAnalysis({
-              fenBefore: pendingMove.fenBefore,
-              fenAfter: pendingMove.fenAfter,
-              linesBefore: getLinesBefore(pendingMove),
-              scoreAfter,
-            }),
-            pendingMove.fenAfter
-          )
+          const analysis = buildMoveAnalysis({
+            fenBefore: pendingMove.fenBefore,
+            fenAfter: pendingMove.fenAfter,
+            linesBefore: getLinesBefore(pendingMove),
+            scoreAfter,
+          })
+          if (pendingMove.target === "variation") {
+            annotateVariationMoveRef.current(
+              pendingMove.moveIndex,
+              analysis,
+              pendingMove.fenAfter
+            )
+          } else {
+            annotateMoveRef.current(
+              pendingMove.moveIndex,
+              analysis,
+              pendingMove.fenAfter
+            )
+          }
           pendingMoveRef.current = null
         }
 
@@ -371,18 +388,44 @@ export function useEngineWorker() {
     }
   }, [gameState.fen, requestAnalysis])
 
-  // A move played on the board is classified once its position is analysed.
+  // A move played on the board, in the game or in a variation, is
+  // classified once its position is analysed.
   useEffect(() => {
     const previous = previousGameRef.current
     const isOneNewMove =
       gameState.currentMoveIndex === previous.currentMoveIndex + 1 &&
       gameState.history.length === previous.history.length + 1
+    // A new variation, or one extended by a move from its end.
+    const previousVariationLength =
+      previous.variationIndex !== null && previous.variation
+        ? previous.variationIndex
+        : 0
+    const isNewVariationMove =
+      gameState.variation !== null &&
+      gameState.variationIndex !== null &&
+      gameState.variationIndex === gameState.variation.moves.length &&
+      gameState.variationIndex === previousVariationLength + 1 &&
+      (previousVariationLength > 0 ||
+        previous.currentMoveIndex === gameState.variation.branchIndex)
 
     if (isOneNewMove) {
       const moveIndex = gameState.currentMoveIndex
       const moveEntry = gameState.history[moveIndex - 1]
       if (moveEntry) {
         pendingMoveRef.current = {
+          target: "main",
+          moveIndex,
+          fenBefore: previous.fen,
+          fenAfter: moveEntry.fen,
+          scoreBefore: latestEvalRef.current,
+        }
+      }
+    } else if (isNewVariationMove) {
+      const moveIndex = gameState.variationIndex!
+      const moveEntry = gameState.variation!.moves[moveIndex - 1]
+      if (moveEntry && !moveEntry.classification) {
+        pendingMoveRef.current = {
+          target: "variation",
           moveIndex,
           fenBefore: previous.fen,
           fenAfter: moveEntry.fen,

@@ -171,8 +171,9 @@
     "title": "This move",
     "eval": "Eval: {{before}} → {{after}}",
     "winChanceLoss": "−{{points}} pts win chance",
-    "best": "Best was",
+    "best": "Engine's choice:",
     "wasBest": "The engine's best move.",
-    "playBest": "Play as variation"
+    "playBest": "Play as variation",
+    "enableEngine": "Turn the engine on to judge your move in the variation."
   }
 }
