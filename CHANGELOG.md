@@ -52,6 +52,9 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   scrolls there, and the toolbar wraps instead of overflowing.
 
 ### Changed
+- Engine arrows are drawn as one filled shape each, with a head sized to the board (it
+  was a thin line with a tiny marker head whose overlap doubled the opacity). Knight
+  moves get an L-shaped arrow; the best line is bolder and drawn on top.
 - First visit is calmer: the heatmap starts off, and the import section (PGN/FEN) is open
   while no game is loaded, with a hint in the empty move list. The engine still starts
   off, so a position can be worked out before looking at its evaluation.

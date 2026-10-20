@@ -5,7 +5,7 @@ type ParsedSquare = {
   rankIndex: number
 }
 
-type BoardPoint = {
+export type BoardPoint = {
   x: number
   y: number
 }
