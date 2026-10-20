@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
-import { Separator } from "@workspace/ui/components/separator"
 import {
   Tooltip,
   TooltipContent,
@@ -24,6 +23,7 @@ import { PVLines } from "@/components/analysis/pv-lines"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
+import { Preferences } from "@/components/layout/preferences"
 import { useUI } from "@/hooks/use-ui"
 
 export function AnalysisPanel() {
@@ -36,7 +36,10 @@ export function AnalysisPanel() {
     requestBatchAnalysis,
   } = useEngine()
   const { state: uiState, dispatch } = useUI()
-  const [showImportInputs, setShowImportInputs] = useState(false)
+  // Until the user toggles it, the import section is open while there is
+  // nothing to analyse, so loading a game is the obvious first step.
+  const [importToggled, setImportToggled] = useState<boolean | null>(null)
+  const showImportInputs = importToggled ?? state.history.length === 0
 
   const isRevealAvailable = uiState.guessMode && !engineState.guessRevealed
   const batch = engineState.batch
@@ -65,9 +68,10 @@ export function AnalysisPanel() {
 
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-hidden">
-      <CardHeader className="space-y-3 border-b border-border/50">
-        <div className="flex items-center justify-between">
+      <CardHeader className="space-y-2 border-b border-border/50">
+        <div className="flex items-center justify-between gap-2">
           <CardTitle>{t("common.analysis")}</CardTitle>
+          <Preferences />
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <Tooltip>
@@ -126,13 +130,12 @@ export function AnalysisPanel() {
               {t("analysis.revealTip")}
             </TooltipContent>
           </Tooltip>
-          <Separator orientation="vertical" className="mx-0.5 h-4" />
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="secondary"
                 size="sm"
-                className="h-7 gap-1.5 text-xs"
+                className="h-7 basis-full gap-1.5 text-xs"
                 disabled={!canAnalyze}
                 onClick={handleAnalyzeBatch}
               >
@@ -196,7 +199,8 @@ export function AnalysisPanel() {
         <div className="border-t border-border/50">
           <button
             type="button"
-            onClick={() => setShowImportInputs((prev) => !prev)}
+            onClick={() => setImportToggled(!showImportInputs)}
+            aria-expanded={showImportInputs}
             className="flex w-full items-center justify-between px-4 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             <span>{t("inputs.importGame")}</span>

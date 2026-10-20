@@ -2,7 +2,10 @@ import type { RefObject } from "react"
 
 import { InteractiveChessboard } from "@/components/board/chessboard"
 import { ArrowOverlay } from "@/components/board/arrow-overlay"
-import { HeatmapOverlay } from "@/components/board/heatmap-overlay"
+import {
+  HeatmapOverlay,
+  InfluenceSummary,
+} from "@/components/board/heatmap-overlay"
 
 type BoardPanelProps = {
   exportRef?: RefObject<HTMLElement | null>
@@ -17,6 +20,7 @@ export function BoardPanel({ exportRef }: BoardPanelProps) {
       <div className="pointer-events-none absolute inset-0">
         <HeatmapOverlay />
         <ArrowOverlay />
+        <InfluenceSummary />
       </div>
     </section>
   )

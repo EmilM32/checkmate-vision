@@ -23,8 +23,8 @@
   "heatmap": {
     "modeNet": "Kontrola netto",
     "modeSplit": "Kontrola osobno",
-    "modeNetShort": "NET",
-    "modeSplitShort": "SPLIT",
+    "modeNetShort": "Netto",
+    "modeSplitShort": "Osobno",
     "modeToggle": "Przełącz tryb heatmapy",
     "netHint": "Etykieta z plusem lub minusem pokazuje przewagę kontroli pola.",
     "splitHint": "Etykiety pokazują liczbę nacisków białych i czarnych w formacie białe:czarne.",
@@ -32,18 +32,18 @@
     "valueGuideBody": "Wartości nie są oceną silnika. Pokazują różnicę liczby figur kontrolujących dane pole.",
     "valuePlusExample": "białe mają o 4 więcej atakujących to pole niż czarne.",
     "valueMinusExample": "czarne mają o 5 więcej atakujących to pole niż białe.",
-    "netExample": "W trybie NET dodatnia liczba to presja białych, ujemna to presja czarnych.",
-    "splitExample": "W trybie SPLIT etykieta 3:1 znaczy: 3 ataki białych i 1 atak czarnych.",
+    "netExample": "W trybie Netto dodatnia liczba to presja białych, ujemna to presja czarnych.",
+    "splitExample": "W trybie Osobno etykieta 3:1 znaczy: 3 ataki białych i 1 atak czarnych.",
     "traceTitle": "Podgląd źródeł kontroli",
-    "traceHint": "Kliknij pole prawym przyciskiem myszy, aby zobaczyć figury, które na nie wpływają.",
+    "traceHint": "Alt + prawy przycisk myszy na polu pokazuje figury, które na nie wpływają.",
     "traceKeyboardHint": "Esc usuwa zaznaczenie, I włącza lub ukrywa strzałki podglądu.",
     "traceSelected": "Pole: {{square}}",
     "traceWhiteContrib": "Atakujące białe: {{count}}",
     "traceBlackContrib": "Atakujące czarne: {{count}}",
     "traceNet": "Bilans netto: {{balance}}",
-    "traceHidden": "Strzałki podglądu są ukryte. Naciśnij I, aby je pokazać.",
     "whitePressure": "Presja białych",
-    "blackPressure": "Presja czarnych"
+    "blackPressure": "Presja czarnych",
+    "traceHiddenShort": "strzałki ukryte, I pokazuje"
   },
   "inputs": {
     "pastePgn": "Wklej PGN...",
@@ -54,7 +54,7 @@
     "importGame": "Importuj partię"
   },
   "analysis": {
-    "noMovesYet": "Brak ruchów",
+    "noMovesYet": "Brak ruchów. Zagraj ruch na szachownicy albo wczytaj partię poniżej.",
     "guessEvalHidden": "Tryb zgadywania aktywny. Odkryj analizę, aby zobaczyć wykres oceny.",
     "guessLinesHidden": "Tryb zgadywania aktywny. Odkryj analizę, aby zobaczyć linie silnika.",
     "engineLines": "Linie silnika",
@@ -129,5 +129,12 @@
     "previous": "Poprzedni ruch",
     "next": "Następny ruch",
     "last": "Ostatni ruch"
+  },
+  "help": {
+    "open": "Pomoc: narzędzia i heatmapa"
+  },
+  "theme": {
+    "toggle": "Przełącz motyw",
+    "toggleHint": "Jasny / ciemny motyw (klawisz D)"
   }
 }

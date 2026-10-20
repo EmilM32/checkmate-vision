@@ -14,8 +14,6 @@ import { MoveList } from "@/components/analysis/move-list"
 import { EvalBar } from "@/components/analysis/eval-bar"
 import { EvalChart } from "@/components/analysis/eval-chart"
 import { PlayerBar } from "@/components/board/player-bar"
-import { HeatmapLegend } from "@/components/board/heatmap-overlay"
-import { AnalysisLegend } from "@/components/layout/analysis-legend"
 import { AnalysisPanel } from "@/components/layout/analysis-panel"
 import { BoardPanel } from "@/components/layout/board-panel"
 import { Toolbar } from "@/components/layout/toolbar"
@@ -167,13 +165,6 @@ export function MainLayout() {
                     </AnimatePresence>
                   </div>
                 </Tabs>
-              </div>
-            </div>
-
-            <div className="hidden w-85 shrink-0 flex-col gap-3 xl:flex">
-              <div className="flex-1 overflow-hidden">
-                <HeatmapLegend />
-                <AnalysisLegend />
               </div>
             </div>
           </div>

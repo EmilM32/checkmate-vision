@@ -26,6 +26,8 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 - Polish texts had no diacritics because the font was loaded without its `latin-ext`
   subset; the Polish dictionary is now written properly (and uses Lichess' terms:
   niedokładność / błąd / gruby błąd).
+- The heatmap help said a right-click shows the pieces influencing a square; it takes
+  Alt + right-click.
 - A finished game shows "Checkmate – game over" or "Stalemate – draw" instead of
   "No analysis"; the idle "Batch analysis inactive 0%" bar is gone (progress appears
   once a game analysis starts); board coordinates are bolder and higher-contrast.
@@ -45,6 +47,15 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   scrolls there, and the toolbar wraps instead of overflowing.
 
 ### Changed
+- First visit is calmer: the heatmap starts off, and the import section (PGN/FEN) is open
+  while no game is loaded, with a hint in the empty move list. The engine still starts
+  off, so a position can be worked out before looking at its evaluation.
+- The always-visible legend column is gone (the board gets its width back); the same
+  help is in a "?" popover in the toolbar. The control counts of the square picked with
+  Alt + right-click are shown over the board.
+- Toolbar icons have tooltips, accessible names and pressed states; the heatmap mode
+  reads "Netto/Osobno" ("Net/Split"). Theme and language switches sit in the analysis
+  panel header; the theme no longer needs the hidden D shortcut.
 - Moves are classified by the loss of win chance (Lichess' model) instead of raw
   centipawns, so the same loss weighs less in a decided position; thresholds 2 / 5 / 10 /
   20 points for best, good, inaccuracy and mistake. The opening leniency is gone.

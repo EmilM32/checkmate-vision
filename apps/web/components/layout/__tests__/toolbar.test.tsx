@@ -2,6 +2,8 @@ import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { TooltipProvider } from "@workspace/ui/components/tooltip"
+
 import { Toolbar } from "@/components/layout/toolbar"
 
 const dispatch = vi.fn()
@@ -67,6 +69,14 @@ vi.mock("@/hooks/use-i18n", () => ({
   }),
 }))
 
+function renderToolbar() {
+  render(
+    <TooltipProvider>
+      <Toolbar onExport={vi.fn()} onNewAnalysis={vi.fn()} />
+    </TooltipProvider>
+  )
+}
+
 describe("Toolbar", () => {
   afterEach(() => {
     cleanup()
@@ -93,13 +103,13 @@ describe("Toolbar", () => {
   })
 
   it("shows heatmap mode switch while heatmap is enabled", () => {
-    render(<Toolbar onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
+    renderToolbar()
 
     expect(screen.getByRole("button", { name: "NET" })).toBeTruthy()
   })
 
   it("cycles heatmap mode from net to split", () => {
-    render(<Toolbar onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
+    renderToolbar()
 
     fireEvent.click(screen.getByRole("button", { name: "NET" }))
 
@@ -115,7 +125,7 @@ describe("Toolbar", () => {
       showHeatmap: false,
     }
 
-    render(<Toolbar onExport={vi.fn()} onNewAnalysis={vi.fn()} />)
+    renderToolbar()
 
     expect(screen.queryByRole("button", { name: "NET" })).toBeNull()
   })

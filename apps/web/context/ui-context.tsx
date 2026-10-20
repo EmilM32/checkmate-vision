@@ -23,7 +23,7 @@ export type UIState = {
 }
 
 export const initialUIState: UIState = {
-  showHeatmap: true,
+  showHeatmap: false,
   heatmapMode: "net",
   showInfluenceTrace: true,
   selectedInfluenceSquare: null,

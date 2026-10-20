@@ -37,7 +37,7 @@ describe("UIContext", () => {
 
     const state = harness.getApi().state
     expect(state.showArrows).toBe(false)
-    expect(state.showHeatmap).toBe(false)
+    expect(state.showHeatmap).toBe(true)
     expect(state.heatmapMode).toBe("net")
     expect(state.showInfluenceTrace).toBe(false)
     expect(state.selectedInfluenceSquare).toBe("e4")
@@ -116,6 +116,7 @@ describe("UIContext", () => {
 
     act(() => {
       const { dispatch } = harness.getApi()
+      dispatch({ type: "UI_TOGGLE_HEATMAP" })
       dispatch({ type: "UI_SET_INFLUENCE_SQUARE", payload: "d4" })
       dispatch({ type: "UI_TOGGLE_HEATMAP" })
     })
