@@ -502,17 +502,10 @@ export function HeatmapOverlay() {
   )
 }
 
+/** How to read the heatmap; shown in the help popover. */
 export function HeatmapLegend() {
   const { state: uiState } = useUI()
-  const { state: gameState } = useGame()
   const { t } = useI18n()
-
-  const influenceDetails = useMemo(() => {
-    if (!uiState.showHeatmap || !uiState.selectedInfluenceSquare) return null
-    return buildSquareInfluence(gameState.fen, uiState.selectedInfluenceSquare)
-  }, [gameState.fen, uiState.selectedInfluenceSquare, uiState.showHeatmap])
-
-  if (!uiState.showHeatmap) return null
 
   const modeLabel =
     uiState.heatmapMode === "net"
@@ -528,7 +521,7 @@ export function HeatmapLegend() {
       : t("heatmap.splitExample")
 
   return (
-    <div className="w-full overflow-y-auto rounded-md border border-border/70 bg-background/88 p-3 text-[11px] shadow-md">
+    <div className="text-[11px]">
       <div className="flex items-center justify-between gap-2">
         <span className="font-semibold text-foreground">
           {t("toolbar.heatmap")}
@@ -538,69 +531,74 @@ export function HeatmapLegend() {
         </span>
       </div>
 
-      <p className="mt-2 leading-tight text-muted-foreground">{modeHint}</p>
+      <p className="mt-1.5 leading-snug text-muted-foreground">{modeHint}</p>
 
-      <div className="mt-3 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
         <p className="font-semibold text-foreground">
           {t("heatmap.valueGuideTitle")}
         </p>
         <p className="mt-1">{t("heatmap.valueGuideBody")}</p>
         <p className="mt-1">
-          <span className="font-semibold text-emerald-400">+4:</span>{" "}
+          <span className="font-semibold text-emerald-500">+4:</span>{" "}
           {t("heatmap.valuePlusExample")}
         </p>
         <p className="mt-1">
-          <span className="font-semibold text-red-400">-5:</span>{" "}
+          <span className="font-semibold text-red-500">-5:</span>{" "}
           {t("heatmap.valueMinusExample")}
         </p>
         <p className="mt-1">{modeExample}</p>
       </div>
 
-      <div className="mt-3 flex flex-col gap-2 text-[10px] text-muted-foreground">
-        <span className="inline-flex items-center gap-2">
-          <span className="size-2 shrink-0 rounded-full bg-emerald-600/80" />
-          <span>{t("heatmap.whitePressure")}</span>
-        </span>
-        <span className="inline-flex items-center gap-2">
-          <span className="size-2 shrink-0 rounded-full bg-red-600/80" />
-          <span>{t("heatmap.blackPressure")}</span>
-        </span>
-      </div>
-
-      <div className="mt-3 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
         <p className="font-semibold text-foreground">
           {t("heatmap.traceTitle")}
         </p>
-        {uiState.selectedInfluenceSquare && influenceDetails ? (
-          <>
-            <p className="mt-1">
-              {t("heatmap.traceSelected", {
-                square: uiState.selectedInfluenceSquare,
-              })}
-            </p>
-            <p className="mt-1">
-              {t("heatmap.traceWhiteContrib", {
-                count: influenceDetails.whiteControl,
-              })}
-            </p>
-            <p className="mt-1">
-              {t("heatmap.traceBlackContrib", {
-                count: influenceDetails.blackControl,
-              })}
-            </p>
-            <p className="mt-1">
-              {t("heatmap.traceNet", { balance: influenceDetails.balance })}
-            </p>
-          </>
-        ) : (
-          <p className="mt-1">{t("heatmap.traceHint")}</p>
-        )}
-
+        <p className="mt-1">{t("heatmap.traceHint")}</p>
         <p className="mt-1">{t("heatmap.traceKeyboardHint")}</p>
-        {!uiState.showInfluenceTrace ? (
-          <p className="mt-1">{t("heatmap.traceHidden")}</p>
-        ) : null}
       </div>
+    </div>
+  )
+}
+
+/** Control counts of the square picked with a right click, over the board. */
+export function InfluenceSummary() {
+  const { state: uiState } = useUI()
+  const { state: gameState } = useGame()
+  const { t } = useI18n()
+
+  const influenceDetails = useMemo(() => {
+    if (!uiState.showHeatmap || !uiState.selectedInfluenceSquare) return null
+    return buildSquareInfluence(gameState.fen, uiState.selectedInfluenceSquare)
+  }, [gameState.fen, uiState.selectedInfluenceSquare, uiState.showHeatmap])
+
+  if (!influenceDetails || !uiState.selectedInfluenceSquare) return null
+
+  return (
+    <div
+      className="absolute top-1.5 left-1/2 z-10 -translate-x-1/2 rounded-full bg-background/90 px-3 py-1 text-[11px] whitespace-nowrap text-foreground shadow-md ring-1 ring-foreground/10"
+      data-testid="influence-summary"
+    >
+      <span className="font-semibold">
+        {t("heatmap.traceSelected", {
+          square: uiState.selectedInfluenceSquare,
+        })}
+      </span>
+      {" · "}
+      {t("heatmap.traceWhiteContrib", {
+        count: influenceDetails.whiteControl,
+      })}
+      {" · "}
+      {t("heatmap.traceBlackContrib", {
+        count: influenceDetails.blackControl,
+      })}
+      {" · "}
+      {t("heatmap.traceNet", { balance: influenceDetails.balance })}
+      {!uiState.showInfluenceTrace ? (
+        <span className="text-muted-foreground">
+          {" "}
+          ({t("heatmap.traceHiddenShort")})
+        </span>
+      ) : null}
     </div>
   )
 }

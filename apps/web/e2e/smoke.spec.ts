@@ -1,7 +1,11 @@
 import { expect, test, type Page } from "@playwright/test"
 
+// The import section starts open while no game is loaded.
 async function openImportInputs(page: Page) {
-  await page.getByRole("button", { name: "Importuj partię" }).click()
+  const toggle = page.getByRole("button", { name: "Importuj partię" })
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+    await toggle.click()
+  }
   await expect(page.getByRole("button", { name: "Ustaw FEN" })).toBeVisible()
 }
 
@@ -35,7 +39,7 @@ test.describe("AI-10 smoke", () => {
     )
 
     await expect(page.getByRole("button", { name: "Ustaw FEN" })).toBeEnabled()
-    await expect(page.locator('button[title="Obróć"]:visible')).toBeVisible()
+    await expect(page.getByRole("button", { name: "Obróć" })).toBeVisible()
   })
 
   test("loads PGN and enables move navigation", async ({ page }) => {

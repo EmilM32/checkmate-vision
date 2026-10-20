@@ -11,11 +11,8 @@ export function AnalysisLegend() {
   const { state: engineState } = useEngine()
   const { t } = useI18n()
 
-  if (!uiState.engineEnabled && !uiState.guessMode) return null
-  if (uiState.showHeatmap) return null
-
   return (
-    <div className="w-full overflow-y-auto rounded-md border border-border/70 bg-background/88 p-3 text-[11px] shadow-md">
+    <div className="text-[11px]">
       <div className="flex items-center justify-between gap-2">
         <span className="font-semibold text-foreground">
           {t("analysisLegend.title")}

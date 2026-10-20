@@ -23,8 +23,8 @@
   "heatmap": {
     "modeNet": "Net control",
     "modeSplit": "Split control",
-    "modeNetShort": "NET",
-    "modeSplitShort": "SPLIT",
+    "modeNetShort": "Net",
+    "modeSplitShort": "Split",
     "modeToggle": "Switch heatmap mode",
     "netHint": "Signed labels show who controls the square more strongly.",
     "splitHint": "Labels show white:black control counts for contested squares.",
@@ -32,18 +32,18 @@
     "valueGuideBody": "These numbers are not engine eval. They show the control difference on a square.",
     "valuePlusExample": "white has 4 more attackers on that square than black.",
     "valueMinusExample": "black has 5 more attackers on that square than white.",
-    "netExample": "In NET mode, positive means white pressure and negative means black pressure.",
-    "splitExample": "In SPLIT mode, a 3:1 label means 3 white attacks and 1 black attack.",
+    "netExample": "In Net mode, positive means white pressure and negative means black pressure.",
+    "splitExample": "In Split mode, a 3:1 label means 3 white attacks and 1 black attack.",
     "traceTitle": "Control source trace",
-    "traceHint": "Right-click a board square to reveal pieces influencing that square.",
+    "traceHint": "Alt + right-click a square to reveal the pieces influencing it.",
     "traceKeyboardHint": "Esc clears selection, I toggles trace arrows.",
     "traceSelected": "Square: {{square}}",
     "traceWhiteContrib": "White attackers: {{count}}",
     "traceBlackContrib": "Black attackers: {{count}}",
     "traceNet": "Net balance: {{balance}}",
-    "traceHidden": "Trace arrows are hidden. Press I to show them.",
     "whitePressure": "White pressure",
-    "blackPressure": "Black pressure"
+    "blackPressure": "Black pressure",
+    "traceHiddenShort": "arrows hidden, I shows them"
   },
   "inputs": {
     "pastePgn": "Paste PGN...",
@@ -54,7 +54,7 @@
     "importGame": "Import game"
   },
   "analysis": {
-    "noMovesYet": "No moves yet",
+    "noMovesYet": "No moves yet. Play a move on the board or load a game below.",
     "guessEvalHidden": "Guess mode active. Reveal analysis to inspect evaluation chart.",
     "guessLinesHidden": "Guess mode active. Reveal analysis to view engine lines.",
     "engineLines": "Engine Lines",
@@ -129,5 +129,12 @@
     "previous": "Previous move",
     "next": "Next move",
     "last": "Last move"
+  },
+  "help": {
+    "open": "Help: tools and heatmap"
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "toggleHint": "Light / dark theme (D key)"
   }
 }
