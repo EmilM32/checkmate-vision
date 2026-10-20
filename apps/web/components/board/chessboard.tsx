@@ -11,6 +11,7 @@ import { PromotionPicker } from "@/components/board/promotion-picker"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useUI } from "@/hooks/use-ui"
+import { getLastMove } from "@/lib/chess/last-move"
 import { isPromotionMove, type PromotionPiece } from "@/lib/chess/promotion"
 
 const Chessboard = dynamic(
@@ -24,6 +25,11 @@ const Chessboard = dynamic(
 const HIGHLIGHT_STYLE: React.CSSProperties = {
   background: "radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)",
   boxShadow: "inset 0 0 1px 4px rgba(255, 170, 0, 0.6)",
+}
+
+// The move that led to the shown position (Lichess-like yellow-green tint).
+const LAST_MOVE_STYLE: React.CSSProperties = {
+  backgroundColor: "rgba(155, 199, 0, 0.41)",
 }
 
 const RIGHT_CLICK_HIGHLIGHT_STYLE: React.CSSProperties = {
@@ -79,11 +85,21 @@ export function InteractiveChessboard() {
   const bestMoveUci =
     engineState.pvLines[0]?.pv[0] ?? engineState.bestMove ?? null
 
+  const lastMove = useMemo(
+    () => getLastMove(state.history, state.currentMoveIndex, state.initialFen),
+    [state.history, state.currentMoveIndex, state.initialFen]
+  )
+
   const squareStyles = useMemo<Record<string, React.CSSProperties>>(() => {
     const styles: Record<string, React.CSSProperties> = {}
 
+    if (lastMove) {
+      styles[lastMove.from] = LAST_MOVE_STYLE
+      styles[lastMove.to] = LAST_MOVE_STYLE
+    }
+
     for (const sq of rightClickSquares) {
-      styles[sq] = RIGHT_CLICK_HIGHLIGHT_STYLE
+      styles[sq] = { ...styles[sq], ...RIGHT_CLICK_HIGHLIGHT_STYLE }
     }
 
     if (
@@ -110,6 +126,7 @@ export function InteractiveChessboard() {
   }, [
     analysisVisible,
     bestMoveUci,
+    lastMove,
     rightClickSquares,
     uiState.selectedInfluenceSquare,
     uiState.showArrows,
