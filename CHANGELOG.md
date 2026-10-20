@@ -7,6 +7,8 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 ## [Unreleased]
 
 ### Added
+- The board highlights the last move played, and an analysed move shows its class
+  (!!, !, ?!, ?, ??) in the corner of its target square.
 - Promotion piece picker (queen, rook, bishop, knight) instead of automatic queening.
 - PGN import of games set up from a FEN, with player names, ratings, result and
   `[%clk]` clocks; move numbering follows the initial position.
