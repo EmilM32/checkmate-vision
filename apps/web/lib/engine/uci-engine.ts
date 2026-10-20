@@ -6,7 +6,14 @@ import { serializeCommand } from "@/lib/engine/worker"
 
 export type LineScores = { 1: EngineScore; 2: EngineScore; 3: EngineScore }
 
-export type SearchLimits = { depth: number; movetimeMs: number }
+export type SearchLimits = {
+  depth: number
+  movetimeMs?: number
+  nodes?: number
+  // Clear the hash first: results then depend only on the position and
+  // the limits, not on what this engine searched before.
+  fresh?: boolean
+}
 
 export type SearchResult = {
   // Scores per multi-PV line, from White's perspective.
@@ -134,11 +141,13 @@ export class UciEngine {
         resolve,
         reject,
       }
+      if (limits.fresh) this.send({ type: "ucinewgame" })
       this.send({ type: "position", fen })
       this.send({
         type: "go",
         depth: limits.depth,
         movetimeMs: limits.movetimeMs,
+        nodes: limits.nodes,
       })
     })
   }

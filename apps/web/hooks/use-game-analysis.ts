@@ -19,9 +19,12 @@ import {
   type SearchResult,
 } from "@/lib/engine/uci-engine"
 
-// Two lines are enough to tell an only move ("great"); the time cap
-// bounds a whole game (endgames otherwise take 10+ s per position).
-const GAME_SEARCH = { depth: 18, movetimeMs: 1_500 }
+// Two lines are enough to tell an only move ("great"). A node budget with a
+// cleared hash makes the result depend only on the position: a time limit
+// (and a hash shared by whichever positions an engine happened to get)
+// gave the same game accuracies 10+ points apart between runs. 500k nodes
+// is about 1-2 s per position; the depth cap is never the binding limit.
+const GAME_SEARCH = { depth: 30, nodes: 500_000, fresh: true }
 const GAME_ENGINE_OPTIONS = {
   hashMb: 16,
   multiPv: 2,

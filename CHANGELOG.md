@@ -75,8 +75,11 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 - Stockfish 19 (lite NNUE, single-threaded, ~2 MB) replaces Stockfish 10: about 3-4x
   faster to the same depth. The engine files are copied from the `stockfish` package
   on install instead of being committed, and served with long-lived cache headers.
-- Live analysis searches depth 22 (at most 12 s) with three lines; game analysis
-  depth 18 (at most 1.5 s per position) with two.
+- Live analysis searches depth 22 (at most 12 s) with three lines. Game analysis
+  searches 500k nodes per position on a cleared hash, with two lines: the same game now
+  always gets the same classifications and accuracies (with a time limit and a shared
+  hash, accuracies of one game differed by 10+ points between runs). A game takes
+  about a third longer than before.
 - Live analysis pauses while the tab is hidden.
 - ESLint ignores the vendored Stockfish build in `public/`.
 
