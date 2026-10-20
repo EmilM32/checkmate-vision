@@ -113,6 +113,12 @@ type GameAction =
       patch: MoveAnalysisPatch
       expectedFen?: string
     }
+  | {
+      type: "ANNOTATE_VARIATION_MOVE"
+      index: number
+      patch: MoveAnalysisPatch
+      expectedFen: string
+    }
 
 // Annotations arrive asynchronously from the engine, sometimes several before
 // React re-renders, so they are applied to the latest state in the reducer.
@@ -144,6 +150,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         action.patch,
         action.expectedFen
       )
+    case "ANNOTATE_VARIATION_MOVE": {
+      const { variation } = state
+      const move = variation?.moves[action.index - 1]
+      // The variation may have been replaced while the engine searched.
+      if (!variation || !move || move.fen !== action.expectedFen) return state
+      const moves = [...variation.moves]
+      moves[action.index - 1] = { ...move, ...action.patch }
+      return { ...state, variation: { ...variation, moves } }
+    }
   }
 }
 
@@ -193,6 +208,11 @@ type GameContextValue = {
     index: number,
     patch: MoveAnalysisPatch,
     expectedFen?: string
+  ) => void
+  annotateVariationMove: (
+    index: number,
+    patch: MoveAnalysisPatch,
+    expectedFen: string
   ) => void
   setPositionFromFen: (fen: string) => boolean
   loadPgnGame: (parsed: ParsedGame) => boolean
@@ -281,6 +301,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const annotateMove = useCallback(
     (index: number, patch: MoveAnalysisPatch, expectedFen?: string) => {
       dispatch({ type: "ANNOTATE_MOVE", index, patch, expectedFen })
+    },
+    []
+  )
+
+  const annotateVariationMove = useCallback(
+    (index: number, patch: MoveAnalysisPatch, expectedFen: string) => {
+      dispatch({ type: "ANNOTATE_VARIATION_MOVE", index, patch, expectedFen })
     },
     []
   )
@@ -526,6 +553,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       state,
       makeMove,
       annotateMove,
+      annotateVariationMove,
       setPositionFromFen,
       loadPgnGame,
       undo,
@@ -543,6 +571,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       state,
       makeMove,
       annotateMove,
+      annotateVariationMove,
       setPositionFromFen,
       loadPgnGame,
       undo,

@@ -220,6 +220,35 @@ describe("GameContext", () => {
     expect(state.history).toHaveLength(2)
   })
 
+  it("annotates a variation move only while the variation still has it", () => {
+    const harness = renderGameHarness()
+
+    playMoves(harness)
+    act(() => {
+      harness.getApi().goToMove(1)
+    })
+    act(() => {
+      harness.getApi().makeMove("c7", "c5")
+    })
+    const fen = harness.getApi().state.variation!.moves[0]!.fen
+
+    act(() => {
+      harness.getApi().annotateVariationMove(1, movePatch(), "stale fen")
+    })
+    expect(
+      harness.getApi().state.variation?.moves[0]?.classification
+    ).toBeNull()
+
+    act(() => {
+      harness.getApi().annotateVariationMove(1, movePatch(), fen)
+    })
+    expect(harness.getApi().state.variation?.moves[0]?.classification).toBe(
+      "good"
+    )
+    // The game itself is not touched.
+    expect(harness.getApi().state.history[1]?.classification).toBeNull()
+  })
+
   it("annotateMove updates only valid move indexes", () => {
     const harness = renderGameHarness()
 

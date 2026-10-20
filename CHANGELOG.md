@@ -7,6 +7,10 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 ## [Unreleased]
 
 ### Added
+- Check your own move: with the engine on, moves played in a variation are classified
+  like the game's (symbol in the variation, badge on the board, "This move" card with
+  the engine's choice). In guess mode the verdict appears after "Reveal"; with the
+  engine off the card says to turn it on.
 - Key moments: the move counts in the game summary jump to the next such move of that
   player, Shift + ← / → jump to the previous / next error (?!, ?, ??), and the help
   popover lists the keyboard shortcuts.

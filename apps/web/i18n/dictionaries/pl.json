@@ -171,8 +171,9 @@
     "title": "Ten ruch",
     "eval": "Ocena: {{before}} → {{after}}",
     "winChanceLoss": "−{{points}} pkt proc. szans",
-    "best": "Najlepszy był",
+    "best": "Wybór silnika:",
     "wasBest": "Najlepszy ruch według silnika.",
-    "playBest": "Zagraj w wariancie"
+    "playBest": "Zagraj w wariancie",
+    "enableEngine": "Włącz silnik, aby ocenić swój ruch w wariancie."
   }
 }

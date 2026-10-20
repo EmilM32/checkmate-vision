@@ -116,11 +116,13 @@ function VariationLine({
   initialFen,
   activeIndex,
   activeRef,
+  showClassification,
   onSelect,
   onBack,
   onDelete,
 }: {
   variation: Variation
+  showClassification: boolean
   initialFen: string
   activeIndex: number | null
   activeRef: RefObject<HTMLButtonElement | null>
@@ -160,6 +162,16 @@ function VariationLine({
               }`}
             >
               {move.san}
+              {showClassification &&
+              move.classification &&
+              CLASSIFICATION_SYMBOLS[move.classification] ? (
+                <span
+                  className="font-bold"
+                  style={{ color: CLASSIFICATION_COLORS[move.classification] }}
+                >
+                  {CLASSIFICATION_SYMBOLS[move.classification]}
+                </span>
+              ) : null}
             </button>
           </span>
         )
@@ -249,6 +261,7 @@ export function MoveList() {
                 initialFen={state.initialFen}
                 activeIndex={state.variationIndex}
                 activeRef={activeRef}
+                showClassification={analysisVisible}
                 onSelect={goToVariationMove}
                 onBack={() => goToMove(variation.branchIndex)}
                 onDelete={deleteVariation}

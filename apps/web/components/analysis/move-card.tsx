@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { GitBranch } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
 
+import { getCurrentLine } from "@/context/game-context"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
@@ -30,13 +31,21 @@ export function MoveCard() {
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
 
   const onMainLine = state.variationIndex === null
+  // The shown line: the game's moves, or the variation being explored.
+  const line = useMemo(() => getCurrentLine(state), [state])
   const review = useMemo(
-    () =>
-      onMainLine
-        ? getMoveReview(state.history, state.currentMoveIndex, state.initialFen)
-        : null,
-    [onMainLine, state.history, state.currentMoveIndex, state.initialFen]
+    () => getMoveReview(line, line.length, state.initialFen),
+    [line, state.initialFen]
   )
+
+  // A move of your own in a variation is judged by the live engine.
+  if (!review && !onMainLine && line.length > 0 && !uiState.engineEnabled) {
+    return (
+      <p className="rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs text-muted-foreground">
+        {t("moveCard.enableEngine")}
+      </p>
+    )
+  }
 
   if (!review || !analysisVisible) return null
 
@@ -85,15 +94,17 @@ export function MoveCard() {
               ({formatSignedEval(review.best.score)})
             </span>
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 gap-1 px-2 text-[11px]"
-            onClick={() => startVariation(review.ply - 1, review.best!.uci)}
-          >
-            <GitBranch className="size-3" />
-            {t("moveCard.playBest")}
-          </Button>
+          {onMainLine ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 gap-1 px-2 text-[11px]"
+              onClick={() => startVariation(review.ply - 1, review.best!.uci)}
+            >
+              <GitBranch className="size-3" />
+              {t("moveCard.playBest")}
+            </Button>
+          ) : null}
         </div>
       ) : (
         <p className="mt-1.5 text-muted-foreground">{t("moveCard.wasBest")}</p>
