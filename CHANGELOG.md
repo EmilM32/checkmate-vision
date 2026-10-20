@@ -7,6 +7,11 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 ## [Unreleased]
 
 ### Added
+- "This move" card in the analysis panel for an analysed move: its class, evaluation
+  before and after, the win chance it cost and the engine's best move, which can be
+  played out as a variation. Game analysis now stores the best move with each move.
+- Evaluations in the engine lines, chart tooltip and move card carry their sign (+1.5,
+  -0.8, M+3); the chart tooltip used to show only the magnitude.
 - Variations: a move played mid-game no longer deletes the rest of the game. A different
   move starts a side line shown under the move it replaces (the game's own move just
   steps forward); arrows and keys walk the variation, with buttons to return to the game

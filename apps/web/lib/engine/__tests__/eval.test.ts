@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   evalToPercent,
   formatEval,
+  formatSignedEval,
   getSideToMove,
   isWhiteBetter,
   toWhitePerspective,
@@ -142,5 +143,17 @@ describe("formatEval", () => {
 
   it("formats negative mate as absolute value", () => {
     expect(formatEval({ type: "mate", value: -1 })).toBe("M1")
+  })
+})
+
+describe("formatSignedEval", () => {
+  it("signs centipawns and mates from White's perspective", () => {
+    expect(formatSignedEval({ type: "cp", value: 150 })).toBe("+1.5")
+    expect(formatSignedEval({ type: "cp", value: -80 })).toBe("-0.8")
+    expect(formatSignedEval({ type: "cp", value: 0 })).toBe("0.0")
+    expect(formatSignedEval({ type: "mate", value: 3 })).toBe("M+3")
+    expect(formatSignedEval({ type: "mate", value: -2 })).toBe("M-2")
+    expect(formatSignedEval({ type: "mate", value: 0 })).toBe("#")
+    expect(formatSignedEval(null)).toBe("—")
   })
 })

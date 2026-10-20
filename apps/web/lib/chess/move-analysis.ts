@@ -96,6 +96,8 @@ export function buildMoveAnalysis({
   return {
     scoreBefore,
     scoreAfter,
+    bestMove: linesBefore[0]?.pv[0] ?? null,
+    bestScore: scoreBefore,
     delta: computeMoveDelta(scoreBefore, scoreAfter, playedBy),
     classification:
       scoreBefore && scoreAfter

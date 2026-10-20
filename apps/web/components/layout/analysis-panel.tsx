@@ -18,6 +18,7 @@ import {
 import { FENInput } from "@/components/inputs/fen-input"
 import { PGNInput } from "@/components/inputs/pgn-input"
 import { GameSummary } from "@/components/analysis/game-summary"
+import { MoveCard } from "@/components/analysis/move-card"
 import { MoveList } from "@/components/analysis/move-list"
 import { PVLines } from "@/components/analysis/pv-lines"
 import { useEngine } from "@/hooks/use-engine"
@@ -190,6 +191,7 @@ export function AnalysisPanel() {
             </div>
           ) : null}
           <GameSummary />
+          <MoveCard />
         </div>
         {/* From xl the move list lives in the game panel left of the board. */}
         <div className="h-48 overflow-hidden px-4 py-3 lg:h-auto lg:min-h-32 lg:flex-1 xl:hidden">

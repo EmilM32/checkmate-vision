@@ -146,5 +146,13 @@
     "label": "Wariant",
     "backToGame": "Wróć do partii",
     "delete": "Usuń wariant"
+  },
+  "moveCard": {
+    "title": "Ten ruch",
+    "eval": "Ocena: {{before}} → {{after}}",
+    "winChanceLoss": "−{{points}} pkt proc. szans",
+    "best": "Najlepszy był",
+    "wasBest": "Najlepszy ruch według silnika.",
+    "playBest": "Zagraj w wariancie"
   }
 }
