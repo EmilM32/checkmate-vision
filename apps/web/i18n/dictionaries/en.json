@@ -74,7 +74,10 @@
     "batchRunning": "Game analysis... {{completed}}/{{total}}",
     "batchDone": "Game analysis done",
     "batchCancelled": "Game analysis cancelled",
-    "batchError": "Game analysis failed"
+    "batchError": "Game analysis failed",
+    "line1": "Best move – green arrow",
+    "line2": "Second line – blue arrow",
+    "line3": "Third line – orange arrow"
   },
   "errors": {
     "engineLoadFailed": "The engine could not be loaded.",
@@ -109,7 +112,8 @@
     "analyzeGameDesc": "Runs the engine through every position in the loaded game, classifying each move (brilliant, great, best, good, inaccuracy, mistake, blunder).",
     "engineActive": "Engine is running",
     "guessRevealed": "Guess mode — analysis revealed",
-    "guessHidden": "Guess mode — analysis hidden"
+    "guessHidden": "Guess mode — analysis hidden",
+    "arrowsDesc": "Arrows show the first move of each engine line. The colour matches the bar next to the line in the analysis panel; the best line has the thickest arrow."
   },
   "language": {
     "label": "Language",

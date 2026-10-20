@@ -1,10 +1,11 @@
 "use client"
 
-import { Cpu, Eye, EyeOff, Play } from "lucide-react"
+import { Cpu, Eye, EyeOff, MoveRight, Play } from "lucide-react"
 
 import { useEngine } from "@/hooks/use-engine"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
+import { PV_LINE_COLORS, PV_LINE_LABEL_KEYS } from "@/lib/chess/pv-line-colors"
 
 export function AnalysisLegend() {
   const { state: uiState } = useUI()
@@ -30,6 +31,25 @@ export function AnalysisLegend() {
           {t("toolbar.engine")}
         </p>
         <p className="mt-1">{t("analysisLegend.engineDesc")}</p>
+      </div>
+
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+        <p className="inline-flex items-center gap-1.5 font-semibold text-foreground">
+          <MoveRight className="size-3" />
+          {t("toolbar.arrows")}
+        </p>
+        <p className="mt-1">{t("analysisLegend.arrowsDesc")}</p>
+        <ul className="mt-1.5 space-y-1">
+          {([1, 2, 3] as const).map((id) => (
+            <li key={id} className="flex items-center gap-2">
+              <span
+                className="h-1 w-5 shrink-0 rounded-full"
+                style={{ backgroundColor: PV_LINE_COLORS[id] }}
+              />
+              {t(PV_LINE_LABEL_KEYS[id])}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">

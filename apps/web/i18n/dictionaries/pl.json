@@ -74,7 +74,10 @@
     "batchRunning": "Analiza partii... {{completed}}/{{total}}",
     "batchDone": "Analiza partii zakończona",
     "batchCancelled": "Analiza partii przerwana",
-    "batchError": "Błąd analizy partii"
+    "batchError": "Błąd analizy partii",
+    "line1": "Najlepszy ruch – zielona strzałka",
+    "line2": "Druga linia – niebieska strzałka",
+    "line3": "Trzecia linia – pomarańczowa strzałka"
   },
   "errors": {
     "engineLoadFailed": "Nie udało się załadować silnika.",
@@ -109,7 +112,8 @@
     "analyzeGameDesc": "Uruchamia silnik dla każdej pozycji wczytanej partii i klasyfikuje każdy ruch (genialny, świetny, najlepszy, dobry, niedokładność, błąd, gruby błąd).",
     "engineActive": "Silnik działa",
     "guessRevealed": "Tryb zgadywania – analiza odkryta",
-    "guessHidden": "Tryb zgadywania – analiza ukryta"
+    "guessHidden": "Tryb zgadywania – analiza ukryta",
+    "arrowsDesc": "Strzałki pokazują pierwszy ruch każdej linii silnika. Kolor odpowiada pasku przy linii w panelu analizy; najlepsza linia ma najgrubszą strzałkę."
   },
   "language": {
     "label": "Język",
