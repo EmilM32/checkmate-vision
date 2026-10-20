@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type ComponentProps } from "react"
 import {
   Area,
   AreaChart,
-  CartesianGrid,
   Dot,
   ReferenceLine,
   Tooltip,
@@ -23,8 +22,15 @@ import {
   CLASSIFICATION_LABEL_KEYS,
   CLASSIFICATION_COLORS,
 } from "@/lib/chess/classification"
-import { getMoveNumbering, getPlyMoveNumber } from "@/lib/chess/move-numbering"
+import {
+  getMoveNumbering,
+  getPlyColor,
+  getPlyMoveNumber,
+} from "@/lib/chess/move-numbering"
 import { formatEval } from "@/lib/engine/eval"
+
+const CHART_MARGIN_TOP = 8
+const X_AXIS_HEIGHT = 24
 
 function EvalDot(
   props: ComponentProps<typeof Dot> & { payload?: EvalChartPoint }
@@ -50,6 +56,14 @@ export function EvalChart() {
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
   const data = buildEvalChartData(state.history, state.initialFen)
   const numbering = getMoveNumbering(state.initialFen)
+  // One tick per full move (at White's ply), not one per ply.
+  const moveTicks = data
+    .filter(
+      (point) =>
+        point.moveIndex > 0 &&
+        getPlyColor(point.moveIndex, numbering) === "white"
+    )
+    .map((point) => point.moveIndex)
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -133,48 +147,54 @@ export function EvalChart() {
             width={containerSize.width}
             height={containerSize.height}
             data={data}
-            margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+            margin={{ top: CHART_MARGIN_TOP, right: 8, left: 8, bottom: 0 }}
             onClick={handleChartClick}
           >
             <defs>
-              <linearGradient id="evalFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
-                <stop offset="45%" stopColor="#10b981" stopOpacity={0.08} />
-                <stop offset="55%" stopColor="#ef5350" stopOpacity={0.08} />
-                <stop offset="100%" stopColor="#ef5350" stopOpacity={0.3} />
+              {/* Spans the plot area (top margin to the x-axis), so the
+                  colour switches exactly at the 50% line: green where White
+                  is better, red where Black is. */}
+              <linearGradient
+                id="evalFill"
+                gradientUnits="userSpaceOnUse"
+                x1="0"
+                y1={CHART_MARGIN_TOP}
+                x2="0"
+                y2={containerSize.height - X_AXIS_HEIGHT}
+              >
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
+                <stop offset="50%" stopColor="#10b981" stopOpacity={0.08} />
+                <stop offset="50%" stopColor="#ef5350" stopOpacity={0.08} />
+                <stop offset="100%" stopColor="#ef5350" stopOpacity={0.35} />
               </linearGradient>
             </defs>
-            <CartesianGrid
-              vertical={false}
-              stroke="hsl(var(--border))"
-              opacity={0.3}
-            />
             <XAxis
               dataKey="moveIndex"
+              height={X_AXIS_HEIGHT}
+              ticks={moveTicks}
               tickLine={false}
               axisLine={false}
+              tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
               tickFormatter={(value: number) =>
                 value === 0 ? "0" : `${getPlyMoveNumber(value, numbering)}`
               }
               minTickGap={20}
             />
-            <YAxis
-              domain={[-10, 10]}
-              tickLine={false}
-              axisLine={false}
-              tickCount={5}
-              tickFormatter={(value: number) => `${value}`}
-              width={30}
-            />
+            {/* White's win chance: the midline is an equal game, the top
+                a win for White. Exact evaluations are in the tooltip. */}
+            <YAxis domain={[0, 100]} hide />
             <Tooltip
-              cursor={{ stroke: "hsl(var(--border))", strokeDasharray: "4 4" }}
+              cursor={{
+                stroke: "var(--muted-foreground)",
+                strokeDasharray: "4 4",
+              }}
               content={renderTooltip as never}
             />
             <ReferenceLine
-              y={0}
-              stroke="#374151"
+              y={50}
+              stroke="var(--muted-foreground)"
+              strokeOpacity={0.5}
               strokeDasharray="4 4"
-              ifOverflow="extendDomain"
             />
             <ReferenceLine
               x={state.currentMoveIndex}
@@ -184,8 +204,10 @@ export function EvalChart() {
             />
             <Area
               type="monotone"
-              dataKey="eval"
-              stroke="#e5e7eb"
+              baseValue={50}
+              dataKey="winChance"
+              stroke="var(--foreground)"
+              strokeOpacity={0.7}
               strokeWidth={2}
               fill="url(#evalFill)"
               activeDot={{ r: 4 }}

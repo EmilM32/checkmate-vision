@@ -26,6 +26,11 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 - Polish texts had no diacritics because the font was loaded without its `latin-ext`
   subset; the Polish dictionary is now written properly (and uses Lichess' terms:
   niedokładność / błąd / gruby błąd).
+- Evaluation chart: the y-axis labels were clipped, the line was light gray on white and
+  the ±10 pawn scale flattened balanced games. It now plots White's win chance (the
+  midline is an equal game), with a theme-aware line, green/red fill split exactly at
+  the midline and one x-axis tick per full move.
+- Guess mode showed the game summary (accuracy and move counts); it is hidden now.
 - The heatmap help said a right-click shows the pieces influencing a square; it takes
   Alt + right-click.
 - A finished game shows "Checkmate – game over" or "Stalemate – draw" instead of

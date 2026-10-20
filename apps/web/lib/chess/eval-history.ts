@@ -1,7 +1,10 @@
 import { DEFAULT_POSITION } from "chess.js"
 import type { MoveEntry } from "@/context/game-context"
 import type { EngineScore } from "@/context/engine-context"
-import type { MoveClassification } from "@/lib/chess/classification"
+import {
+  getWinChance,
+  type MoveClassification,
+} from "@/lib/chess/classification"
 import { formatPlyLabel, getMoveNumbering } from "@/lib/chess/move-numbering"
 import { getSideToMove } from "@/lib/engine/eval"
 
@@ -9,6 +12,8 @@ export type EvalChartPoint = {
   moveIndex: number
   moveLabel: string
   eval: number
+  // White's chance to win (0-100), what the chart plots.
+  winChance: number
   rawScore: EngineScore
   classification: MoveClassification | null
 }
@@ -30,6 +35,16 @@ function toChartPawns(score: EngineScore, fenAfter: string): number {
   return clampPawns(score.value / 100)
 }
 
+// The win chance flattens out in decided positions, so the chart keeps the
+// critical swings readable instead of pinning them to a ±10 pawn scale.
+function toWhiteWinChance(score: EngineScore, fenAfter: string): number {
+  if (!score) return 50
+  if (score.type === "mate" && score.value === 0) {
+    return getSideToMove(fenAfter) === "w" ? 0 : 100
+  }
+  return getWinChance(score, "white")
+}
+
 export function buildEvalChartData(
   history: MoveEntry[],
   initialFen: string = DEFAULT_POSITION
@@ -41,7 +56,8 @@ export function buildEvalChartData(
       moveIndex: 0,
       moveLabel: "0",
       eval: 0,
-      rawScore: null,
+      winChance: toWhiteWinChance(history[0]?.scoreBefore ?? null, initialFen),
+      rawScore: history[0]?.scoreBefore ?? null,
       classification: null,
     },
   ]
@@ -52,6 +68,7 @@ export function buildEvalChartData(
       moveIndex,
       moveLabel: `${formatPlyLabel(moveIndex, numbering)} ${move.san}`,
       eval: toChartPawns(move.scoreAfter, move.fen),
+      winChance: toWhiteWinChance(move.scoreAfter, move.fen),
       rawScore: move.scoreAfter,
       classification: move.classification,
     })
