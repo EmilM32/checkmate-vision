@@ -9,7 +9,8 @@
     "white": "Białe",
     "black": "Czarne",
     "reveal": "Odkryj",
-    "new": "Nowa"
+    "new": "Nowa",
+    "game": "Partia"
   },
   "toolbar": {
     "heatmap": "Heatmapa",

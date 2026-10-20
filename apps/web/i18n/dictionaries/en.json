@@ -9,7 +9,8 @@
     "white": "White",
     "black": "Black",
     "reveal": "Reveal",
-    "new": "New"
+    "new": "New",
+    "game": "Game"
   },
   "toolbar": {
     "heatmap": "Heatmap",

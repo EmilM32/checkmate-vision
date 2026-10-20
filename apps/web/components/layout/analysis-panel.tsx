@@ -191,7 +191,8 @@ export function AnalysisPanel() {
           ) : null}
           <GameSummary />
         </div>
-        <div className="h-48 overflow-hidden px-4 py-3 lg:h-auto lg:min-h-32 lg:flex-1">
+        {/* From xl the move list lives in the game panel left of the board. */}
+        <div className="h-48 overflow-hidden px-4 py-3 lg:h-auto lg:min-h-32 lg:flex-1 xl:hidden">
           <MoveList />
         </div>
 
