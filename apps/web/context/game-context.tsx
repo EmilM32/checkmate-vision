@@ -38,15 +38,27 @@ export type MoveAnalysisPatch = {
   classification: MoveClassification | null
 }
 
+// A side line played from the main line: its moves follow the first
+// `branchIndex` moves of the game. One variation is kept at a time.
+export type Variation = {
+  branchIndex: number
+  moves: MoveEntry[]
+}
+
 export type GameState = {
   initialFen: string
   fen: string
   pgn: string
+  // The main line (the loaded or played game).
   history: MoveEntry[]
+  // Position on the main line; while in a variation, its branch point.
   currentMoveIndex: number
   turn: "w" | "b"
   isGameOver: boolean
   meta: GameMeta
+  variation: Variation | null
+  // Variation moves shown on the board, or null while on the main line.
+  variationIndex: number | null
 }
 
 export const initialGameState: GameState = {
@@ -58,6 +70,31 @@ export const initialGameState: GameState = {
   turn: "w",
   isGameOver: false,
   meta: EMPTY_GAME_META,
+  variation: null,
+  variationIndex: null,
+}
+
+/** The moves leading to the shown position, main line or variation. */
+export function getCurrentLine(state: GameState): MoveEntry[] {
+  const { history, currentMoveIndex, variation, variationIndex } = state
+  if (variation && variationIndex !== null) {
+    return [
+      ...history.slice(0, variation.branchIndex),
+      ...variation.moves.slice(0, variationIndex),
+    ]
+  }
+  return history.slice(0, currentMoveIndex)
+}
+
+function newMoveEntry(san: string, fen: string): MoveEntry {
+  return {
+    san,
+    fen,
+    scoreBefore: null,
+    scoreAfter: null,
+    delta: null,
+    classification: null,
+  }
 }
 
 // ── Reducer ──
@@ -118,22 +155,26 @@ function replayMoves(
   }
 }
 
-function deriveState(
-  chess: Chess,
-  history: MoveEntry[],
-  currentMoveIndex: number,
-  initialFen: string,
-  meta: GameMeta
-): GameState {
+type Line = Pick<
+  GameState,
+  | "history"
+  | "currentMoveIndex"
+  | "initialFen"
+  | "meta"
+  | "variation"
+  | "variationIndex"
+>
+
+// Replays the shown line on `chess` and derives the full state from it.
+function deriveState(chess: Chess, line: Line): GameState {
+  const shown = getCurrentLine({ ...initialGameState, ...line })
+  replayMoves(chess, shown, shown.length, line.initialFen)
   return {
-    initialFen,
+    ...line,
     fen: chess.fen(),
     pgn: chess.pgn(),
-    history,
-    currentMoveIndex,
     turn: chess.turn(),
     isGameOver: chess.isGameOver(),
-    meta,
   }
 }
 
@@ -150,7 +191,13 @@ type GameContextValue = {
   setPositionFromFen: (fen: string) => boolean
   loadPgnGame: (parsed: ParsedGame) => boolean
   undo: () => void
+  // Main-line position; leaves a variation (which stays listed).
   goToMove: (index: number) => void
+  goToVariationMove: (index: number) => void
+  stepForward: () => void
+  stepBack: () => void
+  goToEnd: () => void
+  deleteVariation: () => void
   newGame: () => void
   restoreState: (snapshot: GameState) => boolean
 }
@@ -164,44 +211,61 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const makeMove = useCallback(
     (from: string, to: string, promotion?: string): boolean => {
       const chess = chessRef.current
-      const { currentMoveIndex } = state
-      let { history } = state
+      const { history, currentMoveIndex, variation, variationIndex } = state
+      const inVariation = variation !== null && variationIndex !== null
 
-      // If navigated back, truncate future moves and rebuild chess state
-      if (currentMoveIndex < history.length) {
-        history = history.slice(0, currentMoveIndex)
-        replayMoves(chess, history, currentMoveIndex, state.initialFen)
-      }
+      // The board shows the current line; make sure chess.js does too.
+      const line = getCurrentLine(state)
+      replayMoves(chess, line, line.length, state.initialFen)
 
+      let move
       try {
-        const move = chess.move({ from, to, promotion })
-        const newHistory = [
-          ...history,
-          {
-            san: move.san,
-            fen: move.after,
-            scoreBefore: null,
-            scoreAfter: null,
-            delta: null,
-            classification: null,
-          },
-        ]
-        const newIndex = newHistory.length
-        dispatch({
-          type: "SET_STATE",
-          payload: deriveState(
-            chess,
-            newHistory,
-            newIndex,
-            state.initialFen,
-            // A new move leaves the loaded game, so its result no longer applies.
-            { ...state.meta, result: null }
-          ),
-        })
-        return true
+        move = chess.move({ from, to, promotion })
       } catch {
         return false
       }
+      const entry = newMoveEntry(move.san, move.after)
+      const base = {
+        history,
+        currentMoveIndex,
+        initialFen: state.initialFen,
+        meta: state.meta,
+        variation,
+        variationIndex,
+      }
+
+      let next: Line
+      if (inVariation) {
+        // Extend the variation; moves after the shown one are replaced.
+        const moves = [...variation.moves.slice(0, variationIndex), entry]
+        next = {
+          ...base,
+          variation: { branchIndex: variation.branchIndex, moves },
+          variationIndex: moves.length,
+        }
+      } else if (currentMoveIndex === history.length) {
+        // At the end of the game: the move continues the main line, and the
+        // loaded game's result no longer applies.
+        next = {
+          ...base,
+          history: [...history, entry],
+          currentMoveIndex: history.length + 1,
+          meta: { ...state.meta, result: null },
+        }
+      } else if (history[currentMoveIndex]?.san === move.san) {
+        // The game's own move: just step forward.
+        next = { ...base, currentMoveIndex: currentMoveIndex + 1 }
+      } else {
+        // A different move mid-game starts a variation; the game is kept.
+        next = {
+          ...base,
+          variation: { branchIndex: currentMoveIndex, moves: [entry] },
+          variationIndex: 1,
+        }
+      }
+
+      dispatch({ type: "SET_STATE", payload: deriveState(chess, next) })
+      return true
     },
     [state]
   )
@@ -219,7 +283,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       chess.load(fen)
       dispatch({
         type: "SET_STATE",
-        payload: deriveState(chess, [], 0, fen, EMPTY_GAME_META),
+        payload: deriveState(chess, {
+          history: [],
+          currentMoveIndex: 0,
+          initialFen: chess.fen(),
+          meta: EMPTY_GAME_META,
+          variation: null,
+          variationIndex: null,
+        }),
       })
       return true
     } catch {
@@ -245,13 +316,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       dispatch({
         type: "SET_STATE",
-        payload: deriveState(
-          chess,
+        payload: deriveState(chess, {
           history,
-          history.length,
-          parsed.initialFen,
-          parsed.meta
-        ),
+          currentMoveIndex: history.length,
+          initialFen: parsed.initialFen,
+          meta: parsed.meta,
+          variation: null,
+          variationIndex: null,
+        }),
       })
       return true
     } catch {
@@ -263,28 +335,101 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (index: number) => {
       const { history } = state
       const clamped = Math.max(0, Math.min(index, history.length))
-      if (clamped === state.currentMoveIndex) return
+      if (clamped === state.currentMoveIndex && state.variationIndex === null) {
+        return
+      }
 
-      const chess = chessRef.current
-      replayMoves(chess, history, clamped, state.initialFen)
       dispatch({
         type: "SET_STATE",
-        payload: deriveState(
-          chess,
-          history,
-          clamped,
-          state.initialFen,
-          state.meta
-        ),
+        payload: deriveState(chessRef.current, {
+          ...state,
+          currentMoveIndex: clamped,
+          variationIndex: null,
+        }),
       })
     },
     [state]
   )
 
+  const goToVariationMove = useCallback(
+    (index: number) => {
+      const { variation } = state
+      if (!variation) return
+      // Variation move 0 is its branch point on the main line.
+      if (index <= 0) {
+        goToMove(variation.branchIndex)
+        return
+      }
+      const clamped = Math.min(index, variation.moves.length)
+      if (clamped === state.variationIndex) return
+
+      dispatch({
+        type: "SET_STATE",
+        payload: deriveState(chessRef.current, {
+          ...state,
+          currentMoveIndex: variation.branchIndex,
+          variationIndex: clamped,
+        }),
+      })
+    },
+    [state, goToMove]
+  )
+
+  const stepForward = useCallback(() => {
+    if (state.variationIndex !== null) {
+      goToVariationMove(state.variationIndex + 1)
+    } else {
+      goToMove(state.currentMoveIndex + 1)
+    }
+  }, [
+    state.variationIndex,
+    state.currentMoveIndex,
+    goToMove,
+    goToVariationMove,
+  ])
+
+  const stepBack = useCallback(() => {
+    if (state.variationIndex !== null) {
+      goToVariationMove(state.variationIndex - 1)
+    } else {
+      goToMove(state.currentMoveIndex - 1)
+    }
+  }, [
+    state.variationIndex,
+    state.currentMoveIndex,
+    goToMove,
+    goToVariationMove,
+  ])
+
+  // The end of the line being browsed.
+  const goToEnd = useCallback(() => {
+    if (state.variation && state.variationIndex !== null) {
+      goToVariationMove(state.variation.moves.length)
+    } else {
+      goToMove(state.history.length)
+    }
+  }, [state, goToMove, goToVariationMove])
+
+  const deleteVariation = useCallback(() => {
+    const { variation } = state
+    if (!variation) return
+    dispatch({
+      type: "SET_STATE",
+      payload: deriveState(chessRef.current, {
+        ...state,
+        currentMoveIndex:
+          state.variationIndex !== null
+            ? variation.branchIndex
+            : state.currentMoveIndex,
+        variation: null,
+        variationIndex: null,
+      }),
+    })
+  }, [state])
+
   const undo = useCallback(() => {
-    if (state.currentMoveIndex === 0) return
-    goToMove(state.currentMoveIndex - 1)
-  }, [state.currentMoveIndex, goToMove])
+    stepBack()
+  }, [stepBack])
 
   const newGame = useCallback(() => {
     chessRef.current.reset()
@@ -292,31 +437,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const restoreState = useCallback((snapshot: GameState): boolean => {
-    const chess = chessRef.current
-
     try {
       const clampedMoveIndex = Math.max(
         0,
         Math.min(snapshot.currentMoveIndex, snapshot.history.length)
       )
-
-      replayMoves(
-        chess,
-        snapshot.history,
-        clampedMoveIndex,
-        snapshot.initialFen
-      )
+      // Sessions saved before variations existed have none.
+      const variation =
+        snapshot.variation &&
+        snapshot.variation.branchIndex <= snapshot.history.length
+          ? snapshot.variation
+          : null
+      const variationIndex =
+        variation && snapshot.variationIndex !== null
+          ? Math.max(
+              1,
+              Math.min(snapshot.variationIndex ?? 0, variation.moves.length)
+            )
+          : null
 
       dispatch({
         type: "SET_STATE",
-        payload: deriveState(
-          chess,
-          snapshot.history,
-          clampedMoveIndex,
-          snapshot.initialFen,
+        payload: deriveState(chessRef.current, {
+          history: snapshot.history,
+          currentMoveIndex:
+            variation && variationIndex !== null
+              ? variation.branchIndex
+              : clampedMoveIndex,
+          initialFen: snapshot.initialFen,
           // Sessions saved before game metadata existed have no `meta`.
-          snapshot.meta ?? EMPTY_GAME_META
-        ),
+          meta: snapshot.meta ?? EMPTY_GAME_META,
+          variation,
+          variationIndex: variation ? variationIndex : null,
+        }),
       })
 
       return true
@@ -334,6 +487,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       loadPgnGame,
       undo,
       goToMove,
+      goToVariationMove,
+      stepForward,
+      stepBack,
+      goToEnd,
+      deleteVariation,
       newGame,
       restoreState,
     }),
@@ -345,6 +503,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       loadPgnGame,
       undo,
       goToMove,
+      goToVariationMove,
+      stepForward,
+      stepBack,
+      goToEnd,
+      deleteVariation,
       newGame,
       restoreState,
     ]

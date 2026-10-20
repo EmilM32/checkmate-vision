@@ -141,5 +141,10 @@
   "theme": {
     "toggle": "Przełącz motyw",
     "toggleHint": "Jasny / ciemny motyw (klawisz D)"
+  },
+  "variation": {
+    "label": "Wariant",
+    "backToGame": "Wróć do partii",
+    "delete": "Usuń wariant"
   }
 }

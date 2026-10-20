@@ -265,3 +265,43 @@ test.describe("wide layout", () => {
     expect((await board.boundingBox())!.width).toBe(before)
   })
 })
+
+test.describe("variations", () => {
+  test("a move mid-game starts a variation and keeps the game", async ({
+    page,
+  }) => {
+    await page.goto("/")
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+
+    // Back to the position after 1... e5 and play 2. d4 instead of Nf3.
+    await page.keyboard.press("Home")
+    await page.keyboard.press("ArrowRight")
+    await page.keyboard.press("ArrowRight")
+    const from = (await page.locator('[data-square="d2"]').boundingBox())!
+    const to = (await page.locator('[data-square="d4"]').boundingBox())!
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+      steps: 10,
+    })
+    await page.mouse.up()
+
+    const variation = page.locator("[data-testid=variation]:visible")
+    await expect(variation).toContainText("d4")
+    // The game's own moves are all still there.
+    await expect(
+      page.locator("ol:visible button", { hasText: /^a6$/ })
+    ).toHaveCount(1)
+
+    await variation.getByRole("button", { name: "Wróć do partii" }).click()
+    await expect(
+      page.locator('ol:visible button[aria-current="step"]')
+    ).toHaveText(/e5/)
+
+    await variation.getByRole("button", { name: "Usuń wariant" }).click()
+    await expect(variation).toHaveCount(0)
+  })
+})

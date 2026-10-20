@@ -11,6 +11,11 @@ export function useGame() {
     loadPgnGame,
     undo,
     goToMove,
+    goToVariationMove,
+    stepForward,
+    stepBack,
+    goToEnd,
+    deleteVariation,
     newGame,
     restoreState,
   } = useGameContext()
@@ -23,6 +28,11 @@ export function useGame() {
     loadPgnGame,
     undo,
     goToMove,
+    goToVariationMove,
+    stepForward,
+    stepBack,
+    goToEnd,
+    deleteVariation,
     newGame,
     restoreState,
   }

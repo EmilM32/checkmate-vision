@@ -9,6 +9,7 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 import { PromotionPicker } from "@/components/board/promotion-picker"
 
 import { useEngine } from "@/hooks/use-engine"
+import { getCurrentLine } from "@/context/game-context"
 import { useGame } from "@/hooks/use-game"
 import { useUI } from "@/hooks/use-ui"
 import { getLastMove } from "@/lib/chess/last-move"
@@ -85,10 +86,10 @@ export function InteractiveChessboard() {
   const bestMoveUci =
     engineState.pvLines[0]?.pv[0] ?? engineState.bestMove ?? null
 
-  const lastMove = useMemo(
-    () => getLastMove(state.history, state.currentMoveIndex, state.initialFen),
-    [state.history, state.currentMoveIndex, state.initialFen]
-  )
+  const lastMove = useMemo(() => {
+    const line = getCurrentLine(state)
+    return getLastMove(line, line.length, state.initialFen)
+  }, [state])
 
   const squareStyles = useMemo<Record<string, React.CSSProperties>>(() => {
     const styles: Record<string, React.CSSProperties> = {}
