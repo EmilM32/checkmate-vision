@@ -94,7 +94,8 @@
   },
   "summary": {
     "title": "Podsumowanie partii",
-    "accuracy": "celność"
+    "accuracy": "celność",
+    "jumpTo": "Przejdź do: {{label}} (kolejny przy następnym kliknięciu)"
   },
   "classification": {
     "brilliant": "Genialny",
@@ -114,7 +115,26 @@
     "engineActive": "Silnik działa",
     "guessRevealed": "Tryb zgadywania – analiza odkryta",
     "guessHidden": "Tryb zgadywania – analiza ukryta",
-    "arrowsDesc": "Strzałki pokazują pierwszy ruch każdej linii silnika. Kolor odpowiada pasku przy linii w panelu analizy; najlepsza linia ma najgrubszą strzałkę."
+    "arrowsDesc": "Strzałki pokazują pierwszy ruch każdej linii silnika. Kolor odpowiada pasku przy linii w panelu analizy; najlepsza linia ma najgrubszą strzałkę.",
+    "keysTitle": "Klawiatura",
+    "keys": {
+      "moves": {
+        "keys": "← →",
+        "action": "poprzedni / następny ruch"
+      },
+      "ends": {
+        "keys": "Home End",
+        "action": "początek / koniec"
+      },
+      "errors": {
+        "keys": "Shift ← →",
+        "action": "poprzedni / następny błąd (?!, ?, ??)"
+      },
+      "theme": {
+        "keys": "D",
+        "action": "jasny / ciemny motyw"
+      }
+    }
   },
   "language": {
     "label": "Język",

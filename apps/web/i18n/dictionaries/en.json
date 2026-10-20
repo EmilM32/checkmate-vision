@@ -94,7 +94,8 @@
   },
   "summary": {
     "title": "Game summary",
-    "accuracy": "accuracy"
+    "accuracy": "accuracy",
+    "jumpTo": "Go to: {{label}} (the next one on each click)"
   },
   "classification": {
     "brilliant": "Brilliant",
@@ -114,7 +115,26 @@
     "engineActive": "Engine is running",
     "guessRevealed": "Guess mode — analysis revealed",
     "guessHidden": "Guess mode — analysis hidden",
-    "arrowsDesc": "Arrows show the first move of each engine line. The colour matches the bar next to the line in the analysis panel; the best line has the thickest arrow."
+    "arrowsDesc": "Arrows show the first move of each engine line. The colour matches the bar next to the line in the analysis panel; the best line has the thickest arrow.",
+    "keysTitle": "Keyboard",
+    "keys": {
+      "moves": {
+        "keys": "← →",
+        "action": "previous / next move"
+      },
+      "ends": {
+        "keys": "Home End",
+        "action": "start / end"
+      },
+      "errors": {
+        "keys": "Shift ← →",
+        "action": "previous / next error (?!, ?, ??)"
+      },
+      "theme": {
+        "keys": "D",
+        "action": "light / dark theme"
+      }
+    }
   },
   "language": {
     "label": "Language",

@@ -7,6 +7,9 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 ## [Unreleased]
 
 ### Added
+- Key moments: the move counts in the game summary jump to the next such move of that
+  player, Shift + ← / → jump to the previous / next error (?!, ?, ??), and the help
+  popover lists the keyboard shortcuts.
 - "This move" card in the analysis panel for an analysed move: its class, evaluation
   before and after, the win chance it cost and the engine's best move, which can be
   played out as a variation. Game analysis now stores the best move with each move.

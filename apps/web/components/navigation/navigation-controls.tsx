@@ -11,6 +11,8 @@ import {
 
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
+import { ERROR_CLASSES, findKeyMove } from "@/lib/chess/key-moments"
+import { getMoveNumbering } from "@/lib/chess/move-numbering"
 
 export function NavigationControls() {
   const { t } = useI18n()
@@ -30,6 +32,21 @@ export function NavigationControls() {
   const goNext = stepForward
   const goLast = goToEnd
 
+  // Shift + arrows: previous / next inaccuracy, mistake or blunder.
+  const goToError = useCallback(
+    (direction: 1 | -1) => {
+      const ply = findKeyMove(
+        state.history,
+        getMoveNumbering(state.initialFen),
+        inVariation ? state.variation!.branchIndex : state.currentMoveIndex,
+        direction,
+        { classes: ERROR_CLASSES }
+      )
+      if (ply !== null) goToMove(ply)
+    },
+    [state, inVariation, goToMove]
+  )
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName
@@ -37,10 +54,12 @@ export function NavigationControls() {
 
       switch (e.key) {
         case "ArrowLeft":
-          goPrev()
+          if (e.shiftKey) goToError(-1)
+          else goPrev()
           break
         case "ArrowRight":
-          goNext()
+          if (e.shiftKey) goToError(1)
+          else goNext()
           break
         case "Home":
           e.preventDefault()
@@ -57,7 +76,7 @@ export function NavigationControls() {
 
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [goFirst, goPrev, goNext, goLast])
+  }, [goFirst, goPrev, goNext, goLast, goToError])
 
   return (
     <div className="flex items-center gap-1">

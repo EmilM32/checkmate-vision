@@ -13,6 +13,7 @@ import {
   type MoveClassification,
 } from "@/lib/chess/classification"
 import { getGameSummary } from "@/lib/chess/game-summary"
+import { findKeyMove } from "@/lib/chess/key-moments"
 import { getMoveNumbering } from "@/lib/chess/move-numbering"
 
 // Classes worth counting; "best" and "good" make up the rest.
@@ -27,7 +28,7 @@ const COUNTED: MoveClassification[] = [
 /** Accuracy and notable moves per player once the whole game is analysed. */
 export function GameSummary() {
   const { t } = useI18n()
-  const { state } = useGame()
+  const { state, goToMove } = useGame()
   const { state: engineState } = useEngine()
   const { state: uiState } = useUI()
   // Accuracy and move counts would give the answers away in guess mode.
@@ -78,10 +79,27 @@ export function GameSummary() {
             </div>
             <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 font-mono text-xs">
               {COUNTED.filter((kind) => counts[kind] > 0).map((kind) => (
-                <span
+                // Each click jumps to the next such move of this player.
+                <button
                   key={kind}
-                  title={t(CLASSIFICATION_LABEL_KEYS[kind])}
+                  type="button"
+                  className="cursor-pointer rounded px-0.5 hover:bg-muted"
+                  title={t("summary.jumpTo", {
+                    label: t(CLASSIFICATION_LABEL_KEYS[kind]),
+                  })}
                   aria-label={`${t(CLASSIFICATION_LABEL_KEYS[kind])}: ${counts[kind]}`}
+                  onClick={() => {
+                    const ply = findKeyMove(
+                      state.history,
+                      getMoveNumbering(state.initialFen),
+                      state.variationIndex === null
+                        ? state.currentMoveIndex
+                        : 0,
+                      1,
+                      { classes: [kind], side }
+                    )
+                    if (ply !== null) goToMove(ply)
+                  }}
                 >
                   <span
                     className="font-bold"
@@ -90,7 +108,7 @@ export function GameSummary() {
                     {CLASSIFICATION_SYMBOLS[kind]}
                   </span>{" "}
                   {counts[kind]}
-                </span>
+                </button>
               ))}
             </div>
           </div>
