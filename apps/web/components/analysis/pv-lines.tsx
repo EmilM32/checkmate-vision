@@ -10,6 +10,7 @@ import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import type { EngineScore } from "@/context/engine-context"
 import { getTerminalScore } from "@/lib/chess/move-analysis"
+import { PV_LINE_COLORS, PV_LINE_LABEL_KEYS } from "@/lib/chess/pv-line-colors"
 
 function uciToSan(fen: string, uciMoves: string[]): string[] {
   const chess = new Chess(fen)
@@ -136,7 +137,16 @@ export function PVLines() {
           <div
             key={line.id}
             className="flex items-baseline gap-2 rounded-md bg-muted/50 px-3 py-1.5 font-mono text-xs"
+            title={t(PV_LINE_LABEL_KEYS[line.id])}
           >
+            {/* Matches the colour of this line's arrow on the board. */}
+            <span
+              aria-label={t(PV_LINE_LABEL_KEYS[line.id])}
+              role="img"
+              data-testid="pv-line-color"
+              className="h-3 w-1 shrink-0 self-center rounded-full"
+              style={{ backgroundColor: PV_LINE_COLORS[line.id] }}
+            />
             <span
               data-testid="pv-score"
               className={`shrink-0 font-bold ${scoreColorClass(line.score)}`}

@@ -52,6 +52,8 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   scrolls there, and the toolbar wraps instead of overflowing.
 
 ### Changed
+- Each engine line in the analysis panel has a bar in its arrow's colour (green best,
+  blue second, orange third), and the help popover explains the arrows.
 - Engine arrows are drawn as one filled shape each, with a head sized to the board (it
   was a thin line with a tiny marker head whose overlap doubled the opacity). Knight
   moves get an L-shaped arrow; the best line is bolder and drawn on top.

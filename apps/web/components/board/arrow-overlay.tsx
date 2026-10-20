@@ -10,6 +10,7 @@ import {
   buildMultiPvArrows,
   squareCenterUnits,
 } from "@/lib/chess/board-coordinates"
+import { PV_LINE_COLORS } from "@/lib/chess/pv-line-colors"
 
 // The best line is the boldest and most opaque; sizes are in squares.
 const BEST_SHAPE: ArrowShape = {
@@ -29,9 +30,9 @@ const ARROW_STYLES: Record<
   1 | 2 | 3,
   { color: string; opacity: number; shape: ArrowShape }
 > = {
-  1: { color: "#10b981", opacity: 0.85, shape: BEST_SHAPE },
-  2: { color: "#60a5fa", opacity: 0.6, shape: ALTERNATIVE_SHAPE },
-  3: { color: "#f59e0b", opacity: 0.45, shape: ALTERNATIVE_SHAPE },
+  1: { color: PV_LINE_COLORS[1], opacity: 0.85, shape: BEST_SHAPE },
+  2: { color: PV_LINE_COLORS[2], opacity: 0.6, shape: ALTERNATIVE_SHAPE },
+  3: { color: PV_LINE_COLORS[3], opacity: 0.45, shape: ALTERNATIVE_SHAPE },
 }
 
 export function ArrowOverlay() {
