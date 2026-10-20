@@ -67,6 +67,24 @@ describe("UciEngine", () => {
     expect(worker.terminated).toBe(true)
   })
 
+  it("searches a node budget on a cleared hash when asked", async () => {
+    const { worker, engine } = await startEngine()
+
+    const search = engine.search(AFTER_E4, {
+      depth: 30,
+      nodes: 500_000,
+      fresh: true,
+    })
+    expect(worker.commands.slice(-3)).toEqual([
+      "ucinewgame",
+      `position fen ${AFTER_E4}`,
+      "go depth 30 nodes 500000",
+    ])
+    worker.emit("info depth 12 multipv 1 score cp -30 pv e7e5")
+    worker.emit("bestmove e7e5")
+    await expect(search).resolves.toMatchObject({ depth: 12 })
+  })
+
   it("returns line scores from White's perspective", async () => {
     const { worker, engine } = await startEngine()
 
