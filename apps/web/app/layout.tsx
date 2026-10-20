@@ -15,10 +15,13 @@ export const metadata: Metadata = {
     "Visual chess analysis in the browser: Stockfish evaluation, candidate lines, board control heatmap and move classification.",
 }
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" })
+const outfit = Outfit({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-sans",
+})
 
 const fontMono = Geist_Mono({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-mono",
 })
 
