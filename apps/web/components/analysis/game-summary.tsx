@@ -2,8 +2,10 @@
 
 import { useMemo } from "react"
 
+import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
+import { useUI } from "@/hooks/use-ui"
 import {
   CLASSIFICATION_COLORS,
   CLASSIFICATION_LABEL_KEYS,
@@ -26,13 +28,17 @@ const COUNTED: MoveClassification[] = [
 export function GameSummary() {
   const { t } = useI18n()
   const { state } = useGame()
+  const { state: engineState } = useEngine()
+  const { state: uiState } = useUI()
+  // Accuracy and move counts would give the answers away in guess mode.
+  const analysisVisible = !uiState.guessMode || engineState.guessRevealed
 
   const summary = useMemo(
     () => getGameSummary(state.history, getMoveNumbering(state.initialFen)),
     [state.history, state.initialFen]
   )
 
-  if (!summary) return null
+  if (!summary || !analysisVisible) return null
 
   return (
     <div

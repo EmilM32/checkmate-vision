@@ -7,6 +7,7 @@ describe("buildEvalChartData", () => {
     expect(points).toHaveLength(1)
     expect(points[0]?.moveIndex).toBe(0)
     expect(points[0]?.eval).toBe(0)
+    expect(points[0]?.winChance).toBe(50)
   })
 
   it("maps white-perspective cp score to pawns and clamps to +/-10", () => {
@@ -31,6 +32,10 @@ describe("buildEvalChartData", () => {
 
     expect(points[1]?.eval).toBeCloseTo(1.2, 4)
     expect(points[2]?.eval).toBe(10)
+    // +1.2 is a clear edge; +15 is decided but stays below the mate ceiling.
+    expect(points[1]?.winChance).toBeGreaterThan(55)
+    expect(points[1]?.winChance).toBeLessThan(75)
+    expect(points[2]?.winChance).toBeGreaterThan(95)
   })
 
   it("maps mate score to +/-10 from white perspective", () => {
@@ -46,6 +51,7 @@ describe("buildEvalChartData", () => {
     ])
 
     expect(points[1]?.eval).toBe(-10)
+    expect(points[1]?.winChance).toBe(0)
   })
 
   it("resolves a checkmated position from the side to move", () => {
@@ -61,5 +67,8 @@ describe("buildEvalChartData", () => {
     ])
 
     expect(points[1]?.eval).toBe(10)
+    expect(points[1]?.winChance).toBe(100)
+    // The first point takes the score of the starting position.
+    expect(points[0]?.winChance).toBe(100)
   })
 })

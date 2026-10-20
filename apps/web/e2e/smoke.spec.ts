@@ -126,6 +126,12 @@ test.describe("engine analysis", () => {
       page.locator("[data-testid=game-summary]:visible")
     ).toBeVisible()
     expect(await accuracy("white")).toBeGreaterThan(await accuracy("black"))
+
+    // Guess mode hides the answers, the summary included.
+    await page.getByRole("button", { name: "Zgaduj", exact: true }).click()
+    await expect(
+      page.locator("[data-testid=game-summary]:visible")
+    ).toHaveCount(0)
   })
 
   test("keeps analysing after a checkmate position", async ({ page }) => {
