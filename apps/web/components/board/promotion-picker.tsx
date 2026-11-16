@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import { defaultPieces } from "react-chessboard"
 
 import { useI18n } from "@/hooks/use-i18n"
@@ -22,6 +23,12 @@ export function PromotionPicker({
 }: PromotionPickerProps) {
   const { t } = useI18n()
   const cells = getPromotionCells(square, boardFlipped)
+  const chosen = useRef(false)
+  const choose = (piece: PromotionPiece) => {
+    if (chosen.current) return
+    chosen.current = true
+    onSelect(piece)
+  }
 
   return (
     <div
@@ -44,7 +51,11 @@ export function PromotionPicker({
             type="button"
             aria-label={t(`promotion.${piece}`)}
             title={t(`promotion.${piece}`)}
-            onClick={() => onSelect(piece)}
+            onPointerUp={(event) => {
+              if (event.button !== 0) return
+              choose(piece)
+            }}
+            onClick={() => choose(piece)}
             className="absolute cursor-pointer rounded-full bg-background/95 p-[1%] shadow-lg ring-1 ring-border transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             style={{
               left: `${x * 12.5}%`,

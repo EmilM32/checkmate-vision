@@ -6,6 +6,18 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ## [Unreleased]
 
+### Fixed
+- End-to-end tests run against a production server (`next build && next start`), so a
+  cold dev compile no longer drops the first loads. The promotion drag waits until the
+  pawn has settled on its square and the board has accepted the drag, then chooses the
+  piece on pointer release (the board swallows the click that follows a drag).
+- The evaluation bar registers `@property --eval-pct` at the top level, so `next build`
+  no longer warns while optimizing CSS.
+
+### Changed
+- Next.js 16.4.6 and the other dependencies, each within its current major. `shadcn`
+  (the CLI) is a dev dependency, so `pnpm audit --prod` no longer walks its tree.
+
 ### Added
 - Check your own move: with the engine on, moves played in a variation are classified
   like the game's (symbol in the variation, badge on the board, "This move" card with

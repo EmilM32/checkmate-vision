@@ -14,10 +14,10 @@ export default defineConfig({
     locale: "pl-PL",
   },
   webServer: {
-    command: `pnpm dev -p ${PORT}`,
+    command: `pnpm build && pnpm start -p ${PORT}`,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 180000,
   },
   projects: [
     {

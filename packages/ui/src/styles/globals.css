@@ -138,6 +138,12 @@
   }
 }
 
+@property --eval-pct {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+
 @layer components {
   .eval-bar-gradient {
     --eval-pct: 50%;
@@ -158,12 +164,6 @@
       oklch(0.20 0 0) var(--eval-pct),
       oklch(0.20 0 0) 100%
     );
-  }
-
-  @property --eval-pct {
-    syntax: "<percentage>";
-    inherits: false;
-    initial-value: 50%;
   }
 
   .board-overlay {

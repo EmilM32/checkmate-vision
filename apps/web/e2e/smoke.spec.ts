@@ -15,6 +15,70 @@ async function setFen(page: Page, fen: string) {
   await page.getByRole("button", { name: "Ustaw FEN" }).click()
 }
 
+async function dragPiece(
+  page: Page,
+  fromSquare: string,
+  toSquare: string,
+  piece: string
+) {
+  const square = page.locator(`[data-square="${fromSquare}"]`)
+  const pieceLocator = square.locator(`[data-piece="${piece}"]`)
+  const handle = square.locator('[aria-roledescription="draggable"]')
+
+  await expect(handle).toHaveAttribute("aria-disabled", "false")
+  await expect
+    .poll(async () => {
+      const pieceBox = await pieceLocator.boundingBox()
+      const squareBox = await square.boundingBox()
+      if (!pieceBox || !squareBox || squareBox.width < 8) return false
+      const transform = await pieceLocator.evaluate(
+        (el) => getComputedStyle(el).transform
+      )
+      if (transform !== "none") return false
+      const cx = pieceBox.x + pieceBox.width / 2
+      const cy = pieceBox.y + pieceBox.height / 2
+      return (
+        cx >= squareBox.x &&
+        cx < squareBox.x + squareBox.width &&
+        cy >= squareBox.y &&
+        cy < squareBox.y + squareBox.height
+      )
+    })
+    .toBe(true)
+
+  const fromBox = (await handle.boundingBox())!
+  const toBox = (await page.locator(`[data-square="${toSquare}"]`).boundingBox())!
+  const startX = fromBox.x + fromBox.width / 2
+  const startY = fromBox.y + fromBox.height / 2
+  await page.mouse.move(startX, startY)
+  await page.mouse.down()
+  await page.mouse.move(startX, startY - fromBox.height / 3)
+  await expect(handle).toHaveAttribute("aria-pressed", "true")
+  await page.mouse.move(toBox.x + toBox.width / 2, toBox.y + toBox.height / 2, {
+    steps: 10,
+  })
+  await page.mouse.up()
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const marker = document.createElement("button")
+        marker.type = "button"
+        let saw = false
+        marker.addEventListener("click", () => {
+          saw = true
+        })
+        document.body.appendChild(marker)
+        marker.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, cancelable: true })
+        )
+        marker.remove()
+        return saw
+      })
+    )
+    .toBe(true)
+}
+
 test.describe("AI-10 smoke", () => {
   test("loads app and shows core controls", async ({ page }) => {
     await page.goto("/")
@@ -197,17 +261,7 @@ test.describe("game import and moves", () => {
 
   test("lets the player choose the promotion piece", async ({ page }) => {
     await setFen(page, "8/4P1k1/8/8/8/8/8/4K3 w - - 0 1")
-
-    const from = await page.locator('[data-square="e7"]').boundingBox()
-    const to = await page.locator('[data-square="e8"]').boundingBox()
-    if (!from || !to) throw new Error("board squares not found")
-
-    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-    await page.mouse.down()
-    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
-      steps: 10,
-    })
-    await page.mouse.up()
+    await dragPiece(page, "e7", "e8", "wP")
 
     const picker = page.getByRole("dialog", { name: "Wybierz figurę promocji" })
     await expect(picker).toBeVisible()
@@ -287,14 +341,7 @@ test.describe("variations", () => {
     await page.keyboard.press("Home")
     await page.keyboard.press("ArrowRight")
     await page.keyboard.press("ArrowRight")
-    const from = (await page.locator('[data-square="d2"]').boundingBox())!
-    const to = (await page.locator('[data-square="d4"]').boundingBox())!
-    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-    await page.mouse.down()
-    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
-      steps: 10,
-    })
-    await page.mouse.up()
+    await dragPiece(page, "d2", "d4", "wP")
 
     const variation = page.locator("[data-testid=variation]:visible")
     await expect(variation).toContainText("d4")
@@ -329,14 +376,7 @@ test.describe("variations", () => {
     await expect(
       page.locator("[data-testid=pv-score]:visible").first()
     ).toBeVisible({ timeout: 30_000 })
-    const from = (await page.locator('[data-square="d1"]').boundingBox())!
-    const to = (await page.locator('[data-square="h5"]').boundingBox())!
-    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-    await page.mouse.down()
-    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
-      steps: 10,
-    })
-    await page.mouse.up()
+    await dragPiece(page, "d1", "h5", "wQ")
 
     const card = page.locator("[data-testid=move-card]:visible")
     await expect(card).toContainText("Qh5", { timeout: 40_000 })
