@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { useGame } from "@/hooks/use-game"
@@ -12,6 +12,9 @@ export function FENInput() {
   const { state, setPositionFromFen } = useGame()
   const [value, setValue] = useState(state.fen)
   const [error, setError] = useState<string | null>(null)
+  const [errorAttempt, setErrorAttempt] = useState(0)
+  const fieldId = useId()
+  const errorId = useId()
 
   // Follow the board, but keep what the user typed until the position changes.
   const [syncedFen, setSyncedFen] = useState(state.fen)
@@ -20,31 +23,51 @@ export function FENInput() {
     setValue(state.fen)
   }
 
-  function handleApplyFen() {
-    setError(null)
+  function reportError(message: string) {
+    setError(message)
+    setErrorAttempt((attempt) => attempt + 1)
+  }
 
+  function handleApplyFen() {
     const validation = validateFen(value)
     if (!validation.ok) {
-      setError(t(validation.error))
+      reportError(t(validation.error))
       return
     }
 
     const ok = setPositionFromFen(value.trim())
     if (!ok) {
-      setError(t("errors.fenSetFailed"))
+      reportError(t("errors.fenSetFailed"))
+      return
     }
+
+    setError(null)
   }
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-muted-foreground">{t("common.fen")}</label>
+      <label htmlFor={fieldId} className="text-xs text-muted-foreground">
+        {t("common.fen")}
+        <span className="sr-only">{t("inputs.fenLabelHint")}</span>
+      </label>
       <Input
+        id={fieldId}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="font-mono text-xs"
-        aria-invalid={Boolean(error)}
+        className="font-mono"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
       />
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      {error ? (
+        <p
+          key={errorAttempt}
+          id={errorId}
+          role="alert"
+          className="text-sm text-destructive"
+        >
+          {error}
+        </p>
+      ) : null}
       <div>
         <Button size="sm" onClick={handleApplyFen}>
           {t("inputs.setFen")}

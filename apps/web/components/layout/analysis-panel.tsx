@@ -162,7 +162,7 @@ export function AnalysisPanel() {
         <div className="space-y-2 border-b border-border/50 px-4 py-2 empty:hidden">
           {batch.status !== "idle" ? (
             <div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
                 <span>
                   {batch.status === "running"
                     ? t("analysis.batchRunning", {
@@ -184,7 +184,7 @@ export function AnalysisPanel() {
                 />
               </div>
               {batch.lastError ? (
-                <p className="mt-1 text-xs text-destructive">
+                <p className="mt-1 text-sm text-destructive">
                   {t(batch.lastError)}
                 </p>
               ) : null}
@@ -204,13 +204,13 @@ export function AnalysisPanel() {
             type="button"
             onClick={() => setImportToggled(!showImportInputs)}
             aria-expanded={showImportInputs}
-            className="flex w-full items-center justify-between px-4 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="flex w-full items-center justify-between px-4 py-2 text-sm font-medium text-foreground transition-colors hover:text-foreground"
           >
             <span>{t("inputs.importGame")}</span>
             {showImportInputs ? (
-              <ChevronDown className="size-3.5" />
+              <ChevronDown className="size-4" />
             ) : (
-              <ChevronUp className="size-3.5" />
+              <ChevronUp className="size-4" />
             )}
           </button>
           <AnimatePresence initial={false}>
