@@ -8,6 +8,7 @@ import { CornerUpLeft, X } from "lucide-react"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
+import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion"
 import { useUI } from "@/hooks/use-ui"
 import type { MoveEntry, Variation } from "@/context/game-context"
 import {
@@ -208,10 +209,14 @@ export function MoveList() {
   const { state: uiState } = useUI()
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
   const activeRef = useRef<HTMLButtonElement>(null)
+  const reduceMotion = usePrefersReducedMotion()
 
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
-  }, [state.currentMoveIndex, state.variationIndex])
+    activeRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: reduceMotion ? "auto" : "smooth",
+    })
+  }, [state.currentMoveIndex, state.variationIndex, reduceMotion])
 
   if (state.history.length === 0) {
     return (

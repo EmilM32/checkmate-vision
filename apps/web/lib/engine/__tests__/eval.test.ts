@@ -117,8 +117,9 @@ describe("evalToPercent", () => {
 })
 
 describe("formatEval", () => {
-  it("returns '0.0' for null", () => {
-    expect(formatEval(null)).toBe("0.0")
+  it("returns no label while the engine has not scored yet", () => {
+    expect(formatEval(null)).toBe("")
+    expect(formatEval(null)).not.toBe("0.0")
   })
 
   it("formats positive cp as absolute value with 1 decimal", () => {

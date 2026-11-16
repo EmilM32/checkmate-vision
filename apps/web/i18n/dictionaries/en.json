@@ -177,5 +177,15 @@
     "wasBest": "The engine's best move.",
     "playBest": "Play as variation",
     "enableEngine": "Turn the engine on to judge your move in the variation."
+  },
+  "evalBar": {
+    "off": "Evaluation unavailable – engine is off",
+    "calculating": "Calculating evaluation…",
+    "hidden": "Evaluation hidden – guess mode",
+    "white": "Evaluation: White is better by {{value}}",
+    "black": "Evaluation: Black is better by {{value}}",
+    "equal": "Evaluation: equal",
+    "mateWhite": "White mates in {{n}}",
+    "mateBlack": "Black mates in {{n}}"
   }
 }

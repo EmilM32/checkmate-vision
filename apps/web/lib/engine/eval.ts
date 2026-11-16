@@ -46,8 +46,10 @@ export function isWhiteBetter(
   return score.value >= 0
 }
 
+// A missing score is not 0.0. Callers show a waiting state until the engine
+// reports a result; an empty label cannot be read as an evaluation.
 export function formatEval(score: EngineScore): string {
-  if (!score) return "0.0"
+  if (!score) return ""
   if (score.type === "mate") {
     return score.value === 0 ? "#" : `M${Math.abs(score.value)}`
   }
