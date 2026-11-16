@@ -31,6 +31,11 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 - Next.js 16.4.6 and the other dependencies, each within its current major. `shadcn`
   (the CLI) is a dev dependency, so `pnpm audit --prod` no longer walks its tree.
 
+### Removed
+- Unused `zod` from the UI package, left over from the shadcn template. Nothing in the
+  apps or packages imported it, so production dependencies no longer include the
+  vulnerable 3.25.76 release.
+
 ### Added
 
 - Check your own move: with the engine on, moves played in a variation are classified
