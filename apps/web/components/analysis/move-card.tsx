@@ -10,9 +10,9 @@ import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import {
-  CLASSIFICATION_COLORS,
   CLASSIFICATION_LABEL_KEYS,
   CLASSIFICATION_SYMBOLS,
+  CLASSIFICATION_TEXT_COLORS,
 } from "@/lib/chess/classification"
 import { formatPlyLabel, getMoveNumbering } from "@/lib/chess/move-numbering"
 import { getMoveReview } from "@/lib/chess/move-review"
@@ -41,7 +41,7 @@ export function MoveCard() {
   // A move of your own in a variation is judged by the live engine.
   if (!review && !onMainLine && line.length > 0 && !uiState.engineEnabled) {
     return (
-      <p className="rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs text-muted-foreground">
+      <p className="rounded-lg border border-dashed border-border/70 px-3 py-2 text-sm text-muted-foreground">
         {t("moveCard.enableEngine")}
       </p>
     )
@@ -49,7 +49,7 @@ export function MoveCard() {
 
   if (!review || !analysisVisible) return null
 
-  const color = CLASSIFICATION_COLORS[review.classification]
+  const color = CLASSIFICATION_TEXT_COLORS[review.classification]
   const label = `${formatPlyLabel(
     review.ply,
     getMoveNumbering(state.initialFen)
@@ -57,7 +57,7 @@ export function MoveCard() {
 
   return (
     <section
-      className="rounded-lg border border-border/50 px-3 py-2 text-xs"
+      className="rounded-lg border border-border/50 px-3 py-2 text-sm"
       aria-label={t("moveCard.title")}
       data-testid="move-card"
     >
@@ -98,10 +98,10 @@ export function MoveCard() {
             <Button
               variant="outline"
               size="sm"
-              className="h-6 gap-1 px-2 text-[11px]"
+              className="h-8 gap-1 px-2 text-xs"
               onClick={() => startVariation(review.ply - 1, review.best!.uci)}
             >
-              <GitBranch className="size-3" />
+              <GitBranch className="size-3.5" />
               {t("moveCard.playBest")}
             </Button>
           ) : null}

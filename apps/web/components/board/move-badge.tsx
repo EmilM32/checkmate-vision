@@ -44,7 +44,7 @@ export function MoveBadge() {
       role="img"
       aria-label={t(CLASSIFICATION_LABEL_KEYS[classification])}
       data-testid="move-badge"
-      className="absolute z-10 flex size-[4.6cqw] -translate-x-[85%] -translate-y-[15%] items-center justify-center rounded-full font-mono text-[2.1cqw] leading-none font-bold text-white shadow-md ring-2 ring-white/80"
+      className="absolute z-10 flex size-[4.6cqw] -translate-x-[85%] -translate-y-[15%] items-center justify-center rounded-full font-mono text-[2.1cqw] leading-none font-bold text-zinc-900 shadow-md ring-2 ring-white/80"
       style={{
         left: `${((target.x + 0.5) / 8) * 100}%`,
         top: `${((target.y - 0.5) / 8) * 100}%`,

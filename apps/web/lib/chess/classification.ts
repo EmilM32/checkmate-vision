@@ -29,6 +29,16 @@ export const CLASSIFICATION_COLORS: Record<MoveClassification, string> = {
   blunder: "#ef5350",
 }
 
+export const CLASSIFICATION_TEXT_COLORS: Record<MoveClassification, string> = {
+  brilliant: "var(--cv-class-brilliant)",
+  great: "var(--cv-class-great)",
+  best: "var(--cv-class-best)",
+  good: "var(--cv-class-good)",
+  inaccuracy: "var(--cv-class-inaccuracy)",
+  mistake: "var(--cv-class-mistake)",
+  blunder: "var(--cv-class-blunder)",
+}
+
 // Standard annotation symbols; "best" and "good" moves carry none.
 export const CLASSIFICATION_SYMBOLS: Record<MoveClassification, string> = {
   brilliant: "!!",

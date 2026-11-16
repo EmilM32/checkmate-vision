@@ -14,19 +14,19 @@ export function AnalysisLegend() {
   const { t } = useI18n()
 
   return (
-    <div className="text-[11px]">
+    <div className="text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="font-semibold text-foreground">
           {t("analysisLegend.title")}
         </span>
         {uiState.guessMode && (
-          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+          <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {t("toolbar.guess")}
           </span>
         )}
       </div>
 
-      <div className="mt-3 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-3 rounded-md border border-border/60 bg-muted/25 p-2 text-sm leading-snug text-muted-foreground">
         <p className="inline-flex items-center gap-1.5 font-semibold text-foreground">
           <Cpu className="size-3" />
           {t("toolbar.engine")}
@@ -34,7 +34,7 @@ export function AnalysisLegend() {
         <p className="mt-1">{t("analysisLegend.engineDesc")}</p>
       </div>
 
-      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-sm leading-snug text-muted-foreground">
         <p className="inline-flex items-center gap-1.5 font-semibold text-foreground">
           <MoveRight className="size-3" />
           {t("toolbar.arrows")}
@@ -53,7 +53,7 @@ export function AnalysisLegend() {
         </ul>
       </div>
 
-      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-sm leading-snug text-muted-foreground">
         <p className="inline-flex items-center gap-1.5 font-semibold text-foreground">
           <EyeOff className="size-3" />
           {t("toolbar.guess")}
@@ -61,7 +61,7 @@ export function AnalysisLegend() {
         <p className="mt-1">{t("analysisLegend.guessDesc")}</p>
       </div>
 
-      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-sm leading-snug text-muted-foreground">
         <p className="inline-flex items-center gap-1.5 font-semibold text-foreground">
           <Eye className="size-3" />
           {t("common.reveal")}
@@ -69,7 +69,7 @@ export function AnalysisLegend() {
         <p className="mt-1">{t("analysisLegend.revealDesc")}</p>
       </div>
 
-      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-sm leading-snug text-muted-foreground">
         <p className="inline-flex items-center gap-1.5 font-semibold text-foreground">
           <Play className="size-3" />
           {t("inputs.analyzeGame")}
@@ -77,7 +77,7 @@ export function AnalysisLegend() {
         <p className="mt-1">{t("analysisLegend.analyzeGameDesc")}</p>
       </div>
 
-      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-sm leading-snug text-muted-foreground">
         <p className="inline-flex items-center gap-1.5 font-semibold text-foreground">
           <Keyboard className="size-3" />
           {t("analysisLegend.keysTitle")}
@@ -95,7 +95,7 @@ export function AnalysisLegend() {
       </div>
 
       {(uiState.engineEnabled || uiState.guessMode) && (
-        <div className="mt-3 flex flex-col gap-1.5 text-[10px] text-muted-foreground">
+        <div className="mt-3 flex flex-col gap-1.5 text-xs text-muted-foreground">
           {uiState.engineEnabled && (
             <span className="inline-flex items-center gap-2">
               <span className="size-2 shrink-0 rounded-full bg-emerald-600/80" />

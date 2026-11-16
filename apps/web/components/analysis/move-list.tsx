@@ -14,6 +14,7 @@ import {
   CLASSIFICATION_COLORS,
   CLASSIFICATION_LABEL_KEYS,
   CLASSIFICATION_SYMBOLS,
+  CLASSIFICATION_TEXT_COLORS,
 } from "@/lib/chess/classification"
 import {
   getMoveNumbering,
@@ -80,7 +81,7 @@ function MoveButton({
           : undefined
       }
       aria-current={isActive ? "step" : undefined}
-      className={`flex cursor-pointer items-center gap-1 rounded px-1 text-left ${
+      className={`flex min-h-6 w-full cursor-pointer items-center gap-1 rounded px-1 text-left pointer-coarse:min-h-11 ${
         isActive
           ? "bg-accent text-accent-foreground"
           : "text-foreground hover:bg-muted"
@@ -100,7 +101,7 @@ function MoveButton({
         <span
           aria-hidden="true"
           className="font-bold"
-          style={{ color: CLASSIFICATION_COLORS[classification] }}
+          style={{ color: CLASSIFICATION_TEXT_COLORS[classification] }}
         >
           {CLASSIFICATION_SYMBOLS[classification]}
         </span>
@@ -155,7 +156,7 @@ function VariationLine({
               ref={isActive ? activeRef : undefined}
               onClick={() => onSelect(index)}
               aria-current={isActive ? "step" : undefined}
-              className={`cursor-pointer rounded px-1 ${
+              className={`min-h-6 cursor-pointer rounded px-1 pointer-coarse:min-h-11 ${
                 isActive
                   ? "bg-accent text-accent-foreground"
                   : "text-foreground/80 hover:bg-muted"
@@ -167,7 +168,9 @@ function VariationLine({
               CLASSIFICATION_SYMBOLS[move.classification] ? (
                 <span
                   className="font-bold"
-                  style={{ color: CLASSIFICATION_COLORS[move.classification] }}
+                  style={{
+                    color: CLASSIFICATION_TEXT_COLORS[move.classification],
+                  }}
                 >
                   {CLASSIFICATION_SYMBOLS[move.classification]}
                 </span>
@@ -181,7 +184,7 @@ function VariationLine({
           onClick={onBack}
           title={t("variation.backToGame")}
           aria-label={t("variation.backToGame")}
-          className="cursor-pointer rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground pointer-coarse:size-11"
         >
           <CornerUpLeft className="size-3.5" />
         </button>
@@ -189,7 +192,7 @@ function VariationLine({
           onClick={onDelete}
           title={t("variation.delete")}
           aria-label={t("variation.delete")}
-          className="cursor-pointer rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground pointer-coarse:size-11"
         >
           <X className="size-3.5" />
         </button>
@@ -212,7 +215,7 @@ export function MoveList() {
 
   if (state.history.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
         {t("analysis.noMovesYet")}
       </div>
     )
@@ -245,11 +248,11 @@ export function MoveList() {
 
   return (
     <ScrollArea className="h-full">
-      <ol className="grid grid-cols-[2.5rem_1fr_1fr] gap-y-0.5 font-mono text-xs">
+      <ol className="grid grid-cols-[2.5rem_1fr_1fr] gap-y-0.5 font-mono text-sm">
         {rows.map((row) => (
           <Fragment key={row.moveNumber}>
             <li className="col-span-3 grid grid-cols-subgrid">
-              <span className="pr-1 text-right text-muted-foreground">
+              <span className="flex items-center justify-end pr-1 text-right text-muted-foreground">
                 {row.moveNumber}.
               </span>
               {renderCell(row.white)}
@@ -271,7 +274,7 @@ export function MoveList() {
         ))}
       </ol>
       {state.meta.result ? (
-        <p className="mt-2 text-center font-mono text-xs font-semibold text-muted-foreground">
+        <p className="mt-2 text-center font-mono text-sm font-semibold text-muted-foreground">
           {state.meta.result}
         </p>
       ) : null}

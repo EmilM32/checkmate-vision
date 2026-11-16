@@ -137,7 +137,7 @@ export function EvalChart() {
       className="h-36 w-full min-w-0 overflow-hidden rounded-lg border border-border/50 p-2"
     >
       {!analysisVisible ? (
-        <div className="flex h-full items-center justify-center rounded-md bg-muted/40 text-xs text-muted-foreground">
+        <div className="flex h-full items-center justify-center rounded-md bg-muted/40 text-sm text-muted-foreground">
           {t("analysis.guessEvalHidden")}
         </div>
       ) : null}

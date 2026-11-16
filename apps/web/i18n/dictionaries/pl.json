@@ -52,7 +52,9 @@
     "analyzeGame": "Analizuj partię",
     "setFen": "Ustaw FEN",
     "firstLoadPgn": "Najpierw wczytaj PGN z ruchami",
-    "importGame": "Importuj partię"
+    "importGame": "Importuj partię",
+    "fenLabelHint": " – pozycja startowa w zapisie FEN",
+    "pgnLabelHint": " – zapis partii w formacie PGN"
   },
   "analysis": {
     "noMovesYet": "Brak ruchów. Zagraj ruch na szachownicy albo wczytaj partię poniżej.",

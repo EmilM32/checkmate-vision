@@ -7,9 +7,9 @@ import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import {
-  CLASSIFICATION_COLORS,
   CLASSIFICATION_LABEL_KEYS,
   CLASSIFICATION_SYMBOLS,
+  CLASSIFICATION_TEXT_COLORS,
   type MoveClassification,
 } from "@/lib/chess/classification"
 import { getGameSummary } from "@/lib/chess/game-summary"
@@ -77,7 +77,7 @@ export function GameSummary() {
                 {t("summary.accuracy")}
               </span>
             </div>
-            <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 font-mono text-xs">
+            <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 font-mono text-sm">
               {COUNTED.filter((kind) => counts[kind] > 0).map((kind) => (
                 // Each click jumps to the next such move of this player.
                 <button
@@ -103,7 +103,7 @@ export function GameSummary() {
                 >
                   <span
                     className="font-bold"
-                    style={{ color: CLASSIFICATION_COLORS[kind] }}
+                    style={{ color: CLASSIFICATION_TEXT_COLORS[kind] }}
                   >
                     {CLASSIFICATION_SYMBOLS[kind]}
                   </span>{" "}

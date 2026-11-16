@@ -7,6 +7,12 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 ## [Unreleased]
 
 ### Fixed
+
+- FEN and PGN fields are named for assistive technology (visible label plus a
+  format hint), and a validation error is announced again when the same message
+  is produced a second time.
+- Move-list targets are 24px tall, and 44px on a coarse pointer, so a move can
+  be hit without aiming at the text line.
 - End-to-end tests run against a production server (`next build && next start`), so a
   cold dev compile no longer drops the first loads. The promotion drag waits until the
   pawn has settled on its square and the board has accepted the drag, then chooses the
@@ -15,10 +21,18 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   no longer warns while optimizing CSS.
 
 ### Changed
+
+- Helper text and positive/negative engine scores meet WCAG AA on the muted
+  tiles in both themes. Move-class names and symbols use darker text colours in
+  the light theme; the badge on the board keeps its fill and draws a dark symbol.
+- Body copy (engine lines, the move list, help text, validation errors) is 14px
+  and labels stay at least 12px. PGN and FEN fields use the 16px field size below
+  the `md` breakpoint, so iOS does not zoom the page when they are focused.
 - Next.js 16.4.6 and the other dependencies, each within its current major. `shadcn`
   (the CLI) is a dev dependency, so `pnpm audit --prod` no longer walks its tree.
 
 ### Added
+
 - Check your own move: with the engine on, moves played in a variation are classified
   like the game's (symbol in the variation, badge on the board, "This move" card with
   the engine's choice). In guess mode the verdict appears after "Reveal"; with the
@@ -53,6 +67,7 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   number of brilliant, great, inaccurate, mistaken and blundered moves.
 
 ### Fixed
+
 - Polish texts had no diacritics because the font was loaded without its `latin-ext`
   subset; the Polish dictionary is now written properly (and uses Lichess' terms:
   niedokładność / błąd / gruby błąd).
@@ -82,6 +97,7 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   scrolls there, and the toolbar wraps instead of overflowing.
 
 ### Changed
+
 - Three columns from 1280 px: a "Game" panel left of the board holds the evaluation chart
   and the full move list, so opening the chart no longer shrinks the board (at 1440×900
   the board is 744 px with the chart open, 596 px before). The navigation and toolbar
@@ -125,6 +141,7 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 ## [1.0.0] - 2026-04-08
 
 ### Added
+
 - Critical QA tests for game state transitions in GameContext.
 - UI reducer tests for toggle, restore, and reset behavior.
 - Navigation controls tests for keyboard and button interactions.
@@ -132,9 +149,11 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 - Release readiness documents: checklist, constraints, and technical decisions.
 
 ### Changed
+
 - Vitest configuration now supports tsx tests in a browser-like environment.
 - Workspace scripts include release gate commands.
 
 ### Known constraints
+
 - No multiplayer support in v1.
 - No cloud storage in v1 (localStorage only).

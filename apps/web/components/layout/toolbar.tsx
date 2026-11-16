@@ -119,7 +119,7 @@ export function Toolbar({ onExport, onNewAnalysis }: ToolbarProps) {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 px-2 text-[11px] font-semibold tracking-wide uppercase"
+            className="h-8 px-2 text-xs font-semibold tracking-wide uppercase"
             onClick={() => {
               dispatch({
                 type: "UI_SET_HEATMAP_MODE",

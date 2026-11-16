@@ -32,10 +32,13 @@ function uciToSan(fen: string, uciMoves: string[]): string[] {
 
 function scoreColorClass(score: EngineScore | null): string {
   if (!score) return "text-muted-foreground"
-  if (score.type === "mate")
-    return score.value > 0 ? "text-emerald-500" : "text-red-500"
-  if (score.value > 50) return "text-emerald-500"
-  if (score.value < -50) return "text-red-500"
+  if (score.type === "mate") {
+    return score.value > 0
+      ? "text-emerald-700 dark:text-emerald-400"
+      : "text-red-700 dark:text-red-400"
+  }
+  if (score.value > 50) return "text-emerald-700 dark:text-emerald-400"
+  if (score.value < -50) return "text-red-700 dark:text-red-400"
   return "text-muted-foreground"
 }
 
@@ -59,7 +62,7 @@ export function PVLines() {
 
   if (!uiState.engineEnabled) {
     return (
-      <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
         {t("analysis.engineOff")}
       </div>
     )
@@ -69,7 +72,7 @@ export function PVLines() {
     return (
       <div
         role="alert"
-        className="flex items-center justify-between gap-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive"
+        className="flex items-center justify-between gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
       >
         <span>{t(engineState.error)}</span>
         <Button
@@ -87,7 +90,7 @@ export function PVLines() {
   // No engine lines exist for a finished game; say why instead.
   if (terminalScore) {
     return (
-      <div className="rounded-md bg-muted/50 px-3 py-2 text-xs font-medium text-foreground/80">
+      <div className="rounded-md bg-muted/50 px-3 py-2 text-sm font-medium text-foreground/80">
         {terminalScore.type === "mate"
           ? t("analysis.checkmate")
           : t("analysis.stalemate")}
@@ -97,7 +100,7 @@ export function PVLines() {
 
   if (!analysisVisible) {
     return (
-      <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
         {t("analysis.guessLinesHidden")}
       </div>
     )
@@ -110,7 +113,7 @@ export function PVLines() {
           {t("analysis.engineLines")}
         </p>
         {engineState.depth > 0 && (
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground tabular-nums">
             d{engineState.depth}
             {engineState.nps > 0 &&
               ` · ${(engineState.nps / 1000).toFixed(0)}kn/s`}
@@ -118,7 +121,7 @@ export function PVLines() {
         )}
       </div>
       {linesWithSan.length === 0 ? (
-        <div className="rounded-md bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
+        <div className="rounded-md bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground">
           {engineState.isAnalyzing
             ? t("analysis.analyzing")
             : t("analysis.noAnalysis")}
@@ -127,7 +130,7 @@ export function PVLines() {
         linesWithSan.map((line) => (
           <div
             key={line.id}
-            className="flex items-baseline gap-2 rounded-md bg-muted/50 px-3 py-1.5 font-mono text-xs"
+            className="flex items-baseline gap-2 rounded-md bg-muted/50 px-3 py-1.5 font-mono text-sm"
             title={t(PV_LINE_LABEL_KEYS[line.id])}
           >
             {/* Matches the colour of this line's arrow on the board. */}

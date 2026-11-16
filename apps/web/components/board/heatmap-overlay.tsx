@@ -521,35 +521,39 @@ export function HeatmapLegend() {
       : t("heatmap.splitExample")
 
   return (
-    <div className="text-[11px]">
+    <div className="text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="font-semibold text-foreground">
           {t("toolbar.heatmap")}
         </span>
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           {modeLabel}
         </span>
       </div>
 
       <p className="mt-1.5 leading-snug text-muted-foreground">{modeHint}</p>
 
-      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-sm leading-snug text-muted-foreground">
         <p className="font-semibold text-foreground">
           {t("heatmap.valueGuideTitle")}
         </p>
         <p className="mt-1">{t("heatmap.valueGuideBody")}</p>
         <p className="mt-1">
-          <span className="font-semibold text-emerald-500">+4:</span>{" "}
+          <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+            +4:
+          </span>{" "}
           {t("heatmap.valuePlusExample")}
         </p>
         <p className="mt-1">
-          <span className="font-semibold text-red-500">-5:</span>{" "}
+          <span className="font-semibold text-red-700 dark:text-red-400">
+            -5:
+          </span>{" "}
           {t("heatmap.valueMinusExample")}
         </p>
         <p className="mt-1">{modeExample}</p>
       </div>
 
-      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/25 p-2 text-sm leading-snug text-muted-foreground">
         <p className="font-semibold text-foreground">
           {t("heatmap.traceTitle")}
         </p>
@@ -575,7 +579,7 @@ export function InfluenceSummary() {
 
   return (
     <div
-      className="absolute top-1.5 left-1/2 z-10 -translate-x-1/2 rounded-full bg-background/90 px-3 py-1 text-[11px] whitespace-nowrap text-foreground shadow-md ring-1 ring-foreground/10"
+      className="absolute top-1.5 left-1/2 z-10 -translate-x-1/2 rounded-full bg-background/90 px-3 py-1 text-xs whitespace-nowrap text-foreground shadow-md ring-1 ring-foreground/10"
       data-testid="influence-summary"
     >
       <span className="font-semibold">
