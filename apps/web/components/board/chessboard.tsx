@@ -9,6 +9,7 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 import { PromotionPicker } from "@/components/board/promotion-picker"
 
 import { useEngine } from "@/hooks/use-engine"
+import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion"
 import { getCurrentLine } from "@/context/game-context"
 import { useGame } from "@/hooks/use-game"
 import { useUI } from "@/hooks/use-ui"
@@ -61,16 +62,25 @@ function isTypingTarget(target: EventTarget | null): boolean {
   )
 }
 
+const LIGHT_SQUARE_STYLE: React.CSSProperties = {
+  backgroundColor: "var(--cv-board-light)",
+}
+const DARK_SQUARE_STYLE: React.CSSProperties = {
+  backgroundColor: "var(--cv-board-dark)",
+}
+// Theme tokens, so a theme switch repaints the board without JavaScript.
+// Weight stays high so coordinates remain readable under the heatmap tint.
 const COORDINATE_ON_DARK_STYLE: React.CSSProperties = {
-  color: "#f6e7cf",
+  color: "var(--cv-board-coord-on-dark)",
   fontWeight: 600,
 }
 const COORDINATE_ON_LIGHT_STYLE: React.CSSProperties = {
-  color: "#8b5a34",
+  color: "var(--cv-board-coord-on-light)",
   fontWeight: 600,
 }
 
 export function InteractiveChessboard() {
+  const reduceMotion = usePrefersReducedMotion()
   const { state, makeMove } = useGame()
   const { state: uiState, dispatch: uiDispatch } = useUI()
   const { state: engineState } = useEngine()
@@ -248,13 +258,15 @@ export function InteractiveChessboard() {
           position: state.fen,
           boardOrientation: uiState.boardFlipped ? "black" : "white",
           squareStyles,
+          lightSquareStyle: LIGHT_SQUARE_STYLE,
+          darkSquareStyle: DARK_SQUARE_STYLE,
           onPieceDrop: handlePieceDrop,
           onSquareRightClick: handleSquareRightClick,
           onSquareMouseDown: handleSquareMouseDown,
           onSquareClick: handleSquareClick,
-          animationDurationInMs: 200,
-          // Bolder, higher-contrast coordinates than the library default,
-          // so they stay legible under the heatmap tint.
+          animationDurationInMs: reduceMotion ? 0 : 200,
+          // Bolder coordinates than the library default, so they stay
+          // legible under the heatmap tint.
           darkSquareNotationStyle: COORDINATE_ON_DARK_STYLE,
           lightSquareNotationStyle: COORDINATE_ON_LIGHT_STYLE,
         }}

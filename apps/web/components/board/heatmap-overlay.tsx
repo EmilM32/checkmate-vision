@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
+import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion"
 import { useUI } from "@/hooks/use-ui"
 import { squareCenterUnits } from "@/lib/chess/board-coordinates"
 import {
@@ -98,6 +99,7 @@ function getSquareColor(
 export function HeatmapOverlay() {
   const { state: gameState } = useGame()
   const { state: uiState } = useUI()
+  const reduceMotion = usePrefersReducedMotion()
 
   const cells = useMemo(() => buildHeatmap(gameState.fen), [gameState.fen])
 
@@ -450,12 +452,21 @@ export function HeatmapOverlay() {
                 fill="none"
                 stroke="rgba(56, 189, 248, 0.9)"
                 strokeWidth="0.07"
-                animate={{ opacity: [0.95, 0.35, 0.95], r: [0.2, 0.34, 0.2] }}
-                transition={{
-                  duration: 1.2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                opacity={reduceMotion ? 0.95 : undefined}
+                animate={
+                  reduceMotion
+                    ? undefined
+                    : { opacity: [0.95, 0.35, 0.95], r: [0.2, 0.34, 0.2] }
+                }
+                transition={
+                  reduceMotion
+                    ? undefined
+                    : {
+                        duration: 1.2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }
+                }
               />
               <circle
                 cx={selectedTargetPoint.x}

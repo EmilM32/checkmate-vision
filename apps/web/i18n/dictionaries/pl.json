@@ -177,5 +177,15 @@
     "wasBest": "Najlepszy ruch według silnika.",
     "playBest": "Zagraj w wariancie",
     "enableEngine": "Włącz silnik, aby ocenić swój ruch w wariancie."
+  },
+  "evalBar": {
+    "off": "Ocena niedostępna – silnik wyłączony",
+    "calculating": "Liczę ocenę…",
+    "hidden": "Ocena ukryta – tryb zgadywania",
+    "white": "Ocena: białe lepiej o {{value}}",
+    "black": "Ocena: czarne lepiej o {{value}}",
+    "equal": "Ocena: równo",
+    "mateWhite": "Białe dają mata w {{n}}",
+    "mateBlack": "Czarne dają mata w {{n}}"
   }
 }

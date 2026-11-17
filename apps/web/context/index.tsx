@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useRef, type ReactNode } from "react"
+import { MotionConfig } from "framer-motion"
 
 import { EngineConnector } from "@/components/analysis/engine-connector"
 import { EngineProvider, useEngineContext } from "@/context/engine-context"
 import { GameProvider, useGameContext } from "@/context/game-context"
 import { UIProvider, useUIContext } from "@/context/ui-context"
+import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion"
 import {
   clearPersistedSession,
   readPersistedSession,
@@ -63,17 +65,28 @@ function SessionPersistenceBridge() {
   return null
 }
 
+function ReducedMotion({ children }: { children: ReactNode }) {
+  const reduce = usePrefersReducedMotion()
+  return (
+    <MotionConfig reducedMotion={reduce ? "always" : "user"}>
+      {children}
+    </MotionConfig>
+  )
+}
+
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <GameProvider>
-      <EngineProvider>
-        <UIProvider>
-          <SessionPersistenceBridge />
-          <EngineConnector />
-          {children}
-        </UIProvider>
-      </EngineProvider>
-    </GameProvider>
+    <ReducedMotion>
+      <GameProvider>
+        <EngineProvider>
+          <UIProvider>
+            <SessionPersistenceBridge />
+            <EngineConnector />
+            {children}
+          </UIProvider>
+        </EngineProvider>
+      </GameProvider>
+    </ReducedMotion>
   )
 }
 

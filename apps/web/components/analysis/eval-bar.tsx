@@ -2,39 +2,80 @@
 
 import { AnimatePresence, motion } from "framer-motion"
 
+import type { EngineScore } from "@/context/engine-context"
 import { useEngine } from "@/hooks/use-engine"
+import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion"
 import { useGame } from "@/hooks/use-game"
+import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import { evalToPercent, formatEval, isWhiteBetter } from "@/lib/engine/eval"
 
+const SHELL =
+  "relative flex w-7 shrink-0 flex-col overflow-hidden rounded-l-lg ring-1 ring-inset ring-foreground/30"
+
+type Translate = (
+  key: string,
+  values?: Record<string, string | number>
+) => string
+
+function evalCaption(
+  t: Translate,
+  options: {
+    engineEnabled: boolean
+    analysisVisible: boolean
+    score: EngineScore
+    whiteBetter: boolean
+    label: string
+  }
+): string {
+  if (!options.engineEnabled) return t("evalBar.off")
+  if (!options.analysisVisible) return t("evalBar.hidden")
+  if (!options.score) return t("evalBar.calculating")
+  if (options.score.type === "mate") {
+    if (options.score.value === 0) return t("analysis.checkmate")
+    const n = Math.abs(options.score.value)
+    return options.whiteBetter
+      ? t("evalBar.mateWhite", { n })
+      : t("evalBar.mateBlack", { n })
+  }
+  if (options.label === "0.0") return t("evalBar.equal")
+  return options.whiteBetter
+    ? t("evalBar.white", { value: options.label })
+    : t("evalBar.black", { value: options.label })
+}
+
 export function EvalBar() {
+  const { t } = useI18n()
+  const reduceMotion = usePrefersReducedMotion()
   const { state } = useEngine()
   const { state: uiState } = useUI()
   const { state: gameState } = useGame()
   const analysisVisible = !uiState.guessMode || state.guessRevealed
 
-  const pct = evalToPercent(state.evaluation, gameState.turn)
-  const label = formatEval(state.evaluation)
-  const whiteBetter = isWhiteBetter(state.evaluation, gameState.turn)
-
+  const score = state.evaluation
+  const pct = evalToPercent(score, gameState.turn)
+  const label = formatEval(score)
+  const whiteBetter = isWhiteBetter(score, gameState.turn)
   const whiteOnBottom = !uiState.boardFlipped
   const evalDir = whiteOnBottom ? "0deg" : "180deg"
-  const labelOnTop = whiteBetter === whiteOnBottom
+  // Far end of the side that is ahead, as on Lichess and Chess.com.
+  const labelOnTop = whiteBetter !== whiteOnBottom
+  const caption = evalCaption(t, {
+    engineEnabled: uiState.engineEnabled,
+    analysisVisible,
+    score,
+    whiteBetter,
+    label,
+  })
 
   if (!uiState.engineEnabled) {
     return (
       <div
-        className="eval-bar-gradient relative flex w-7 shrink-0 flex-col overflow-hidden rounded-l-lg opacity-40"
-        style={{ "--eval-dir": evalDir } as React.CSSProperties}
-      >
-        <span
-          className={`absolute left-1/2 -translate-x-1/2 text-[10px] leading-none font-bold text-zinc-500 ${
-            whiteOnBottom ? "bottom-1.5" : "top-1.5"
-          }`}
-        >
-          —
-        </span>
-      </div>
+        role="img"
+        aria-label={caption}
+        title={caption}
+        className={`${SHELL} bg-muted`}
+      />
     )
   }
 
@@ -43,42 +84,48 @@ export function EvalBar() {
       {!analysisVisible ? (
         <motion.div
           key="eval-hidden"
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 0.55 }}
-          exit={{ opacity: 0.1 }}
+          role="img"
+          aria-label={caption}
+          title={caption}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="eval-bar-gradient relative flex w-7 shrink-0 flex-col overflow-hidden rounded-l-lg"
-          style={{ "--eval-dir": evalDir } as React.CSSProperties}
+          className={`${SHELL} bg-muted`}
         >
-          <span
-            className={`absolute left-1/2 -translate-x-1/2 text-[10px] leading-none font-bold text-zinc-900 ${
-              whiteOnBottom ? "bottom-1.5" : "top-1.5"
-            }`}
-          >
+          <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs leading-none font-semibold text-muted-foreground">
             ?
           </span>
         </motion.div>
       ) : (
         <motion.div
           key="eval-visible"
-          className="eval-bar-gradient relative flex w-7 shrink-0 flex-col overflow-hidden rounded-l-lg"
+          role="img"
+          aria-label={caption}
+          title={caption}
+          className={`${SHELL} eval-bar-gradient`}
           style={{ "--eval-dir": evalDir } as React.CSSProperties}
           animate={{ "--eval-pct": `${pct}%` } as Record<string, string>}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
+          transition={{
+            duration: reduceMotion ? 0 : 0.5,
+            ease: "easeInOut",
+          }}
         >
-          <motion.span
-            data-testid="eval-label"
-            key={whiteBetter ? "white" : "black"}
-            initial={{ opacity: 0, y: labelOnTop ? -4 : 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: labelOnTop ? 4 : -4 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className={`absolute left-1/2 -translate-x-1/2 text-[10px] leading-none font-bold ${
-              labelOnTop ? "top-1.5" : "bottom-1.5"
-            } ${whiteBetter ? "text-zinc-100" : "text-zinc-900"}`}
-          >
-            {label}
-          </motion.span>
+          {score ? (
+            <motion.span
+              data-testid="eval-label"
+              key={whiteBetter ? "white" : "black"}
+              initial={{ opacity: 0, y: labelOnTop ? -4 : 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: labelOnTop ? 4 : -4 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className={`absolute left-1/2 -translate-x-1/2 text-xs leading-none font-semibold tracking-tight whitespace-nowrap tabular-nums ${
+                labelOnTop ? "top-1.5" : "bottom-1.5"
+              } ${whiteBetter ? "text-zinc-900" : "text-zinc-100"}`}
+            >
+              {label}
+            </motion.span>
+          ) : null}
         </motion.div>
       )}
     </AnimatePresence>

@@ -83,10 +83,7 @@
     --sidebar-accent-foreground: oklch(0.218 0.008 223.9);
     --sidebar-border: oklch(0.925 0.005 214.3);
     --sidebar-ring: oklch(0.723 0.014 214.4);
-    --cv-surface: oklch(0.96 0.01 230);
-    --cv-surface-2: oklch(0.92 0.015 230);
     --cv-accent: oklch(0.74 0.17 160);
-    --cv-border: oklch(0.86 0.02 230);
     --cv-class-brilliant: oklch(0.52 0.105 223.128);
     --cv-class-great: oklch(0.527 0.154 150.069);
     --cv-class-best: oklch(0.511 0.096 186.391);
@@ -94,6 +91,10 @@
     --cv-class-inaccuracy: oklch(0.554 0.135 66.442);
     --cv-class-mistake: oklch(0.553 0.195 38.402);
     --cv-class-blunder: oklch(0.505 0.213 27.518);
+    --cv-board-light: #F0D9B5;
+    --cv-board-dark: #B58863;
+    --cv-board-coord-on-light: #7a4e2c;
+    --cv-board-coord-on-dark: #2e1b0f;
 }
 
 .dark {
@@ -128,10 +129,7 @@
     --sidebar-accent-foreground: oklch(0.987 0.002 197.1);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.56 0.021 213.5);
-    --cv-surface: #0f172a;
-    --cv-surface-2: #1e293b;
     --cv-accent: #10b981;
-    --cv-border: #374151;
     --cv-class-brilliant: #26c6da;
     --cv-class-great: #66bb6a;
     --cv-class-best: #a5d6a7;
@@ -139,6 +137,10 @@
     --cv-class-inaccuracy: #eab308;
     --cv-class-mistake: #ffa726;
     --cv-class-blunder: #ef5350;
+    --cv-board-light: #BFA889;
+    --cv-board-dark: #7E5F45;
+    --cv-board-coord-on-light: #4a3220;
+    --cv-board-coord-on-dark: #f6e7cf;
 }
 
 @layer base {
@@ -148,7 +150,18 @@
 
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--cv-accent) 6%, transparent), transparent 28%), radial-gradient(circle at 90% 100%, color-mix(in oklab, var(--cv-surface-2) 60%, black), transparent 40%);
+    background-image: radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--cv-accent) 6%, transparent), transparent 28%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

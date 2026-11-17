@@ -3,12 +3,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ChevronDown, ChevronUp, Cpu, Eye, EyeOff, Play } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
+import { Card, CardContent, CardHeader } from "@workspace/ui/components/card"
 import {
   Tooltip,
   TooltipContent,
@@ -70,8 +65,10 @@ export function AnalysisPanel() {
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-hidden">
       <CardHeader className="space-y-2 border-b border-border/50">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle>{t("common.analysis")}</CardTitle>
+        <div className="flex h-7 items-center justify-between gap-2">
+          <h1 className="font-heading text-base font-semibold tracking-tight text-foreground">
+            CheckMate Vision
+          </h1>
           <Preferences />
         </div>
         <div className="flex flex-wrap items-center gap-1.5">

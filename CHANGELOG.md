@@ -8,6 +8,8 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
+- The evaluation bar placed its score on the losing side. A position the engine
+  has not scored yet shows a waiting state instead of 0.0.
 - FEN and PGN fields are named for assistive technology (visible label plus a
   format hint), and a validation error is announced again when the same message
   is produced a second time.
@@ -22,6 +24,17 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Changed
 
+- The evaluation bar uses a 12px score at the end of the side that is ahead,
+  with a border so the light segment stays visible, and plain tracks when the
+  engine is off or guess mode hides the score.
+- Board squares and coordinates follow the theme. In the light theme the
+  coordinates are dark brown on both square colours; both themes meet WCAG AA.
+- The analysis panel is headed "CheckMate Vision".
+- The page background keeps the green glow at the top and no longer paints a
+  gray patch in the corner.
+- Motion follows `prefers-reduced-motion`: the heatmap pulse, piece movement,
+  evaluation-bar fill and smooth list scrolling stop, and CSS animations
+  collapse.
 - Helper text and positive/negative engine scores meet WCAG AA on the muted
   tiles in both themes. Move-class names and symbols use darker text colours in
   the light theme; the badge on the board keeps its fill and draws a dark symbol.
