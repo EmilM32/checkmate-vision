@@ -24,6 +24,10 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Changed
 
+- Node.js must be `^20.19.0 || >=22.12.0` (22 LTS; `.nvmrc` is `22`).
+  `engine-strict=true` makes `pnpm install` exit with an engines error on Node
+  below 20.19 and on 22.0–22.11, before `@tailwindcss/node` can `require()` the
+  ESM-only `magic-string` package and fail the dev build.
 - The evaluation bar uses a 12px score at the end of the side that is ahead,
   with a border so the light segment stays visible, and plain tracks when the
   engine is off or guess mode hides the score.
