@@ -8,6 +8,9 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
+- Reduced motion no longer shifts the page 10px on load or the mobile tab 6px
+  as it leaves. Those animations drop the vertical offset, and the flat layout
+  rule cancels a translation that was already baked into the first render.
 - The evaluation bar placed its score on the losing side. A position the engine
   has not scored yet shows a waiting state instead of 0.0.
 - FEN and PGN fields are named for assistive technology (visible label plus a
@@ -45,6 +48,7 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   (the CLI) is a dev dependency, so `pnpm audit --prod` no longer walks its tree.
 
 ### Removed
+
 - Unused `zod` from the UI package, left over from the shadcn template. Nothing in the
   apps or packages imported it, so production dependencies no longer include the
   vulnerable 3.25.76 release.
