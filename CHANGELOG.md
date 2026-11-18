@@ -8,6 +8,11 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
+- Alt + right-click on a heatmap square no longer logs `<circle> attribute r:
+  Expected length, "undefined"`. The pulse had no starting radius, so the
+  animation wrote `undefined` onto the circle. It now starts from a real one.
+- A refresh keeps the loaded game and the current move. The end-to-end test
+  checks that, and that Alt + right-click logs no circle error.
 - Reduced motion no longer shifts the page 10px on load or the mobile tab 6px
   as it leaves. Those animations drop the vertical offset, and the flat layout
   rule cancels a translation that was already baked into the first render.
