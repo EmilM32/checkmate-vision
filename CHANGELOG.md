@@ -24,12 +24,13 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Changed
 
-- Node.js must be `^20.19.0 || ^22.13.0 || >=24.0.0` (22 LTS; `.nvmrc` is `22`).
+- Node.js must be `^22.13.0 || >=24.0.0` (22 LTS; `.nvmrc` is `22`). Node 20
+  is out: it reached end of life in April 2026, and CI does not test it.
   `engine-strict=true` makes `pnpm install` exit with an engines error on Node
-  below 20.19, on 22.0–22.12, and on 23. 22.12 is too old for `jsdom@29.1.1`
-  and `eslint-visitor-keys@5` (`^22.13.0`), and Node 23 sits outside those
-  ranges. The install stops before `@tailwindcss/node` can `require()` the
-  ESM-only `magic-string` package and fail the dev build.
+  20, on 22.0–22.12, and on 23. 22.12 is too old for `jsdom@29.1.1` and
+  `eslint-visitor-keys@5` (`^22.13.0`). The install stops before
+  `@tailwindcss/node` can `require()` the ESM-only `magic-string` package and
+  fail the dev build.
 - The evaluation bar uses a 12px score at the end of the side that is ahead,
   with a border so the light segment stays visible, and plain tracks when the
   engine is off or guess mode hides the score.
