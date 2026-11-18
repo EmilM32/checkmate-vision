@@ -7,6 +7,7 @@ import { PGNInput } from "@/components/inputs/pgn-input"
 
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 const NEXT_FEN = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+const IMPOSSIBLE_FEN = "4k3/4R3/8/8/8/8/8/4K3 w - - 0 1"
 
 const {
   localeRef,
@@ -140,6 +141,43 @@ describe("FEN input", () => {
     expect(field.getAttribute("aria-invalid")).toBeNull()
     expect(field.getAttribute("aria-describedby")).toBeNull()
     expect(setPositionFromFen).toHaveBeenCalledWith(NEXT_FEN)
+  })
+
+  it("announces a position where the side not to move is in check", async () => {
+    const user = userEvent.setup()
+    render(<FENInput />)
+
+    const field = screen.getByRole("textbox", { name: FEN_NAME.pl })
+    await user.clear(field)
+    await user.type(field, IMPOSSIBLE_FEN)
+    await user.click(screen.getByRole("button", { name: "Ustaw FEN" }))
+
+    const alert = screen.getByRole("alert")
+    expect(alert.textContent).toBe(
+      "Ta pozycja jest niemożliwa: król strony, która nie ma ruchu, jest w szachu."
+    )
+    expect(field.getAttribute("aria-invalid")).toBe("true")
+    expect(field.getAttribute("aria-describedby")).toBe(alert.id)
+    expect(setPositionFromFen).not.toHaveBeenCalled()
+  })
+
+  it("announces that impossible position in English", async () => {
+    localeRef.current = "en"
+    const user = userEvent.setup()
+    render(<FENInput />)
+
+    const field = screen.getByRole("textbox", { name: FEN_NAME.en })
+    await user.clear(field)
+    await user.type(field, IMPOSSIBLE_FEN)
+    await user.click(screen.getByRole("button", { name: "Set FEN" }))
+
+    const alert = screen.getByRole("alert")
+    expect(alert.textContent).toBe(
+      "This position is impossible: the king of the side not to move is in check."
+    )
+    expect(field.getAttribute("aria-invalid")).toBe("true")
+    expect(field.getAttribute("aria-describedby")).toBe(alert.id)
+    expect(setPositionFromFen).not.toHaveBeenCalled()
   })
 
   it("announces a position the board refused to set", async () => {

@@ -106,6 +106,44 @@ test.describe("AI-10 smoke", () => {
     await expect(page.getByRole("button", { name: "Obróć" })).toBeVisible()
   })
 
+  test("rejects a FEN where the side not to move is in check", async ({
+    page,
+  }) => {
+    await page.goto("/")
+    await openImportInputs(page)
+
+    const whitePawn = page.locator(
+      '[data-square="e2"] [data-piece="wP"]:visible'
+    )
+    await expect(whitePawn).toBeVisible()
+
+    const impossible = "4k3/4R3/8/8/8/8/8/4K3 w - - 0 1"
+    await setFen(page, impossible)
+
+    const field = page.locator("input.font-mono:visible").first()
+    await expect(field).toHaveAttribute("aria-invalid", "true")
+    const describedBy = await field.getAttribute("aria-describedby")
+    expect(describedBy).toBeTruthy()
+    const alert = page.locator(`[id="${describedBy}"]`)
+    await expect(alert).toHaveRole("alert")
+    await expect(alert).toHaveText(
+      "Ta pozycja jest niemożliwa: król strony, która nie ma ruchu, jest w szachu."
+    )
+    await expect(field).toHaveValue(impossible)
+    await expect(whitePawn).toBeVisible()
+    await expect(
+      page.locator('[data-square="e7"] [data-piece="wR"]:visible')
+    ).toHaveCount(0)
+
+    await setFen(page, "4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+    await expect(field).not.toHaveAttribute("aria-invalid")
+    await expect(page.locator("p[role=alert]")).toHaveCount(0)
+    await expect(whitePawn).toHaveCount(0)
+    await expect(
+      page.locator('[data-square="e1"] [data-piece="wK"]:visible')
+    ).toBeVisible()
+  })
+
   test("loads PGN and enables move navigation", async ({ page }) => {
     await page.goto("/")
     await openImportInputs(page)

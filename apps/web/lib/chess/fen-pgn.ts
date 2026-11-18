@@ -45,6 +45,16 @@ function normalizeInput(input: string): string {
   return input.trim()
 }
 
+// chess.js accepts a FEN whose king is in check when it is not that side's
+// turn, and Stockfish crashes on it. isCheck() only looks at the side to
+// move, so test whether the other king is attacked.
+function sideNotToMoveIsInCheck(chess: Chess): boolean {
+  const sideToMove = chess.turn()
+  const idle = sideToMove === "w" ? "b" : "w"
+  const [king] = chess.findPiece({ type: "k", color: idle })
+  return king !== undefined && chess.isAttacked(king, sideToMove)
+}
+
 export function validateFen(fen: string): ValidationResult {
   const normalizedFen = normalizeInput(fen)
   if (!normalizedFen) {
@@ -54,6 +64,9 @@ export function validateFen(fen: string): ValidationResult {
   try {
     const chess = new Chess()
     chess.load(normalizedFen)
+    if (sideNotToMoveIsInCheck(chess)) {
+      return { ok: false, error: "errors.fenSideNotToMoveInCheck" }
+    }
     return { ok: true }
   } catch {
     return { ok: false, error: "errors.fenInvalid" }

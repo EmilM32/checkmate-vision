@@ -87,6 +87,7 @@
     "engineCrashed": "The engine stopped unexpectedly.",
     "fenEmpty": "FEN cannot be empty.",
     "fenInvalid": "Invalid FEN format.",
+    "fenSideNotToMoveInCheck": "This position is impossible: the king of the side not to move is in check.",
     "pgnEmpty": "PGN cannot be empty.",
     "pgnNoMoves": "PGN contains no moves.",
     "pgnInvalid": "Invalid PGN format.",
