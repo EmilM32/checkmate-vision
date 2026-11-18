@@ -25,25 +25,25 @@ describe("positionKey", () => {
 describe("AnalysisCache", () => {
   it("returns stored analysis for the same position", () => {
     const cache = new AnalysisCache()
-    cache.set(START, entry(20))
+    cache.set(START, 3, entry(20))
 
-    expect(cache.get(START.replace(" 0 1", " 2 7"))).toEqual(entry(20))
+    expect(cache.get(START.replace(" 0 1", " 2 7"), 3)).toEqual(entry(20))
   })
 
   it("keeps the deeper analysis", () => {
     const cache = new AnalysisCache()
-    cache.set(START, entry(22))
-    cache.set(START, entry(12, 3, false))
-    expect(cache.get(START)?.depth).toBe(22)
+    cache.set(START, 3, entry(22))
+    cache.set(START, 3, entry(12, 3, false))
+    expect(cache.get(START, 3)?.depth).toBe(22)
 
-    cache.set(START, entry(24))
-    expect(cache.get(START)?.depth).toBe(24)
+    cache.set(START, 3, entry(24))
+    expect(cache.get(START, 3)?.depth).toBe(24)
   })
 
   it("ignores results without lines", () => {
     const cache = new AnalysisCache()
-    cache.set(START, entry(0, 0))
-    expect(cache.get(START)).toBeUndefined()
+    cache.set(START, 3, entry(0, 0))
+    expect(cache.get(START, 3)).toBeUndefined()
   })
 
   it("evicts the least recently used position", () => {
@@ -53,13 +53,24 @@ describe("AnalysisCache", () => {
       "8/8/8/8/8/8/8/K5k1 w",
       "8/8/8/8/8/8/8/K4k2 w",
     ]
-    cache.set(fens[0]!, entry(10))
-    cache.set(fens[1]!, entry(10))
-    cache.get(fens[0]!)
-    cache.set(fens[2]!, entry(10))
+    cache.set(fens[0]!, 3, entry(10))
+    cache.set(fens[1]!, 3, entry(10))
+    cache.get(fens[0]!, 3)
+    cache.set(fens[2]!, 3, entry(10))
 
-    expect(cache.get(fens[0]!)).toBeDefined()
-    expect(cache.get(fens[1]!)).toBeUndefined()
-    expect(cache.get(fens[2]!)).toBeDefined()
+    expect(cache.get(fens[0]!, 3)).toBeDefined()
+    expect(cache.get(fens[1]!, 3)).toBeUndefined()
+    expect(cache.get(fens[2]!, 3)).toBeDefined()
+  })
+
+  it("keeps a separate entry per multipv", () => {
+    const cache = new AnalysisCache()
+    cache.set(START, 3, entry(22, 3))
+    cache.set(START, 2, entry(30, 2))
+
+    expect(cache.get(START, 3)?.lines).toHaveLength(3)
+    expect(cache.get(START, 3)?.depth).toBe(22)
+    expect(cache.get(START, 2)?.lines).toHaveLength(2)
+    expect(cache.get(START, 2)?.depth).toBe(30)
   })
 })

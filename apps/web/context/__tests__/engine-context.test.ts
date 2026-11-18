@@ -109,6 +109,30 @@ describe("engineReducer batch analysis", () => {
     expect(restarted.pvLines).toEqual([])
   })
 
+  it("drops the score when the position changes", () => {
+    const withEval = {
+      ...initialEngineState,
+      evaluation: { type: "cp", value: 150 } as const,
+      depth: 20,
+      pvLines: [
+        {
+          id: 1 as const,
+          score: { type: "cp" as const, value: 150 },
+          pv: ["e2e4"],
+        },
+      ],
+      bestMove: "e2e4",
+      isAnalyzing: true,
+    }
+
+    const next = engineReducer(withEval, { type: "ENGINE_NEW_POSITION" })
+    expect(next.evaluation).toBeNull()
+    expect(next.pvLines).toEqual([])
+    expect(next.bestMove).toBeNull()
+    expect(next.depth).toBe(0)
+    expect(next.isAnalyzing).toBe(true)
+  })
+
   it("ignores low-depth evaluation updates", () => {
     const withEval = {
       ...initialEngineState,

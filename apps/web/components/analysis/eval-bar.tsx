@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 
 import type { EngineScore } from "@/context/engine-context"
@@ -9,6 +10,8 @@ import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
 import { useUI } from "@/hooks/use-ui"
 import { evalToPercent, formatEval, isWhiteBetter } from "@/lib/engine/eval"
+
+const CALC_FILL_MS = 300
 
 const SHELL =
   "relative flex w-7 shrink-0 flex-col overflow-hidden rounded-l-lg ring-1 ring-inset ring-foreground/30"
@@ -22,6 +25,7 @@ function evalCaption(
   t: Translate,
   options: {
     engineEnabled: boolean
+    engineFailed: boolean
     analysisVisible: boolean
     score: EngineScore
     whiteBetter: boolean
@@ -29,6 +33,7 @@ function evalCaption(
   }
 ): string {
   if (!options.engineEnabled) return t("evalBar.off")
+  if (options.engineFailed) return t("evalBar.engineFailed")
   if (!options.analysisVisible) return t("evalBar.hidden")
   if (!options.score) return t("evalBar.calculating")
   if (options.score.type === "mate") {
@@ -53,8 +58,28 @@ export function EvalBar() {
   const analysisVisible = !uiState.guessMode || state.guessRevealed
 
   const score = state.evaluation
-  const pct = evalToPercent(score, gameState.turn)
+  const engineFailed = Boolean(state.error)
+  const livePct = score ? evalToPercent(score, gameState.turn) : null
+  const [hold, setHold] = useState({ pct: 50, neutral: false })
+  if (engineFailed && (hold.pct !== 50 || !hold.neutral)) {
+    setHold({ pct: 50, neutral: true })
+  } else if (
+    !engineFailed &&
+    livePct !== null &&
+    (hold.pct !== livePct || hold.neutral)
+  ) {
+    setHold({ pct: livePct, neutral: false })
+  }
+  const pct = livePct ?? (hold.neutral ? 50 : hold.pct)
   const label = formatEval(score)
+
+  useEffect(() => {
+    if (engineFailed || livePct !== null) return
+    const timer = setTimeout(() => {
+      setHold((current) => ({ pct: current.pct, neutral: true }))
+    }, CALC_FILL_MS)
+    return () => clearTimeout(timer)
+  }, [engineFailed, livePct, gameState.fen])
   const whiteBetter = isWhiteBetter(score, gameState.turn)
   const whiteOnBottom = !uiState.boardFlipped
   const evalDir = whiteOnBottom ? "0deg" : "180deg"
@@ -62,6 +87,7 @@ export function EvalBar() {
   const labelOnTop = whiteBetter !== whiteOnBottom
   const caption = evalCaption(t, {
     engineEnabled: uiState.engineEnabled,
+    engineFailed,
     analysisVisible,
     score,
     whiteBetter,
@@ -76,6 +102,24 @@ export function EvalBar() {
         title={caption}
         className={`${SHELL} bg-muted`}
       />
+    )
+  }
+
+  if (engineFailed) {
+    return (
+      <div
+        role="img"
+        aria-label={caption}
+        title={caption}
+        className={`${SHELL} bg-muted`}
+      >
+        <span
+          aria-hidden="true"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs leading-none font-semibold text-muted-foreground"
+        >
+          !
+        </span>
+      </div>
     )
   }
 
@@ -104,6 +148,7 @@ export function EvalBar() {
           aria-label={caption}
           title={caption}
           className={`${SHELL} eval-bar-gradient`}
+          data-eval-pct={pct.toFixed(1)}
           style={{ "--eval-dir": evalDir } as React.CSSProperties}
           animate={{ "--eval-pct": `${pct}%` } as Record<string, string>}
           transition={{

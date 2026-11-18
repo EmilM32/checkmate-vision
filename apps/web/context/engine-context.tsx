@@ -12,9 +12,7 @@ import type { ParsedBestMove, ParsedInfoLine } from "@/lib/engine/types"
 // ── Types ──
 
 export type EngineScore =
-  | { type: "cp"; value: number }
-  | { type: "mate"; value: number }
-  | null
+  { type: "cp"; value: number } | { type: "mate"; value: number } | null
 
 export type EngineLine = {
   id: 1 | 2 | 3
@@ -29,11 +27,7 @@ export type BatchAnalysisItem = {
 }
 
 export type BatchAnalysisStatus =
-  | "idle"
-  | "running"
-  | "done"
-  | "cancelled"
-  | "error"
+  "idle" | "running" | "done" | "cancelled" | "error"
 
 export type BatchAnalysisState = {
   requestId: number
@@ -94,6 +88,7 @@ export const initialEngineState: EngineState = {
 
 export type EngineAction =
   | { type: "ENGINE_START_ANALYSIS" }
+  | { type: "ENGINE_NEW_POSITION" }
   | { type: "ENGINE_OUTPUT"; info: ParsedInfoLine }
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
   | { type: "ENGINE_TERMINAL_POSITION"; score: EngineScore }
@@ -149,6 +144,19 @@ export function engineReducer(
         bestMove: null,
         cachedDepth: 0,
         guessRevealed: false,
+      }
+
+    case "ENGINE_NEW_POSITION":
+      return {
+        ...state,
+        evaluation: null,
+        depth: 0,
+        nps: 0,
+        pvLines: [],
+        bestMove: null,
+        cachedDepth: 0,
+        guessRevealed: false,
+        isAnalyzing: state.error ? false : true,
       }
 
     case "ENGINE_OUTPUT": {
@@ -215,6 +223,12 @@ export function engineReducer(
         error: action.error,
         isAnalyzing: false,
         retryRequested: false,
+        evaluation: null,
+        depth: 0,
+        nps: 0,
+        bestMove: null,
+        pvLines: [],
+        cachedDepth: 0,
       }
 
     case "ENGINE_RETRY_REQUEST":

@@ -90,8 +90,7 @@ export function useGameAnalysis() {
 
     const onPosition = (item: BatchAnalysisItem, result: SearchResult) => {
       results.set(item.moveIndex, result)
-      // Lets the live view show these lines at once while browsing the game.
-      analysisCache.set(item.fen, {
+      analysisCache.set(item.fen, GAME_ENGINE_OPTIONS.multiPv, {
         depth: result.depth,
         lines: result.lines,
         complete: false,

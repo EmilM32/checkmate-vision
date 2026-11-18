@@ -61,7 +61,7 @@
     "guessEvalHidden": "Guess mode active. Reveal analysis to inspect evaluation chart.",
     "guessLinesHidden": "Guess mode active. Reveal analysis to view engine lines.",
     "engineLines": "Engine Lines",
-    "analyzing": "Analyzing...",
+    "analyzing": "Calculating evaluation…",
     "noAnalysis": "No analysis",
     "checkmate": "Checkmate – game over",
     "stalemate": "Stalemate – draw",
@@ -182,6 +182,7 @@
   },
   "evalBar": {
     "off": "Evaluation unavailable – engine is off",
+    "engineFailed": "Evaluation unavailable: the engine stopped responding",
     "calculating": "Calculating evaluation…",
     "hidden": "Evaluation hidden – guess mode",
     "white": "Evaluation: White is better by {{value}}",

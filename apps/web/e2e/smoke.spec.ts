@@ -324,6 +324,213 @@ test.describe("engine analysis", () => {
       timeout: 30_000,
     })
   })
+
+  test("shows the engine error on the bar and recovers on the next position", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000)
+    await expect(
+      page.locator("[data-testid=pv-score]:visible").first()
+    ).toBeVisible({ timeout: 30_000 })
+
+    const stockfish = page
+      .workers()
+      .find((worker) => worker.url().includes("stockfish"))
+    expect(stockfish).toBeTruthy()
+    await stockfish!.evaluate(() => {
+      setTimeout(() => {
+        throw new Error("wasm crash")
+      }, 0)
+    })
+
+    const crashAlert = page.locator("span:visible", {
+      hasText: "Silnik niespodziewanie przestał działać.",
+    })
+    await expect(crashAlert).toBeVisible({ timeout: 30_000 })
+    const bar = page.getByRole("img", {
+      name: "Ocena niedostępna: silnik przestał odpowiadać",
+    })
+    await expect(bar).toBeVisible()
+    await expect(bar).toHaveText("!")
+    await expect(
+      page.locator("button:visible", { hasText: "Spróbuj ponownie" })
+    ).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Uruchom ponownie" })
+    ).toHaveCount(0)
+
+    await setFen(
+      page,
+      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+    )
+    await expect(
+      page.getByText("Silnik niespodziewanie przestał działać.")
+    ).toHaveCount(0)
+    await expect(bar).toHaveCount(0)
+    await expect(
+      page.locator("[data-testid=pv-score]:visible").first()
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByTestId("eval-label")).toBeVisible()
+  })
+
+  test("does not keep the previous evaluation after the position changes", async ({
+    page,
+  }) => {
+    await setFen(page, "4k3/8/8/8/8/8/8/3QK3 w - - 0 1")
+    const label = page.getByTestId("eval-label")
+    await expect(label).toHaveText(/^[1-9]|^M/, { timeout: 30_000 })
+    const stale = (await label.textContent()) ?? ""
+
+    await page.evaluate((previous) => {
+      const hits: string[] = []
+      const read = () => {
+        const text =
+          document.querySelector("[data-testid=eval-label]")?.textContent ?? ""
+        const startPosition =
+          document.querySelector('[data-square="e2"] [data-piece="wP"]') !==
+            null &&
+          document.querySelector('[data-square="d1"] [data-piece="wQ"]') ===
+            null
+        if (startPosition && text === previous) hits.push(text)
+      }
+      const observer = new MutationObserver(read)
+      observer.observe(document.body, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+      })
+      ;(window as unknown as { __staleEval: string[] }).__staleEval = hits
+    }, stale)
+
+    await setFen(
+      page,
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    )
+    await expect(
+      page.locator('[data-square="e2"] [data-piece="wP"]')
+    ).toBeVisible()
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { __staleEval: string[] }).__staleEval
+        )
+      )
+      .toEqual([])
+    await expect(label).not.toHaveText(stale, { timeout: 30_000 })
+  })
+
+  test("does not flash the calculating fill while stepping through moves", async ({
+    page,
+  }) => {
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+    await page.getByRole("heading", { name: "CheckMate Vision" }).click()
+    await page.keyboard.press("Home")
+    await expect(page.getByTestId("eval-label")).toBeVisible({
+      timeout: 30_000,
+    })
+
+    await page.evaluate(() => {
+      const hits: number[] = []
+      let hiddenAt = 0
+      let lastNumberPct = ""
+      const read = () => {
+        const bar = document.querySelector("[data-eval-pct]")
+        if (!bar) return
+        const pct = bar.getAttribute("data-eval-pct") ?? ""
+        const hasNumber = bar.querySelector("[data-testid=eval-label]") !== null
+        if (hasNumber) {
+          hiddenAt = 0
+          lastNumberPct = pct
+          return
+        }
+        if (!lastNumberPct || Math.abs(Number(lastNumberPct) - 50) < 10) return
+        if (!hiddenAt) hiddenAt = performance.now()
+        if (pct === "50.0" && performance.now() - hiddenAt < 290) {
+          hits.push(performance.now() - hiddenAt)
+        }
+      }
+      const observer = new MutationObserver(read)
+      observer.observe(document.body, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        characterData: true,
+      })
+      const tick = () => {
+        read()
+        ;(window as unknown as { __evalFrame: number }).__evalFrame =
+          requestAnimationFrame(tick)
+      }
+      tick()
+      ;(window as unknown as { __calcFillHits: number[] }).__calcFillHits = hits
+    })
+
+    for (let step = 0; step < 4; step += 1) {
+      await page.keyboard.press("ArrowRight")
+      await expect(page.getByTestId("eval-label")).toBeVisible({
+        timeout: 30_000,
+      })
+    }
+
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __calcFillHits: number[] }).__calcFillHits
+      )
+    ).toEqual([])
+  })
+
+  test("does not flash two lines after game analysis", async ({ page }) => {
+    test.setTimeout(90_000)
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Nf3 Nc6")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+
+    const lines = page.locator("[data-testid=pv-line-color]:visible")
+    await expect(lines).toHaveCount(3, { timeout: 30_000 })
+
+    await page.evaluate(() => {
+      const visible = () =>
+        [...document.querySelectorAll("[data-testid=pv-line-color]")].filter(
+          (el) => {
+            const box = el.getBoundingClientRect()
+            return box.width > 0 && box.height > 0
+          }
+        ).length
+      const drops: number[] = []
+      let last = visible()
+      const observer = new MutationObserver(() => {
+        const count = visible()
+        if (last >= 3 && count > 0 && count < 3) drops.push(count)
+        last = count
+      })
+      observer.observe(document.body, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+      })
+      ;(window as unknown as { __lineDrops: number[] }).__lineDrops = drops
+    })
+
+    await page.getByRole("button", { name: "Analizuj partię" }).click()
+    await expect(
+      page.locator("span:visible", { hasText: /^Analiza partii zakończona$/ })
+    ).toBeVisible({ timeout: 45_000 })
+
+    await page.getByRole("heading", { name: "CheckMate Vision" }).click()
+    await page.keyboard.press("Home")
+    await expect(lines).toHaveCount(3, { timeout: 30_000 })
+    await page.keyboard.press("End")
+    await expect(lines).toHaveCount(3, { timeout: 30_000 })
+
+    const drops = await page.evaluate(
+      () => (window as unknown as { __lineDrops: number[] }).__lineDrops
+    )
+    expect(drops).toEqual([])
+  })
 })
 
 test.describe("game import and moves", () => {
