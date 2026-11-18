@@ -22,6 +22,7 @@ import { NavigationControls } from "@/components/navigation/navigation-controls"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
+import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion"
 import { useUI } from "@/hooks/use-ui"
 import { exportBoardToPng } from "@/lib/export/board-export"
 import { clearPersistedSession } from "@/lib/persistence/session-storage"
@@ -59,6 +60,7 @@ export function MainLayout() {
   const { newGame } = useGame()
   const { resetEngine } = useEngine()
   const { state: uiState, dispatch: uiDispatch } = useUI()
+  const reduceMotion = usePrefersReducedMotion()
 
   const handleExport = useCallback(async () => {
     if (!boardExportRef.current) return
@@ -83,7 +85,11 @@ export function MainLayout() {
   return (
     <main className="min-h-svh p-2 md:p-4 lg:h-svh lg:overflow-hidden lg:p-5">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        data-testid="layout-shell"
+        // `initial` is frozen on the first render, before usePrefersReducedMotion
+        // reads matchMedia. The flat rule cancels that shift under the media query.
+        data-reduced-motion-flat=""
+        initial={reduceMotion ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="flex w-full flex-col gap-3 lg:h-full lg:flex-row lg:items-stretch lg:justify-center lg:gap-4"
@@ -169,9 +175,17 @@ export function MainLayout() {
                     <AnimatePresence mode="wait" initial={false}>
                       <motion.div
                         key={mobileTab}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
+                        data-testid="mobile-tab-panel"
+                        data-reduced-motion-flat=""
+                        initial={
+                          reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }
+                        }
+                        animate={
+                          reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }
+                        }
+                        exit={
+                          reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }
+                        }
                         transition={{ duration: 0.22, ease: "easeOut" }}
                         className="h-full"
                       >
