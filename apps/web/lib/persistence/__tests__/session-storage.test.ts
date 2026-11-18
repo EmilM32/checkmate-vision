@@ -418,12 +418,58 @@ describe("corrupt persisted game", () => {
       { ...gameAfterE4, history: [{ ...move, san: null }] },
     ],
     ["a move is null", { ...gameAfterE4, history: [null] }],
-    [
-      "a move fen is not text",
-      { ...gameAfterE4, history: [{ ...move, fen: 5 }] },
-    ],
   ])("drops the game when %s", (_label, game) => {
     expect(migratePersistedSession(sessionWithGame(game))).toBeNull()
+  })
+
+  it.each([
+    ["not a position", "x"],
+    ["a different position", DEFAULT_POSITION],
+  ])("rebuilds a move fen that is %s from the moves", (_label, fen) => {
+    const migrated = migratePersistedSession(
+      sessionWithGame({
+        ...gameAfterE4,
+        history: [{ ...move, fen }],
+      })
+    )
+
+    expect(migrated?.game.history).toEqual(gameAfterE4.history)
+    expect(migrated?.game.fen).toBe(fenAfterE4)
+    expect(migrated?.game.currentMoveIndex).toBe(1)
+  })
+
+  it("rebuilds fen, turn and isGameOver from the move at the current index", () => {
+    const fenAfterE5 =
+      "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+    const migrated = migratePersistedSession(
+      sessionWithGame({
+        ...gameAfterE4,
+        fen: 5,
+        turn: "x",
+        isGameOver: "yes",
+        currentMoveIndex: 1,
+        history: [
+          move,
+          {
+            san: "e5",
+            fen: "x",
+            scoreBefore: null,
+            scoreAfter: null,
+            delta: null,
+            classification: null,
+          },
+        ],
+      })
+    )
+
+    expect(migrated?.game.history.map((entry) => entry.fen)).toEqual([
+      fenAfterE4,
+      fenAfterE5,
+    ])
+    expect(migrated?.game.fen).toBe(fenAfterE4)
+    expect(migrated?.game.turn).toBe("b")
+    expect(migrated?.game.isGameOver).toBe(false)
+    expect(migrated?.game.currentMoveIndex).toBe(1)
   })
 })
 

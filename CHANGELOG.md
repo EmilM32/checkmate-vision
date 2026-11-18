@@ -13,10 +13,12 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   longer drops the moves. Analysis fields of the wrong shape are cleared, names
   and the result must be text, and a rating must be a finite number or numeric
   text; anything else is cleared instead of being drawn. The repaired session
-  is written back once. A move list that is not a list, a move that cannot be
-  replayed, or a starting position that is not a FEN is dropped and the stored
-  session is removed. A current move that is not a whole number from 0 through
-  the last move jumps to the last move.
+  is written back once. Each move's position, and the board's fen, side to
+  move and game-over flag, come from replaying the moves, so a stored fen
+  cannot reach the board or the engine. A move list that is not a list, a move
+  that cannot be replayed, or a starting position that is not a FEN is dropped
+  and the stored session is removed. A current move that is not a whole number
+  from 0 through the last move jumps to the last move.
 - A saved session with a corrupt `ui` no longer blanks the page. Fields of the
   wrong type, including `selectedInfluenceSquare` set to a number, object,
   array, or a square that is not on the board, are replaced with their

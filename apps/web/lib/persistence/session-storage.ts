@@ -169,16 +169,22 @@ function sanitizeOptionalScore(value: unknown): EngineScore | undefined {
   return sanitizeScore(value)
 }
 
+function playSan(chess: Chess, san: string): boolean {
+  try {
+    return chess.move(san) !== null
+  } catch {
+    return false
+  }
+}
+
 function readMove(value: unknown, chess: Chess): MoveEntry | null {
-  if (!isRecord(value)) return null
-  const san = typeof value.san === "string" && value.san ? value.san : null
-  const fen = typeof value.fen === "string" && value.fen ? value.fen : null
-  if (!san || !fen || !chess.moves().includes(san)) return null
-  chess.move(san)
+  if (!isRecord(value) || typeof value.san !== "string" || !value.san)
+    return null
+  if (!playSan(chess, value.san)) return null
 
   return omitUndefined({
-    san,
-    fen,
+    san: value.san,
+    fen: chess.fen(),
     scoreBefore: sanitizeScore(value.scoreBefore),
     scoreAfter: sanitizeScore(value.scoreAfter),
     delta: sanitizeDelta(value.delta),
@@ -189,7 +195,10 @@ function readMove(value: unknown, chess: Chess): MoveEntry | null {
   } satisfies { [K in keyof Required<MoveEntry>]: MoveEntry[K] })
 }
 
-function readHistory(value: unknown, initialFen: string): MoveEntry[] | null {
+function readHistory(
+  value: unknown,
+  initialFen: string
+): { history: MoveEntry[]; chess: Chess } | null {
   if (!Array.isArray(value)) return null
   const chess = new Chess(initialFen)
   const history: MoveEntry[] = []
@@ -198,7 +207,7 @@ function readHistory(value: unknown, initialFen: string): MoveEntry[] | null {
     if (!move) return null
     history.push(move)
   }
-  return history
+  return { history, chess }
 }
 
 function sanitizeVariation(
@@ -220,8 +229,7 @@ function sanitizeVariation(
   const chess = new Chess(initialFen)
   for (let index = 0; index < branchIndex; index++) {
     const san = history[index]?.san
-    if (!san || !chess.moves().includes(san)) return null
-    chess.move(san)
+    if (!san || !playSan(chess, san)) return null
   }
   const moves: MoveEntry[] = []
   for (const entry of value.moves) {
@@ -265,20 +273,27 @@ function sanitizeGame(value: unknown): GameState | null {
   const initialFen = value.initialFen.trim()
   if (!validateFen(initialFen).ok) return null
 
-  const history = readHistory(value.history, initialFen)
-  if (!history) return null
+  const replay = readHistory(value.history, initialFen)
+  if (!replay) return null
+  const { history, chess } = replay
+  const currentMoveIndex = sanitizeMoveIndex(
+    value.currentMoveIndex,
+    history.length
+  )
+  for (let index = history.length; index > currentMoveIndex; index--) {
+    chess.undo()
+  }
 
   const variation = sanitizeVariation(value.variation, history, initialFen)
 
   return {
     initialFen,
-    fen: typeof value.fen === "string" ? value.fen : initialFen,
+    fen: chess.fen(),
     pgn: typeof value.pgn === "string" ? value.pgn : "",
     history,
-    currentMoveIndex: sanitizeMoveIndex(value.currentMoveIndex, history.length),
-    turn: value.turn === "w" || value.turn === "b" ? value.turn : "w",
-    isGameOver:
-      typeof value.isGameOver === "boolean" ? value.isGameOver : false,
+    currentMoveIndex,
+    turn: chess.turn(),
+    isGameOver: chess.isGameOver(),
     meta: sanitizeMeta(value.meta),
     variation,
     variationIndex: sanitizeVariationIndex(value.variationIndex, variation),
