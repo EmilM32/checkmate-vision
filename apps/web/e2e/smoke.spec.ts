@@ -108,6 +108,44 @@ test.describe("AI-10 smoke", () => {
     await expect(page.getByRole("button", { name: "Obróć" })).toBeVisible()
   })
 
+  test("rejects a FEN where the side not to move is in check", async ({
+    page,
+  }) => {
+    await page.goto("/")
+    await openImportInputs(page)
+
+    const whitePawn = page.locator(
+      '[data-square="e2"] [data-piece="wP"]:visible'
+    )
+    await expect(whitePawn).toBeVisible()
+
+    const impossible = "4k3/4R3/8/8/8/8/8/4K3 w - - 0 1"
+    await setFen(page, impossible)
+
+    const field = page.locator("input.font-mono:visible").first()
+    await expect(field).toHaveAttribute("aria-invalid", "true")
+    const describedBy = await field.getAttribute("aria-describedby")
+    expect(describedBy).toBeTruthy()
+    const alert = page.locator(`[id="${describedBy}"]`)
+    await expect(alert).toHaveRole("alert")
+    await expect(alert).toHaveText(
+      "Ta pozycja jest niemożliwa: król strony, która nie ma ruchu, jest w szachu."
+    )
+    await expect(field).toHaveValue(impossible)
+    await expect(whitePawn).toBeVisible()
+    await expect(
+      page.locator('[data-square="e7"] [data-piece="wR"]:visible')
+    ).toHaveCount(0)
+
+    await setFen(page, "4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+    await expect(field).not.toHaveAttribute("aria-invalid")
+    await expect(page.locator("p[role=alert]")).toHaveCount(0)
+    await expect(whitePawn).toHaveCount(0)
+    await expect(
+      page.locator('[data-square="e1"] [data-piece="wK"]:visible')
+    ).toBeVisible()
+  })
+
   test("loads PGN and enables move navigation", async ({ page }) => {
     await page.goto("/")
     await openImportInputs(page)
@@ -134,6 +172,69 @@ test.describe("engine analysis", () => {
     await page.goto("/")
     await page.getByRole("button", { name: "Silnik", exact: true }).click()
     await openImportInputs(page)
+  })
+
+  test("rejects a set-up PGN that starts from an impossible position", async ({
+    page,
+  }) => {
+    const field = page.locator('textarea[placeholder="Wklej PGN..."]:visible')
+    await field.fill("1. e4 e5")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+    const blackReply = page.locator("ol:visible button", { hasText: /^e5$/ })
+    await expect(blackReply.first()).toBeVisible()
+    const playedPawn = page.locator(
+      '[data-square="e4"] [data-piece="wP"]:visible'
+    )
+    await expect(playedPawn).toBeVisible()
+    const score = page.locator("[data-testid=pv-score]:visible").first()
+    await expect(score).toBeVisible({ timeout: 30_000 })
+
+    // Loading a game closes the import section.
+    await openImportInputs(page)
+
+    // Headers alone, and the same headers plus a move. On main the game with a
+    // move loads, and Home then sends the illegal start to Stockfish.
+    const headers = [
+      '[SetUp "1"]',
+      '[FEN "4k3/4R3/8/8/8/8/8/4K3 w - - 0 1"]',
+    ].join("\n")
+    for (const impossible of [headers, `${headers}\n\n1. Ke2 *`]) {
+      await field.fill(impossible)
+      await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+
+      await expect(field).toHaveAttribute("aria-invalid", "true")
+      const describedBy = await field.getAttribute("aria-describedby")
+      expect(describedBy).toBeTruthy()
+      const alert = page.locator(`[id="${describedBy}"]`)
+      await expect(alert).toHaveRole("alert")
+      await expect(alert).toHaveText(
+        "Partia zaczyna się od niemożliwej pozycji: król strony, która nie ma ruchu, jest w szachu."
+      )
+
+      await expect(blackReply.first()).toBeVisible()
+      await expect(playedPawn).toBeVisible()
+      await expect(
+        page.locator('[data-square="e7"] [data-piece="wR"]:visible')
+      ).toHaveCount(0)
+      await expect(
+        page.getByText("Silnik niespodziewanie przestał działać.")
+      ).toHaveCount(0)
+      await expect(score).toBeVisible()
+    }
+
+    // Home walks back through the game that stayed. The engine keeps scoring it.
+    await page.getByRole("heading", { name: "CheckMate Vision" }).click()
+    await page.keyboard.press("Home")
+    await expect(
+      page.locator('[data-square="e2"] [data-piece="wP"]:visible')
+    ).toBeVisible()
+    await expect(
+      page.locator('[data-square="e7"] [data-piece="wR"]:visible')
+    ).toHaveCount(0)
+    await expect(
+      page.getByText("Silnik niespodziewanie przestał działać.")
+    ).toHaveCount(0)
+    await expect(score).toBeVisible({ timeout: 30_000 })
   })
 
   test("reports evaluation from white's perspective with black to move", async ({

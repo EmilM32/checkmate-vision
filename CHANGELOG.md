@@ -13,6 +13,10 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   animation wrote `undefined` onto the circle. It now starts from a real one.
 - A refresh keeps the loaded game and the current move. The end-to-end test
   checks that, and that Alt + right-click logs no circle error.
+- A FEN where the side not to move is in check is rejected before it reaches
+  the board or the engine. A PGN set up from that position is rejected with its
+  own message, and the game already on the board stays, so the engine keeps
+  analysing it.
 - Reduced motion no longer shifts the page 10px on load or the mobile tab 6px
   as it leaves. Those animations drop the vertical offset, and the flat layout
   rule cancels a translation that was already baked into the first render.
