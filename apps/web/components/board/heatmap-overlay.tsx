@@ -452,7 +452,7 @@ export function HeatmapOverlay() {
                 fill="none"
                 stroke="rgba(56, 189, 248, 0.9)"
                 strokeWidth="0.07"
-                opacity={reduceMotion ? 0.95 : undefined}
+                initial={{ r: 0.24, opacity: 0.95 }}
                 animate={
                   reduceMotion
                     ? undefined

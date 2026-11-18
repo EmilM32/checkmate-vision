@@ -47,7 +47,9 @@ async function dragPiece(
     .toBe(true)
 
   const fromBox = (await handle.boundingBox())!
-  const toBox = (await page.locator(`[data-square="${toSquare}"]`).boundingBox())!
+  const toBox = (await page
+    .locator(`[data-square="${toSquare}"]`)
+    .boundingBox())!
   const startX = fromBox.x + fromBox.width / 2
   const startY = fromBox.y + fromBox.height / 2
   await page.mouse.move(startX, startY)
@@ -425,6 +427,78 @@ test.describe("wide layout", () => {
     await page.getByRole("button", { name: "Wykres", exact: true }).click()
     await expect(page.locator(".recharts-surface:visible")).toBeVisible()
     expect((await board.boundingBox())!.width).toBe(before)
+  })
+})
+
+test.describe("session persistence", () => {
+  test("keeps the loaded game and the current move after a refresh", async ({
+    page,
+  }) => {
+    const consoleErrors: string[] = []
+    page.on("console", (message) => {
+      if (message.type() === "error") consoleErrors.push(message.text())
+    })
+    page.on("pageerror", (error) => {
+      consoleErrors.push(error.message)
+    })
+
+    await page.goto("/")
+    await openImportInputs(page)
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Nf3 Nc6")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+    await expect(
+      page.locator("ol:visible button", { hasText: /^Nc6$/ })
+    ).toBeVisible()
+
+    // Leave the game one move before the end, so a restored position is
+    // distinct from both the start and the final move.
+    await page.keyboard.press("ArrowLeft")
+    await expect(
+      page.locator('ol:visible button[aria-current="step"]')
+    ).toHaveText(/Nf3/)
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const raw = localStorage.getItem("checkmate-vision:session")
+          if (!raw) return null
+          const session = JSON.parse(raw)
+          const index = session.game.currentMoveIndex
+          return session.game.history[index - 1]?.san ?? null
+        })
+      )
+      .toBe("Nf3")
+
+    await page.reload()
+    await expect(
+      page.locator('ol:visible button[aria-current="step"]')
+    ).toHaveText(/Nf3/)
+    await expect(
+      page.locator("ol:visible button", { hasText: /^e4$/ })
+    ).toBeVisible()
+    await expect(
+      page.locator("ol:visible button", { hasText: /^Nc6$/ })
+    ).toBeVisible()
+
+    const errorsBeforeClick = consoleErrors.length
+    await page.getByRole("button", { name: "Heatmapa", exact: true }).click()
+    await page.locator('[data-square="e4"]').click({
+      button: "right",
+      modifiers: ["Alt"],
+    })
+    await expect(page.getByTestId("influence-summary")).toContainText("e4")
+    await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => resolve(undefined))
+          )
+        })
+    )
+
+    expect(consoleErrors.slice(errorsBeforeClick)).toEqual([])
   })
 })
 
