@@ -93,7 +93,7 @@ packages/
 ## Quick Start
 
 Prerequisites:
-- Node.js 20+
+- Node.js 22.13 or 24+
 - pnpm 9.15.9+
 
 From repository root:
