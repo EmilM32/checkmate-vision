@@ -264,6 +264,215 @@ describe("corrupt persisted ui", () => {
   )
 })
 
+function sessionWithGame(
+  game: unknown,
+  patch: { engine?: unknown; savedAt?: unknown } = {}
+) {
+  return {
+    ...sessionWithUi(initialUIState),
+    game,
+    ...patch,
+  }
+}
+
+describe("corrupt persisted game", () => {
+  const move = gameAfterE4.history[0]!
+
+  it.each([
+    ["an object", { a: 1 }],
+    ["an unknown label", "zzz"],
+  ])(
+    "drops a classification that is %s and keeps the move",
+    (_label, classification) => {
+      const migrated = migratePersistedSession(
+        sessionWithGame({
+          ...gameAfterE4,
+          history: [{ ...move, classification }],
+        })
+      )
+
+      expect(migrated?.game.history[0]).toEqual(move)
+      expect(migrated?.game.currentMoveIndex).toBe(1)
+      expect(migrated?.game.initialFen).toBe(gameAfterE4.initialFen)
+    }
+  )
+
+  it("drops an evaluation that is not a score and keeps a real classification", () => {
+    const migrated = migratePersistedSession(
+      sessionWithGame({
+        ...gameAfterE4,
+        history: [
+          {
+            ...move,
+            classification: "good",
+            scoreBefore: {},
+            scoreAfter: "abc",
+            delta: "no",
+            bestMove: { uci: "e2e4" },
+            bestScore: [],
+            clock: "1:00",
+          },
+        ],
+      })
+    )
+
+    expect(migrated?.game.history[0]).toEqual({
+      ...move,
+      classification: "good",
+      bestScore: null,
+    })
+    expect(migrated?.game.history[0]).not.toHaveProperty("bestMove")
+    expect(migrated?.game.history[0]).not.toHaveProperty("clock")
+  })
+
+  it("replaces meta values that cannot be rendered as text and keeps the game", () => {
+    const migrated = migratePersistedSession(
+      sessionWithGame({
+        ...gameAfterE4,
+        meta: {
+          white: {},
+          black: 5,
+          whiteElo: "x",
+          blackElo: [],
+          result: 7,
+        },
+      })
+    )
+
+    expect(migrated?.game.meta).toEqual({
+      white: null,
+      black: null,
+      whiteElo: null,
+      blackElo: null,
+      result: null,
+    })
+    expect(migrated?.game.history).toEqual(gameAfterE4.history)
+  })
+
+  it("keeps player names, a numeric rating and a result", () => {
+    const migrated = migratePersistedSession(
+      sessionWithGame({
+        ...gameAfterE4,
+        meta: {
+          white: "Kasparov, Garry",
+          black: "Topalov, Veselin",
+          whiteElo: "2830",
+          blackElo: 2700,
+          result: "1-0",
+        },
+      })
+    )
+
+    expect(migrated?.game.meta).toEqual({
+      white: "Kasparov, Garry",
+      black: "Topalov, Veselin",
+      whiteElo: "2830",
+      blackElo: "2700",
+      result: "1-0",
+    })
+  })
+
+  it.each([
+    ["2.5", 2.5],
+    ["-1", -1],
+    ["null", null],
+  ])(
+    "moves currentMoveIndex %s to the last move",
+    (_label, currentMoveIndex) => {
+      const migrated = migratePersistedSession(
+        sessionWithGame({ ...gameAfterE4, currentMoveIndex })
+      )
+
+      expect(migrated?.game.currentMoveIndex).toBe(gameAfterE4.history.length)
+      expect(migrated?.game.history).toEqual(gameAfterE4.history)
+    }
+  )
+
+  it.each([
+    ["a string", "x"],
+    ["null", null],
+  ])("replaces engine %s and keeps the moves", (_label, engine) => {
+    const migrated = migratePersistedSession(
+      sessionWithGame(gameAfterE4, { engine })
+    )
+
+    expect(migrated?.engine).toEqual({ guessRevealed: false })
+    expect(migrated?.game).toEqual(gameAfterE4)
+  })
+
+  it("replaces a numeric savedAt and keeps the moves", () => {
+    const before = Date.now()
+    const migrated = migratePersistedSession(
+      sessionWithGame(gameAfterE4, { savedAt: 5 })
+    )
+
+    expect(migrated?.game).toEqual(gameAfterE4)
+    expect(Date.parse(migrated?.savedAt ?? "")).toBeGreaterThanOrEqual(before)
+  })
+
+  it.each([
+    ["initialFen is not a position", { ...gameAfterE4, initialFen: 5 }],
+    ["history is not a list", { ...gameAfterE4, history: { san: "e4" } }],
+    [
+      "a move has no san",
+      { ...gameAfterE4, history: [{ ...move, san: null }] },
+    ],
+    ["a move is null", { ...gameAfterE4, history: [null] }],
+  ])("drops the game when %s", (_label, game) => {
+    expect(migratePersistedSession(sessionWithGame(game))).toBeNull()
+  })
+
+  it.each([
+    ["not a position", "x"],
+    ["a different position", DEFAULT_POSITION],
+  ])("rebuilds a move fen that is %s from the moves", (_label, fen) => {
+    const migrated = migratePersistedSession(
+      sessionWithGame({
+        ...gameAfterE4,
+        history: [{ ...move, fen }],
+      })
+    )
+
+    expect(migrated?.game.history).toEqual(gameAfterE4.history)
+    expect(migrated?.game.fen).toBe(fenAfterE4)
+    expect(migrated?.game.currentMoveIndex).toBe(1)
+  })
+
+  it("rebuilds fen, turn and isGameOver from the move at the current index", () => {
+    const fenAfterE5 =
+      "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+    const migrated = migratePersistedSession(
+      sessionWithGame({
+        ...gameAfterE4,
+        fen: 5,
+        turn: "x",
+        isGameOver: "yes",
+        currentMoveIndex: 1,
+        history: [
+          move,
+          {
+            san: "e5",
+            fen: "x",
+            scoreBefore: null,
+            scoreAfter: null,
+            delta: null,
+            classification: null,
+          },
+        ],
+      })
+    )
+
+    expect(migrated?.game.history.map((entry) => entry.fen)).toEqual([
+      fenAfterE4,
+      fenAfterE5,
+    ])
+    expect(migrated?.game.fen).toBe(fenAfterE4)
+    expect(migrated?.game.turn).toBe("b")
+    expect(migrated?.game.isGameOver).toBe(false)
+    expect(migrated?.game.currentMoveIndex).toBe(1)
+  })
+})
+
 describe("session storage read/write", () => {
   const localStorage = new LocalStorageMock()
 
@@ -357,6 +566,86 @@ describe("session storage read/write", () => {
 
     expect(readPersistedSession()?.ui.selectedInfluenceSquare).toBeNull()
     expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBe(raw)
+  })
+
+  it("writes a repaired game back once and leaves the moves in place", () => {
+    localStorage.setItem(
+      SESSION_STORAGE_KEY,
+      JSON.stringify(
+        sessionWithGame({
+          ...gameAfterE4,
+          history: [{ ...gameAfterE4.history[0], classification: { a: 1 } }],
+          meta: {
+            white: {},
+            black: 5,
+            whiteElo: "x",
+            blackElo: [],
+            result: 7,
+          },
+          currentMoveIndex: 2.5,
+        })
+      )
+    )
+
+    const restored = readPersistedSession()
+
+    expect(restored?.game.history[0]?.san).toBe("e4")
+    expect(restored?.game.history[0]?.classification).toBeNull()
+    expect(restored?.game.meta.white).toBeNull()
+    expect(restored?.game.meta.result).toBeNull()
+    expect(restored?.game.currentMoveIndex).toBe(1)
+
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY)
+    const stored = JSON.parse(raw ?? "null") as {
+      game: {
+        history: { san: string; classification: unknown }[]
+        meta: { white: unknown; result: unknown }
+        currentMoveIndex: number
+      }
+    }
+    expect(stored.game.history[0]?.classification).toBeNull()
+    expect(stored.game.meta.white).toBeNull()
+    expect(stored.game.currentMoveIndex).toBe(1)
+
+    expect(readPersistedSession()?.game.history[0]?.san).toBe("e4")
+    expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBe(raw)
+  })
+
+  it.each([
+    ["engine is a string", { engine: "x" }],
+    ["engine is null", { engine: null }],
+    ["savedAt is a number", { savedAt: 5 }],
+  ])("keeps the stored game when %s", (_label, patch) => {
+    localStorage.setItem(
+      SESSION_STORAGE_KEY,
+      JSON.stringify({ ...sessionWithUi(initialUIState), ...patch })
+    )
+
+    const restored = readPersistedSession()
+    expect(restored?.game.history[0]?.san).toBe("e4")
+    expect(restored?.engine).toEqual({ guessRevealed: false })
+    expect(localStorage.getItem(SESSION_STORAGE_KEY)).not.toBeNull()
+
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY)
+    expect(readPersistedSession()?.game.currentMoveIndex).toBe(1)
+    expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBe(raw)
+  })
+
+  it.each([
+    ["history is not a list", { ...gameAfterE4, history: null }],
+    ["initialFen is not a position", { ...gameAfterE4, initialFen: 5 }],
+    [
+      "a move cannot be replayed",
+      { ...gameAfterE4, history: [{ ...gameAfterE4.history[0], san: 4 }] },
+    ],
+  ])("removes the key when %s", (_label, game) => {
+    localStorage.setItem(
+      SESSION_STORAGE_KEY,
+      JSON.stringify(sessionWithGame(game))
+    )
+
+    expect(readPersistedSession()).toBeNull()
+    expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
   })
 
   it.each([

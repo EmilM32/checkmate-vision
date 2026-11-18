@@ -8,13 +8,24 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
+- A saved game no longer blanks the page when a move classification, score, or
+  player field has the wrong shape, and a bad engine setting or timestamp no
+  longer drops the moves. Analysis fields of the wrong shape are cleared, names
+  and the result must be text, and a rating must be a finite number or numeric
+  text; anything else is cleared instead of being drawn. The repaired session
+  is written back once. Each move's position, and the board's fen, side to
+  move and game-over flag, come from replaying the moves, so a stored fen
+  cannot reach the board or the engine. A move list that is not a list, a move
+  that cannot be replayed, or a starting position that is not a FEN is dropped
+  and the stored session is removed. A current move that is not a whole number
+  from 0 through the last move jumps to the last move.
 - A saved session with a corrupt `ui` no longer blanks the page. Fields of the
   wrong type, including `selectedInfluenceSquare` set to a number, object,
   array, or a square that is not on the board, are replaced with their
   defaults and written back. The game and the current move stay. The stored
   session is removed only when the game itself cannot be read.
 - Alt + right-click on a heatmap square no longer logs `<circle> attribute r:
-  Expected length, "undefined"`. The pulse had no starting radius, so the
+Expected length, "undefined"`. The pulse had no starting radius, so the
   animation wrote `undefined` onto the circle. It now starts from a real one.
 - A refresh keeps the loaded game and the current move. The end-to-end test
   checks that, and that Alt + right-click logs no circle error.
