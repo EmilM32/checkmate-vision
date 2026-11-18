@@ -8,6 +8,11 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
+- A saved session with a corrupt `ui` no longer blanks the page. Fields of the
+  wrong type, including `selectedInfluenceSquare` set to a number, object,
+  array, or a square that is not on the board, are replaced with their
+  defaults and written back. The game and the current move stay. The stored
+  session is removed only when the game itself cannot be read.
 - Alt + right-click on a heatmap square no longer logs `<circle> attribute r:
   Expected length, "undefined"`. The pulse had no starting radius, so the
   animation wrote `undefined` onto the circle. It now starts from a real one.
