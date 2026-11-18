@@ -85,7 +85,7 @@ describe("fen-pgn helpers", () => {
       for (const result of [validatePgn(pgn), parsePgn(pgn)]) {
         expect(result.ok).toBe(false)
         if (!result.ok) {
-          expect(result.error).toBe("errors.fenSideNotToMoveInCheck")
+          expect(result.error).toBe("errors.pgnSideNotToMoveInCheck")
         }
       }
     }

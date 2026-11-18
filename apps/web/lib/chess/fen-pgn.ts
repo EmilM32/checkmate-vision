@@ -90,7 +90,7 @@ export function validatePgn(pgn: string): ValidationResult {
     const start = new Chess()
     start.load(startFen)
     if (sideNotToMoveIsInCheck(start)) {
-      return { ok: false, error: "errors.fenSideNotToMoveInCheck" }
+      return { ok: false, error: "errors.pgnSideNotToMoveInCheck" }
     }
     if (history.length === 0) {
       return { ok: false, error: "errors.pgnNoMoves" }

@@ -173,7 +173,7 @@ describe("FEN input", () => {
 
     const alert = screen.getByRole("alert")
     expect(alert.textContent).toBe(
-      "This position is impossible: the king of the side not to move is in check."
+      "This position is impossible: the king of the side that just moved is in check."
     )
     expect(field.getAttribute("aria-invalid")).toBe("true")
     expect(field.getAttribute("aria-describedby")).toBe(alert.id)
@@ -253,6 +253,47 @@ describe("PGN input", () => {
     expect(field.getAttribute("aria-describedby")).toBeNull()
     expect(loadPgnGame).toHaveBeenCalledOnce()
     expect(clearBatchAnalysis).toHaveBeenCalledOnce()
+  })
+
+  it("announces a set-up game that starts from an impossible position", async () => {
+    const user = userEvent.setup()
+    render(<PGNInput />)
+
+    const field = screen.getByRole("textbox", { name: PGN_NAME.pl })
+    fireEvent.change(field, {
+      target: {
+        value: `[SetUp "1"]\n[FEN "${IMPOSSIBLE_FEN}"]\n\n1. Ke2 *`,
+      },
+    })
+    await user.click(screen.getByRole("button", { name: "Wczytaj PGN" }))
+
+    const alert = screen.getByRole("alert")
+    expect(alert.textContent).toBe(
+      "Partia zaczyna się od niemożliwej pozycji: król strony, która nie ma ruchu, jest w szachu."
+    )
+    expect(field.getAttribute("aria-invalid")).toBe("true")
+    expect(field.getAttribute("aria-describedby")).toBe(alert.id)
+    expect(loadPgnGame).not.toHaveBeenCalled()
+    expect(clearBatchAnalysis).not.toHaveBeenCalled()
+  })
+
+  it("announces that set-up game in English", async () => {
+    localeRef.current = "en"
+    const user = userEvent.setup()
+    render(<PGNInput />)
+
+    const field = screen.getByRole("textbox", { name: PGN_NAME.en })
+    fireEvent.change(field, {
+      target: { value: `[SetUp "1"]\n[FEN "${IMPOSSIBLE_FEN}"]` },
+    })
+    await user.click(screen.getByRole("button", { name: "Load PGN" }))
+
+    const alert = screen.getByRole("alert")
+    expect(alert.textContent).toBe(
+      "This game starts from an impossible position: the king of the side that just moved is in check."
+    )
+    expect(field.getAttribute("aria-describedby")).toBe(alert.id)
+    expect(loadPgnGame).not.toHaveBeenCalled()
   })
 
   it("announces a game the board refused to load", async () => {

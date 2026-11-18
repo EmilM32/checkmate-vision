@@ -88,6 +88,7 @@
     "fenEmpty": "FEN nie może być pusty.",
     "fenInvalid": "Nieprawidłowy format FEN.",
     "fenSideNotToMoveInCheck": "Ta pozycja jest niemożliwa: król strony, która nie ma ruchu, jest w szachu.",
+    "pgnSideNotToMoveInCheck": "Partia zaczyna się od niemożliwej pozycji: król strony, która nie ma ruchu, jest w szachu.",
     "pgnEmpty": "PGN nie może być pusty.",
     "pgnNoMoves": "PGN nie zawiera ruchów.",
     "pgnInvalid": "Nieprawidłowy format PGN.",
