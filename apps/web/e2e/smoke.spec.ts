@@ -324,6 +324,104 @@ test.describe("engine analysis", () => {
       timeout: 30_000,
     })
   })
+
+  test("shows the engine error on the bar and recovers on the next position", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000)
+    await expect(
+      page.locator("[data-testid=pv-score]:visible").first()
+    ).toBeVisible({ timeout: 30_000 })
+
+    const stockfish = page
+      .workers()
+      .find((worker) => worker.url().includes("stockfish"))
+    expect(stockfish).toBeTruthy()
+    await stockfish!.evaluate(() => {
+      setTimeout(() => {
+        throw new Error("wasm crash")
+      }, 0)
+    })
+
+    const crashAlert = page.locator("span:visible", {
+      hasText: "Silnik niespodziewanie przestał działać.",
+    })
+    await expect(crashAlert).toBeVisible({ timeout: 30_000 })
+    const bar = page.getByRole("img", {
+      name: "Ocena niedostępna: silnik przestał odpowiadać",
+    })
+    await expect(bar).toBeVisible()
+    await expect(bar).toHaveText("!")
+    await expect(
+      page.locator("button:visible", { hasText: "Spróbuj ponownie" })
+    ).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Uruchom ponownie" })
+    ).toHaveCount(0)
+
+    await setFen(
+      page,
+      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+    )
+    await expect(
+      page.getByText("Silnik niespodziewanie przestał działać.")
+    ).toHaveCount(0)
+    await expect(bar).toHaveCount(0)
+    await expect(
+      page.locator("[data-testid=pv-score]:visible").first()
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByTestId("eval-label")).toBeVisible()
+  })
+
+  test("does not flash two lines after game analysis", async ({ page }) => {
+    test.setTimeout(90_000)
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Nf3 Nc6")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+
+    const lines = page.locator("[data-testid=pv-line-color]:visible")
+    await expect(lines).toHaveCount(3, { timeout: 30_000 })
+
+    await page.evaluate(() => {
+      const visible = () =>
+        [...document.querySelectorAll("[data-testid=pv-line-color]")].filter(
+          (el) => {
+            const box = el.getBoundingClientRect()
+            return box.width > 0 && box.height > 0
+          }
+        ).length
+      const drops: number[] = []
+      let last = visible()
+      const observer = new MutationObserver(() => {
+        const count = visible()
+        if (last >= 3 && count > 0 && count < 3) drops.push(count)
+        last = count
+      })
+      observer.observe(document.body, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+      })
+      ;(window as unknown as { __lineDrops: number[] }).__lineDrops = drops
+    })
+
+    await page.getByRole("button", { name: "Analizuj partię" }).click()
+    await expect(
+      page.locator("span:visible", { hasText: /^Analiza partii zakończona$/ })
+    ).toBeVisible({ timeout: 45_000 })
+
+    await page.getByRole("heading", { name: "CheckMate Vision" }).click()
+    await page.keyboard.press("Home")
+    await expect(lines).toHaveCount(3, { timeout: 30_000 })
+    await page.keyboard.press("End")
+    await expect(lines).toHaveCount(3, { timeout: 30_000 })
+
+    const drops = await page.evaluate(
+      () => (window as unknown as { __lineDrops: number[] }).__lineDrops
+    )
+    expect(drops).toEqual([])
+  })
 })
 
 test.describe("game import and moves", () => {

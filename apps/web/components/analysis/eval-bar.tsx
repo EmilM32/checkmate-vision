@@ -22,6 +22,7 @@ function evalCaption(
   t: Translate,
   options: {
     engineEnabled: boolean
+    engineFailed: boolean
     analysisVisible: boolean
     score: EngineScore
     whiteBetter: boolean
@@ -29,6 +30,7 @@ function evalCaption(
   }
 ): string {
   if (!options.engineEnabled) return t("evalBar.off")
+  if (options.engineFailed) return t("evalBar.engineFailed")
   if (!options.analysisVisible) return t("evalBar.hidden")
   if (!options.score) return t("evalBar.calculating")
   if (options.score.type === "mate") {
@@ -53,6 +55,7 @@ export function EvalBar() {
   const analysisVisible = !uiState.guessMode || state.guessRevealed
 
   const score = state.evaluation
+  const engineFailed = Boolean(state.error)
   const pct = evalToPercent(score, gameState.turn)
   const label = formatEval(score)
   const whiteBetter = isWhiteBetter(score, gameState.turn)
@@ -62,6 +65,7 @@ export function EvalBar() {
   const labelOnTop = whiteBetter !== whiteOnBottom
   const caption = evalCaption(t, {
     engineEnabled: uiState.engineEnabled,
+    engineFailed,
     analysisVisible,
     score,
     whiteBetter,
@@ -76,6 +80,24 @@ export function EvalBar() {
         title={caption}
         className={`${SHELL} bg-muted`}
       />
+    )
+  }
+
+  if (engineFailed) {
+    return (
+      <div
+        role="img"
+        aria-label={caption}
+        title={caption}
+        className={`${SHELL} bg-muted`}
+      >
+        <span
+          aria-hidden="true"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs leading-none font-semibold text-muted-foreground"
+        >
+          !
+        </span>
+      </div>
     )
   }
 

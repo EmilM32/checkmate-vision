@@ -19,14 +19,20 @@ function quality(entry: CachedAnalysis): number {
   return entry.depth * 10 + entry.lines.length
 }
 
-/** Engine results per position, least recently used evicted first. */
+// Live analysis asks for 3 lines and game analysis for 2. One slot would let
+// the shorter result replace the longer one and the board would flash 3→2→3.
+function cacheKey(fen: string, multiPv: number): string {
+  return `${positionKey(fen)}|${multiPv}`
+}
+
+/** Engine results per position and line count, least recently used first. */
 export class AnalysisCache {
   private readonly entries = new Map<string, CachedAnalysis>()
 
   constructor(private readonly limit = 500) {}
 
-  get(fen: string): CachedAnalysis | undefined {
-    const key = positionKey(fen)
+  get(fen: string, multiPv: number): CachedAnalysis | undefined {
+    const key = cacheKey(fen, multiPv)
     const entry = this.entries.get(key)
     if (entry) {
       this.entries.delete(key)
@@ -36,10 +42,10 @@ export class AnalysisCache {
   }
 
   /** Stores the result unless a better one (deeper, more lines) is cached. */
-  set(fen: string, entry: CachedAnalysis) {
+  set(fen: string, multiPv: number, entry: CachedAnalysis) {
     if (entry.lines.length === 0) return
 
-    const key = positionKey(fen)
+    const key = cacheKey(fen, multiPv)
     const existing = this.entries.get(key)
     if (existing && quality(existing) > quality(entry)) return
 

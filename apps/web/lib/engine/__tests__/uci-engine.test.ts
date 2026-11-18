@@ -145,8 +145,81 @@ describe("UciEngine", () => {
 
     await expect(search).rejects.toMatchObject({ reason: "crash" })
     expect(worker.terminated).toBe(true)
+  })
+
+  it("streams info lines from White's perspective and stays silent until it fails", async () => {
+    const { worker, engine } = await startEngine()
+    const infos: { depth: number; score: unknown }[] = []
+    let ready = 0
+    const search = engine.search(AFTER_E4, LIMITS, {
+      onInfo: (info) => infos.push({ depth: info.depth, score: info.score }),
+      onReady: () => {
+        ready += 1
+      },
+    })
+
+    worker.emit("info depth 12 multipv 1 score cp -30 pv e7e5")
+    expect(infos).toEqual([{ depth: 12, score: { type: "cp", value: 30 } }])
+    expect(ready).toBe(0)
+    worker.emit("bestmove e7e5")
+    await expect(search).resolves.toMatchObject({ depth: 12 })
+  })
+
+  it("rejects and terminates when go is not answered", async () => {
+    const { worker, engine } = await startEngine()
+    const search = engine.search(AFTER_E4, { ...LIMITS, goTimeoutMs: 1_000 })
+    worker.emit("info depth 8 multipv 1 score cp -10 pv e7e5")
+    const rejected = expect(search).rejects.toMatchObject({ reason: "timeout" })
+
+    await vi.advanceTimersByTimeAsync(1_000)
+
+    await rejected
+    expect(worker.terminated).toBe(true)
+    worker.emit("bestmove e7e5")
+    await expect(search).rejects.toMatchObject({ reason: "timeout" })
+  })
+
+  it("builds a new worker after a crash and searches again", async () => {
+    const workers: FakeStockfish[] = []
+    const started = UciEngine.start(() => {
+      const worker = new FakeStockfish()
+      workers.push(worker)
+      return worker
+    }, OPTIONS)
+    workers[0]!.completeHandshake()
+    const engine = await started
+    let ready = 0
+
+    const crashed = engine.search(AFTER_E4, LIMITS)
+    workers[0]!.crash("RuntimeError: unreachable")
+    await expect(crashed).rejects.toMatchObject({ reason: "crash" })
+
+    const next = engine.search(AFTER_E4, LIMITS, {
+      onReady: () => {
+        ready += 1
+      },
+    })
+    expect(workers).toHaveLength(2)
+    expect(workers[0]!.terminated).toBe(true)
+    workers[1]!.completeHandshake()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(ready).toBe(1)
+    expect(workers[1]!.commands.at(-1)).toMatch(/^go /)
+    workers[1]!.emit("info depth 14 multipv 1 score cp -25 pv e7e5")
+    workers[1]!.emit("bestmove e7e5")
+
+    await expect(next).resolves.toMatchObject({
+      depth: 14,
+      scores: { 1: { type: "cp", value: 25 } },
+    })
+  })
+
+  it("does not search after it was terminated", async () => {
+    const { worker, engine } = await startEngine()
+    engine.terminate()
+    expect(worker.terminated).toBe(true)
     await expect(engine.search(AFTER_E4, LIMITS)).rejects.toMatchObject({
-      reason: "crash",
+      reason: "terminated",
     })
   })
 })

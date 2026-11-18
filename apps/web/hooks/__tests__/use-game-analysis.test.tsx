@@ -142,10 +142,11 @@ describe("useGameAnalysis", () => {
     // The live analysis state is untouched by game analysis.
     expect(result.current.engine.state.evaluation).toBeNull()
     // Results are kept for the live view while browsing the game.
-    expect(analysisCache.get(afterE5!)).toMatchObject({
+    expect(analysisCache.get(afterE5!, 2)).toMatchObject({
       depth: 18,
       complete: false,
     })
+    expect(analysisCache.get(afterE5!, 3)).toBeUndefined()
   })
 
   it("cancels a running analysis", async () => {

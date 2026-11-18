@@ -8,6 +8,14 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
+- After a game analysis the live view no longer flashes two engine lines and
+  then three. Cached results are stored per position and per number of lines,
+  so a two-line game analysis does not replace the three live lines.
+- When the engine stops responding, the evaluation bar becomes a grey neutral
+  bar with "!" in place of the score. A search that never answers `go` counts
+  as the engine stopping. The next position starts a fresh engine, and the bar
+  shows a score again once that engine is ready. The existing alert and its
+  "Try again" button are unchanged.
 - A saved game no longer blanks the page when a move classification, score, or
   player field has the wrong shape, and a bad engine setting or timestamp no
   longer drops the moves. Analysis fields of the wrong shape are cleared, names
@@ -52,6 +60,7 @@ Expected length, "undefined"`. The pulse had no starting radius, so the
 
 ### Changed
 
+- Live analysis runs through the same engine driver as game analysis.
 - Node.js must be `^22.13.0 || >=24.0.0` (22 LTS; `.nvmrc` is `22`). Node 20
   is out: it reached end of life in April 2026, and CI does not test it.
   `engine-strict=true` makes `pnpm install` exit with an engines error on Node

@@ -12,9 +12,7 @@ import type { ParsedBestMove, ParsedInfoLine } from "@/lib/engine/types"
 // ── Types ──
 
 export type EngineScore =
-  | { type: "cp"; value: number }
-  | { type: "mate"; value: number }
-  | null
+  { type: "cp"; value: number } | { type: "mate"; value: number } | null
 
 export type EngineLine = {
   id: 1 | 2 | 3
@@ -29,11 +27,7 @@ export type BatchAnalysisItem = {
 }
 
 export type BatchAnalysisStatus =
-  | "idle"
-  | "running"
-  | "done"
-  | "cancelled"
-  | "error"
+  "idle" | "running" | "done" | "cancelled" | "error"
 
 export type BatchAnalysisState = {
   requestId: number
@@ -215,6 +209,12 @@ export function engineReducer(
         error: action.error,
         isAnalyzing: false,
         retryRequested: false,
+        evaluation: null,
+        depth: 0,
+        nps: 0,
+        bestMove: null,
+        pvLines: [],
+        cachedDepth: 0,
       }
 
     case "ENGINE_RETRY_REQUEST":

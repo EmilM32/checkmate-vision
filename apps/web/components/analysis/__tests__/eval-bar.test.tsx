@@ -12,9 +12,11 @@ let uiState = {
 let engineState: {
   evaluation: { type: "cp" | "mate"; value: number } | null
   guessRevealed: boolean
+  error: string | null
 } = {
   evaluation: null,
   guessRevealed: false,
+  error: null,
 }
 
 let gameState = { turn: "w" as "w" | "b" }
@@ -45,7 +47,7 @@ function renderBar() {
 afterEach(() => {
   cleanup()
   uiState = { engineEnabled: false, guessMode: false, boardFlipped: false }
-  engineState = { evaluation: null, guessRevealed: false }
+  engineState = { evaluation: null, guessRevealed: false, error: null }
   gameState = { turn: "w" }
 })
 
@@ -77,6 +79,7 @@ describe("EvalBar", () => {
     engineState = {
       evaluation: { type: "cp", value: 650 },
       guessRevealed: false,
+      error: null,
     }
     renderBar()
     const label = screen.getByTestId("eval-label")
@@ -94,6 +97,7 @@ describe("EvalBar", () => {
     engineState = {
       evaluation: { type: "cp", value: 650 },
       guessRevealed: false,
+      error: null,
     }
     renderBar()
     const label = screen.getByTestId("eval-label")
@@ -106,6 +110,7 @@ describe("EvalBar", () => {
     engineState = {
       evaluation: { type: "cp", value: -80 },
       guessRevealed: false,
+      error: null,
     }
     renderBar()
     const label = screen.getByTestId("eval-label")
@@ -119,7 +124,11 @@ describe("EvalBar", () => {
 
   it("keeps an equal score on white's side", () => {
     uiState = { ...uiState, engineEnabled: true }
-    engineState = { evaluation: { type: "cp", value: 0 }, guessRevealed: false }
+    engineState = {
+      evaluation: { type: "cp", value: 0 },
+      guessRevealed: false,
+      error: null,
+    }
     renderBar()
     const label = screen.getByTestId("eval-label")
     expect(label.textContent).toBe("0.0")
@@ -134,6 +143,7 @@ describe("EvalBar", () => {
     engineState = {
       evaluation: { type: "mate", value: 3 },
       guessRevealed: false,
+      error: null,
     }
     const { rerender } = renderBar()
     expect(screen.getByTestId("eval-label").textContent).toBe("M3")
@@ -144,6 +154,7 @@ describe("EvalBar", () => {
     engineState = {
       evaluation: { type: "mate", value: -2 },
       guessRevealed: false,
+      error: null,
     }
     rerender(<EvalBar />)
     expect(screen.getByTestId("eval-label").textContent).toBe("M2")
@@ -155,6 +166,7 @@ describe("EvalBar", () => {
     engineState = {
       evaluation: { type: "mate", value: 0 },
       guessRevealed: false,
+      error: null,
     }
     rerender(<EvalBar />)
     expect(screen.getByTestId("eval-label").textContent).toBe("#")
@@ -168,6 +180,7 @@ describe("EvalBar", () => {
     engineState = {
       evaluation: { type: "cp", value: 650 },
       guessRevealed: false,
+      error: null,
     }
     renderBar()
     const bar = screen.getByRole("img")
@@ -176,5 +189,34 @@ describe("EvalBar", () => {
     expect(bar.className).toContain("bg-muted")
     expect(bar.className).not.toContain("eval-bar-gradient")
     expect(screen.queryByTestId("eval-label")).toBeNull()
+  })
+
+  it("shows a grey neutral bar when the engine has stopped", () => {
+    uiState = { ...uiState, engineEnabled: true }
+    engineState = {
+      evaluation: { type: "cp", value: 650 },
+      guessRevealed: false,
+      error: "errors.engineCrashed",
+    }
+    const { rerender } = renderBar()
+    const bar = screen.getByRole("img")
+    expect(bar.getAttribute("aria-label")).toBe("evalBar.engineFailed")
+    expect(bar.getAttribute("title")).toBe("evalBar.engineFailed")
+    expect(bar.textContent).toBe("!")
+    expect(bar.className).toContain("bg-muted")
+    expect(bar.className).not.toContain("eval-bar-gradient")
+    expect(bar.getAttribute("style")).toBeNull()
+    expect(screen.queryByTestId("eval-label")).toBeNull()
+
+    engineState = {
+      evaluation: { type: "cp", value: 650 },
+      guessRevealed: false,
+      error: null,
+    }
+    rerender(<EvalBar />)
+    expect(screen.getByTestId("eval-label").textContent).toBe("6.5")
+    expect(screen.getByRole("img").getAttribute("aria-label")).toBe(
+      'evalBar.white:{"value":"6.5"}'
+    )
   })
 })
