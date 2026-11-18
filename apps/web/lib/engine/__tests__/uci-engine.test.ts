@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { FakeStockfish } from "@/lib/engine/__tests__/fake-stockfish"
-import { EngineFailure, UciEngine } from "@/lib/engine/uci-engine"
+import {
+  EngineFailure,
+  STOP_TIMEOUT_MS,
+  UciEngine,
+} from "@/lib/engine/uci-engine"
 
 const OPTIONS = { hashMb: 16, multiPv: 2, startTimeoutMs: 1_000 }
 const LIMITS = { depth: 18, movetimeMs: 1_500 }
@@ -163,6 +167,20 @@ describe("UciEngine", () => {
     expect(ready).toBe(0)
     worker.emit("bestmove e7e5")
     await expect(search).resolves.toMatchObject({ depth: 12 })
+  })
+
+  it("fails when stop is ignored", async () => {
+    const { worker, engine } = await startEngine()
+    const search = engine.search(AFTER_E4, LIMITS)
+    worker.emit("info depth 8 multipv 1 score cp -10 pv e7e5")
+    engine.stop()
+    expect(worker.commands.at(-1)).toBe("stop")
+    const rejected = expect(search).rejects.toMatchObject({ reason: "timeout" })
+
+    await vi.advanceTimersByTimeAsync(STOP_TIMEOUT_MS)
+
+    await rejected
+    expect(worker.terminated).toBe(true)
   })
 
   it("rejects and terminates when go is not answered", async () => {

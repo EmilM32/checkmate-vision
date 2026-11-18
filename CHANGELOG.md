@@ -12,10 +12,12 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   then three. Cached results are stored per position and per number of lines,
   so a two-line game analysis does not replace the three live lines.
 - When the engine stops responding, the evaluation bar becomes a grey neutral
-  bar with "!" in place of the score. A search that never answers `go` counts
-  as the engine stopping. The next position starts a fresh engine, and the bar
-  shows a score again once that engine is ready. The existing alert and its
-  "Try again" button are unchanged.
+  bar with "!" in place of the score. A search that never answers `go`, or a
+  worker that ignores `stop` for 3 seconds, counts as the engine stopping.
+  The score and lines of the previous position are cleared as soon as the
+  position changes. "Try again" or a later position starts a fresh engine,
+  and the bar shows a score again once that engine is ready. The existing
+  alert and its "Try again" button are unchanged.
 - A saved game no longer blanks the page when a move classification, score, or
   player field has the wrong shape, and a bad engine setting or timestamp no
   longer drops the moves. Analysis fields of the wrong shape are cleared, names

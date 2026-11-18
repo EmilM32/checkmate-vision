@@ -88,6 +88,7 @@ export const initialEngineState: EngineState = {
 
 export type EngineAction =
   | { type: "ENGINE_START_ANALYSIS" }
+  | { type: "ENGINE_NEW_POSITION" }
   | { type: "ENGINE_OUTPUT"; info: ParsedInfoLine }
   | { type: "ENGINE_BESTMOVE"; bestMove: ParsedBestMove }
   | { type: "ENGINE_TERMINAL_POSITION"; score: EngineScore }
@@ -143,6 +144,19 @@ export function engineReducer(
         bestMove: null,
         cachedDepth: 0,
         guessRevealed: false,
+      }
+
+    case "ENGINE_NEW_POSITION":
+      return {
+        ...state,
+        evaluation: null,
+        depth: 0,
+        nps: 0,
+        pvLines: [],
+        bestMove: null,
+        cachedDepth: 0,
+        guessRevealed: false,
+        isAnalyzing: state.error ? false : true,
       }
 
     case "ENGINE_OUTPUT": {

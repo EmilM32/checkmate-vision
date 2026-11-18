@@ -8,6 +8,7 @@ import { GameProvider, useGameContext } from "@/context/game-context"
 import { UIProvider, useUIContext } from "@/context/ui-context"
 import { useEngineWorker } from "@/hooks/use-engine-worker"
 import { analysisCache } from "@/lib/engine/analysis-cache"
+import { STOP_TIMEOUT_MS } from "@/lib/engine/uci-engine"
 
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 const AFTER_E4_FEN =
@@ -377,6 +378,78 @@ describe("useEngineWorker", () => {
       })
 
       expect(harness.current.engine.state.error).toBe("errors.engineLoadFailed")
+    })
+
+    it("clears the previous evaluation as soon as the position changes", () => {
+      const harness = renderEngineHarness()
+      startEngine(harness)
+      emit(harness, "info depth 12 multipv 1 score cp 80 pv e2e4")
+      emit(harness, "info depth 12 multipv 2 score cp 20 pv d2d4")
+      expect(harness.current.engine.state.evaluation).toEqual({
+        type: "cp",
+        value: 80,
+      })
+      expect(harness.current.engine.state.pvLines).toHaveLength(2)
+
+      act(() => {
+        harness.current.game.setPositionFromFen(AFTER_E4_FEN)
+      })
+
+      expect(harness.current.engine.state.evaluation).toBeNull()
+      expect(harness.current.engine.state.pvLines).toEqual([])
+      emit(harness, "info depth 20 multipv 1 score cp 400 pv d2d4")
+      expect(harness.current.engine.state.evaluation).toBeNull()
+      expect(harness.current.engine.state.pvLines).toEqual([])
+    })
+
+    it("reports a worker that ignores stop, then searches the new position", () => {
+      const harness = renderEngineHarness()
+      startEngine(harness)
+      emit(harness, "info depth 12 multipv 1 score cp 40 pv e2e4")
+
+      act(() => {
+        harness.current.game.setPositionFromFen(AFTER_E4_FEN)
+      })
+      expect(harness.current.engine.state.evaluation).toBeNull()
+      act(() => {
+        vi.advanceTimersByTime(150)
+      })
+      expect(harness.stockfish.commands.at(-1)).toBe("stop")
+      expect(harness.current.engine.state.error).toBeNull()
+
+      act(() => {
+        vi.advanceTimersByTime(STOP_TIMEOUT_MS - 1)
+      })
+      expect(harness.current.engine.state.error).toBeNull()
+      act(() => {
+        vi.advanceTimersByTime(1)
+      })
+
+      expect(harness.current.engine.state.error).toBe("errors.engineCrashed")
+      expect(harness.current.engine.state.evaluation).toBeNull()
+      expect(FakeStockfish.instances).toHaveLength(1)
+
+      act(() => {
+        harness.current.worker.stop()
+        harness.current.worker.start()
+      })
+      expect(FakeStockfish.instances).toHaveLength(2)
+      const next = FakeStockfish.instances[1]!
+      act(() => {
+        next.emit("uciok")
+      })
+      act(() => {
+        next.emit("readyok")
+      })
+      expect(next.commands).toContain(`position fen ${AFTER_E4_FEN}`)
+      emit(harness, "info depth 12 multipv 1 score cp -30 pv e7e5")
+      emit(harness, "bestmove e7e5")
+
+      expect(harness.current.engine.state.error).toBeNull()
+      expect(harness.current.engine.state.evaluation).toEqual({
+        type: "cp",
+        value: 30,
+      })
     })
 
     it("reports a crash after the engine was running", () => {

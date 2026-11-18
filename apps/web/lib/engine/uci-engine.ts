@@ -49,6 +49,8 @@ export type UciEngineOptions = {
 // A search that never sends bestmove. Longer than a live movetime and a
 // game-analysis node budget, so a busy engine is not cut off.
 const GO_TIMEOUT_MS = 60_000
+// A worker that ignores `stop` must not sit on the previous position.
+export const STOP_TIMEOUT_MS = 3_000
 
 // The subset of Worker used here, so tests can pass a fake.
 export type EngineWorker = {
@@ -102,6 +104,7 @@ export class UciEngine {
   private bootReject: ((error: EngineFailure) => void) | null = null
   private handshakeTimer: ReturnType<typeof setTimeout> | null = null
   private goTimer: ReturnType<typeof setTimeout> | null = null
+  private stopTimer: ReturnType<typeof setTimeout> | null = null
   private hooks: EngineHooks | null = null
   private waiting: WaitingSearch | null = null
 
@@ -168,6 +171,11 @@ export class UciEngine {
   stop() {
     if (this.pending) {
       this.send({ type: "stop" })
+      this.clearStopTimer()
+      this.stopTimer = setTimeout(() => {
+        this.stopTimer = null
+        this.fail(new EngineFailure("timeout"))
+      }, STOP_TIMEOUT_MS)
       return
     }
     // The replacement worker is still handshaking. Drop it so the caller
@@ -325,6 +333,7 @@ export class UciEngine {
 
     if (parseBestMoveLine(line)) {
       this.clearGoTimer()
+      this.clearStopTimer()
       this.pending = null
       const result: SearchResult = {
         scores: pending.scores,
@@ -344,6 +353,7 @@ export class UciEngine {
     this.failure = error
     this.booting = false
     this.clearGoTimer()
+    this.clearStopTimer()
     this.clearHandshakeTimer()
     this.onLine = null
     this.worker.onmessage = null
@@ -376,6 +386,13 @@ export class UciEngine {
     if (this.goTimer) {
       clearTimeout(this.goTimer)
       this.goTimer = null
+    }
+  }
+
+  private clearStopTimer() {
+    if (this.stopTimer) {
+      clearTimeout(this.stopTimer)
+      this.stopTimer = null
     }
   }
 }

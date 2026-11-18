@@ -373,6 +373,52 @@ test.describe("engine analysis", () => {
     await expect(page.getByTestId("eval-label")).toBeVisible()
   })
 
+  test("does not keep the previous evaluation after the position changes", async ({
+    page,
+  }) => {
+    await setFen(page, "4k3/8/8/8/8/8/8/3QK3 w - - 0 1")
+    const label = page.getByTestId("eval-label")
+    await expect(label).toHaveText(/^[1-9]|^M/, { timeout: 30_000 })
+    const stale = (await label.textContent()) ?? ""
+
+    await page.evaluate((previous) => {
+      const hits: string[] = []
+      const read = () => {
+        const text =
+          document.querySelector("[data-testid=eval-label]")?.textContent ?? ""
+        const startPosition =
+          document.querySelector('[data-square="e2"] [data-piece="wP"]') !==
+            null &&
+          document.querySelector('[data-square="d1"] [data-piece="wQ"]') ===
+            null
+        if (startPosition && text === previous) hits.push(text)
+      }
+      const observer = new MutationObserver(read)
+      observer.observe(document.body, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+      })
+      ;(window as unknown as { __staleEval: string[] }).__staleEval = hits
+    }, stale)
+
+    await setFen(
+      page,
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    )
+    await expect(
+      page.locator('[data-square="e2"] [data-piece="wP"]')
+    ).toBeVisible()
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { __staleEval: string[] }).__staleEval
+        )
+      )
+      .toEqual([])
+    await expect(label).not.toHaveText(stale, { timeout: 30_000 })
+  })
+
   test("does not flash two lines after game analysis", async ({ page }) => {
     test.setTimeout(90_000)
     await page

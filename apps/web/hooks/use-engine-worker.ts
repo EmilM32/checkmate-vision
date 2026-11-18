@@ -1,6 +1,12 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react"
 import { useEngineContext } from "@/context"
 import { useGameContext } from "@/context"
 import { buildMoveAnalysis, getTerminalScore } from "@/lib/chess/move-analysis"
@@ -106,9 +112,12 @@ export function useEngineWorker() {
     annotateVariationMoveRef.current = annotateVariationMove
   }, [annotateMove, annotateVariationMove])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const previous = fenRef.current
     fenRef.current = gameState.fen
-  }, [gameState.fen])
+    if (previous === gameState.fen) return
+    dispatch({ type: "ENGINE_NEW_POSITION" })
+  }, [gameState.fen, dispatch])
 
   const failEngine = (error: unknown) => {
     console.error("Stockfish engine failure:", error)
@@ -218,6 +227,7 @@ export function useEngineWorker() {
         },
         onInfo: (info) => {
           if (lifeRef.current !== life) return
+          if (searchFenRef.current !== fenRef.current) return
           dispatch({ type: "ENGINE_OUTPUT", info })
           if (info.depth < cachedDepthRef.current) return
           pvScoresRef.current[info.multipv] = info.score
@@ -238,7 +248,7 @@ export function useEngineWorker() {
         },
         onError: (error) => {
           if (lifeRef.current !== life) return
-          if (stopRequestedRef.current) {
+          if (stopRequestedRef.current && error.reason !== "timeout") {
             completeSearch(fen, false)
             return
           }
