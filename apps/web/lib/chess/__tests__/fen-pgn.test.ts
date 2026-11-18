@@ -76,6 +76,39 @@ describe("fen-pgn helpers", () => {
     }
   })
 
+  it("rejects a set-up PGN where the side not to move is in check", () => {
+    const fen = "4k3/4R3/8/8/8/8/8/4K3 w - - 0 1"
+    for (const pgn of [
+      `[SetUp "1"]\n[FEN "${fen}"]`,
+      `[SetUp "1"]\n[FEN "${fen}"]\n\n1. Ke2 *`,
+    ]) {
+      for (const result of [validatePgn(pgn), parsePgn(pgn)]) {
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toBe("errors.fenSideNotToMoveInCheck")
+        }
+      }
+    }
+  })
+
+  it("loads a legal set-up PGN", () => {
+    const fen = "4k3/8/8/8/8/8/4P3/4K3 b - - 0 40"
+    const pgn = `[SetUp "1"]\n[FEN "${fen}"]\n\n40... Kd7 41. e4 Ke6 *`
+    const validation = validatePgn(pgn)
+    const parsed = parsePgn(pgn)
+
+    expect(validation.ok).toBe(true)
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) {
+      expect(parsed.data.initialFen).toBe(fen)
+      expect(parsed.data.moves.map((move) => move.san)).toEqual([
+        "Kd7",
+        "e4",
+        "Ke6",
+      ])
+    }
+  })
+
   it("parses valid PGN into move list with FEN snapshots", () => {
     const result = parsePgn("1. d4 d5 2. c4 e6")
 

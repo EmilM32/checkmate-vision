@@ -82,8 +82,17 @@ export function validatePgn(pgn: string): ValidationResult {
   try {
     const chess = new Chess()
     chess.loadPgn(normalizedPgn)
-    const hasMoves = chess.history().length > 0
-    if (!hasMoves) {
+    const history = chess.history({ verbose: true })
+    // A [SetUp]/[FEN] game can start from a position chess.js accepts and
+    // Stockfish crashes on. That start is the first move's `before`, or the
+    // loaded position when the movetext is empty.
+    const startFen = history[0]?.before ?? chess.fen()
+    const start = new Chess()
+    start.load(startFen)
+    if (sideNotToMoveIsInCheck(start)) {
+      return { ok: false, error: "errors.fenSideNotToMoveInCheck" }
+    }
+    if (history.length === 0) {
       return { ok: false, error: "errors.pgnNoMoves" }
     }
     return { ok: true }

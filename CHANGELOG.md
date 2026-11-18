@@ -9,8 +9,8 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 ### Fixed
 
 - A FEN where the side not to move is in check is rejected before it reaches
-  the board or the engine. The previous position stays, and the FEN field
-  reports that the position is impossible.
+  the board or the engine, including a PGN set up from that FEN. The previous
+  position stays, and the field reports that the position is impossible.
 - The evaluation bar placed its score on the losing side. A position the engine
   has not scored yet shows a waiting state instead of 0.0.
 - FEN and PGN fields are named for assistive technology (visible label plus a
