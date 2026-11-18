@@ -419,6 +419,69 @@ test.describe("engine analysis", () => {
     await expect(label).not.toHaveText(stale, { timeout: 30_000 })
   })
 
+  test("does not flash the calculating fill while stepping through moves", async ({
+    page,
+  }) => {
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6")
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+    await page.getByRole("heading", { name: "CheckMate Vision" }).click()
+    await page.keyboard.press("Home")
+    await expect(page.getByTestId("eval-label")).toBeVisible({
+      timeout: 30_000,
+    })
+
+    await page.evaluate(() => {
+      const hits: number[] = []
+      let hiddenAt = 0
+      let lastNumberPct = ""
+      const read = () => {
+        const bar = document.querySelector("[data-eval-pct]")
+        if (!bar) return
+        const pct = bar.getAttribute("data-eval-pct") ?? ""
+        const hasNumber = bar.querySelector("[data-testid=eval-label]") !== null
+        if (hasNumber) {
+          hiddenAt = 0
+          lastNumberPct = pct
+          return
+        }
+        if (!lastNumberPct || Math.abs(Number(lastNumberPct) - 50) < 10) return
+        if (!hiddenAt) hiddenAt = performance.now()
+        if (pct === "50.0" && performance.now() - hiddenAt < 290) {
+          hits.push(performance.now() - hiddenAt)
+        }
+      }
+      const observer = new MutationObserver(read)
+      observer.observe(document.body, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        characterData: true,
+      })
+      const tick = () => {
+        read()
+        ;(window as unknown as { __evalFrame: number }).__evalFrame =
+          requestAnimationFrame(tick)
+      }
+      tick()
+      ;(window as unknown as { __calcFillHits: number[] }).__calcFillHits = hits
+    })
+
+    for (let step = 0; step < 4; step += 1) {
+      await page.keyboard.press("ArrowRight")
+      await expect(page.getByTestId("eval-label")).toBeVisible({
+        timeout: 30_000,
+      })
+    }
+
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __calcFillHits: number[] }).__calcFillHits
+      )
+    ).toEqual([])
+  })
+
   test("does not flash two lines after game analysis", async ({ page }) => {
     test.setTimeout(90_000)
     await page

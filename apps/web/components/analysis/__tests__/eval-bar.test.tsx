@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { EvalBar } from "@/components/analysis/eval-bar"
@@ -19,7 +19,7 @@ let engineState: {
   error: null,
 }
 
-let gameState = { turn: "w" as "w" | "b" }
+let gameState = { turn: "w" as "w" | "b", fen: "start" }
 
 vi.mock("@/hooks/use-ui", () => ({
   useUI: () => ({ state: uiState }),
@@ -48,7 +48,7 @@ afterEach(() => {
   cleanup()
   uiState = { engineEnabled: false, guessMode: false, boardFlipped: false }
   engineState = { evaluation: null, guessRevealed: false, error: null }
-  gameState = { turn: "w" }
+  gameState = { turn: "w", fen: "start" }
 })
 
 describe("EvalBar", () => {
@@ -162,7 +162,7 @@ describe("EvalBar", () => {
       'evalBar.mateBlack:{"n":2}'
     )
 
-    gameState = { turn: "w" }
+    gameState = { turn: "w", fen: "start" }
     engineState = {
       evaluation: { type: "mate", value: 0 },
       guessRevealed: false,
@@ -218,5 +218,71 @@ describe("EvalBar", () => {
     expect(screen.getByRole("img").getAttribute("aria-label")).toBe(
       'evalBar.white:{"value":"6.5"}'
     )
+  })
+
+  it("keeps the fill when the next score arrives within 300 ms", () => {
+    vi.useFakeTimers()
+    uiState = { ...uiState, engineEnabled: true }
+    engineState = {
+      evaluation: { type: "cp", value: 650 },
+      guessRevealed: false,
+      error: null,
+    }
+    gameState = { turn: "w", fen: "before" }
+    const { rerender } = renderBar()
+    const held = screen.getByRole("img").getAttribute("data-eval-pct")
+    expect(held).not.toBe("50.0")
+
+    engineState = { ...engineState, evaluation: null }
+    gameState = { turn: "w", fen: "after" }
+    rerender(<EvalBar />)
+    const bar = screen.getByRole("img")
+    expect(bar.getAttribute("aria-label")).toBe("evalBar.calculating")
+    expect(screen.queryByTestId("eval-label")).toBeNull()
+    expect(bar.getAttribute("data-eval-pct")).toBe(held)
+
+    act(() => {
+      vi.advanceTimersByTime(299)
+    })
+    expect(screen.getByRole("img").getAttribute("data-eval-pct")).toBe(held)
+
+    engineState = {
+      evaluation: { type: "cp", value: -200 },
+      guessRevealed: false,
+      error: null,
+    }
+    rerender(<EvalBar />)
+    const next = screen.getByRole("img").getAttribute("data-eval-pct")
+    expect(next).not.toBe("50.0")
+    expect(next).not.toBe(held)
+    expect(screen.getByTestId("eval-label").textContent).toBe("2.0")
+    vi.useRealTimers()
+  })
+
+  it("moves the fill to the middle after 300 ms without a score", () => {
+    vi.useFakeTimers()
+    uiState = { ...uiState, engineEnabled: true }
+    engineState = {
+      evaluation: { type: "cp", value: 650 },
+      guessRevealed: false,
+      error: null,
+    }
+    gameState = { turn: "w", fen: "before" }
+    const { rerender } = renderBar()
+    const held = screen.getByRole("img").getAttribute("data-eval-pct")
+
+    engineState = { ...engineState, evaluation: null }
+    gameState = { turn: "w", fen: "after" }
+    rerender(<EvalBar />)
+    expect(screen.getByRole("img").getAttribute("data-eval-pct")).toBe(held)
+
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+    expect(screen.getByRole("img").getAttribute("data-eval-pct")).toBe("50.0")
+    expect(screen.getByRole("img").getAttribute("aria-label")).toBe(
+      "evalBar.calculating"
+    )
+    vi.useRealTimers()
   })
 })

@@ -61,7 +61,7 @@
     "guessEvalHidden": "Tryb zgadywania aktywny. Odkryj analizę, aby zobaczyć wykres oceny.",
     "guessLinesHidden": "Tryb zgadywania aktywny. Odkryj analizę, aby zobaczyć linie silnika.",
     "engineLines": "Linie silnika",
-    "analyzing": "Analizowanie...",
+    "analyzing": "Liczę ocenę…",
     "noAnalysis": "Brak analizy",
     "checkmate": "Mat – koniec partii",
     "stalemate": "Pat – remis",
