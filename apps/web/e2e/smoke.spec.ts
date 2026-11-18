@@ -500,6 +500,118 @@ test.describe("session persistence", () => {
 
     expect(consoleErrors.slice(errorsBeforeClick)).toEqual([])
   })
+
+  test("keeps the game when saved ui is corrupt and drops the bad value", async ({
+    page,
+  }) => {
+    const pageErrors: string[] = []
+    page.on("pageerror", (error) => {
+      pageErrors.push(error.message)
+    })
+
+    const afterE4 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+    const session = {
+      schemaVersion: 3,
+      savedAt: "2026-01-01T00:00:00.000Z",
+      game: {
+        initialFen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        fen: afterE4,
+        pgn: "",
+        history: [
+          {
+            san: "e4",
+            fen: afterE4,
+            scoreBefore: null,
+            scoreAfter: null,
+            delta: null,
+            classification: null,
+          },
+        ],
+        currentMoveIndex: 1,
+        turn: "b",
+        isGameOver: false,
+        meta: {
+          white: null,
+          black: null,
+          whiteElo: null,
+          blackElo: null,
+          result: null,
+        },
+        variation: null,
+        variationIndex: null,
+      },
+      ui: {
+        showHeatmap: true,
+        heatmapMode: "net",
+        showInfluenceTrace: true,
+        selectedInfluenceSquare: 4,
+        showArrows: true,
+        guessMode: false,
+        boardFlipped: false,
+        showEvalChart: false,
+        engineEnabled: false,
+      },
+      engine: { guessRevealed: false },
+    }
+
+    await page.addInitScript((raw) => {
+      if (sessionStorage.getItem("cmv-corrupt-ui-planted") === "1") return
+      localStorage.setItem("checkmate-vision:session", raw)
+      sessionStorage.setItem("cmv-corrupt-ui-planted", "1")
+    }, JSON.stringify(session))
+
+    await page.goto("/")
+
+    await expect(
+      page.locator('[data-square="e4"] [data-piece="wP"]')
+    ).toBeVisible()
+    await expect(
+      page.locator('ol:visible button[aria-current="step"]')
+    ).toHaveText(/e4/)
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const raw = localStorage.getItem("checkmate-vision:session")
+          if (!raw) return null
+          const saved = JSON.parse(raw) as {
+            ui: { selectedInfluenceSquare: unknown; showHeatmap: unknown }
+            game: {
+              currentMoveIndex: number
+              history: { san: string }[]
+            }
+          }
+          return {
+            square: saved.ui.selectedInfluenceSquare,
+            heatmap: saved.ui.showHeatmap,
+            san: saved.game.history[0]?.san ?? null,
+            index: saved.game.currentMoveIndex,
+          }
+        })
+      )
+      .toEqual({ square: null, heatmap: true, san: "e4", index: 1 })
+
+    expect(pageErrors).toEqual([])
+
+    await page.reload()
+
+    await expect(
+      page.locator('[data-square="e4"] [data-piece="wP"]')
+    ).toBeVisible()
+    await expect(
+      page.locator('ol:visible button[aria-current="step"]')
+    ).toHaveText(/e4/)
+    expect(pageErrors).toEqual([])
+
+    await page.keyboard.press("ArrowLeft")
+    await expect(
+      page.locator('ol:visible button[aria-current="step"]')
+    ).toHaveCount(0)
+    await expect(
+      page.locator('[data-square="e2"] [data-piece="wP"]')
+    ).toBeVisible()
+    expect(pageErrors).toEqual([])
+  })
 })
 
 test.describe("variations", () => {

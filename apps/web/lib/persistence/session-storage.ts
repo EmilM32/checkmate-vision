@@ -3,7 +3,7 @@ import type {
   PersistableEngineState,
 } from "@/context/engine-context"
 import type { GameState } from "@/context/game-context"
-import type { UIState } from "@/context/ui-context"
+import { initialUIState, type UIState } from "@/context/ui-context"
 
 export const SESSION_STORAGE_KEY = "checkmate-vision:session"
 export const SESSION_SCHEMA_VERSION = 3
@@ -37,21 +37,85 @@ type LegacyPersistedSession = {
   engine?: unknown
 }
 
+// `ui` is checked field by field below. A wrong field must not fail this
+// guard: that used to drop a game that could still be restored.
+type PersistedEnvelope<Version extends number> = {
+  schemaVersion: Version
+  savedAt: string
+  game: GameState
+  ui: unknown
+  engine: PersistableEngineState
+}
+
+const SQUARE_PATTERN = /^[a-h][1-8]$/
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
 
-function isPersistedSessionOfVersion<Version extends number>(
+function isPersistedEnvelope<Version extends number>(
   value: unknown,
   version: Version
-): value is PersistedSessionShape<Version> {
+): value is PersistedEnvelope<Version> {
   if (!isObject(value)) return false
   if (value.schemaVersion !== version) return false
   return (
     isObject(value.game) &&
-    isObject(value.ui) &&
     isObject(value.engine) &&
     typeof value.savedAt === "string"
+  )
+}
+
+function sanitizeBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback
+}
+
+// `null` means nothing is selected. Anything else must be a real square;
+// "E4" and surrounding space are stored as "e4".
+function sanitizeSquare(value: unknown): string | null {
+  if (value === null) return null
+  if (typeof value !== "string") return null
+  const square = value.trim().toLowerCase()
+  return SQUARE_PATTERN.test(square) ? square : null
+}
+
+function sanitizeUIState(value: unknown): UIState {
+  if (!isObject(value)) return { ...initialUIState }
+
+  const heatmapMode = value.heatmapMode
+
+  return {
+    showHeatmap: sanitizeBoolean(value.showHeatmap, initialUIState.showHeatmap),
+    heatmapMode:
+      heatmapMode === "net" || heatmapMode === "split"
+        ? heatmapMode
+        : initialUIState.heatmapMode,
+    showInfluenceTrace: sanitizeBoolean(
+      value.showInfluenceTrace,
+      initialUIState.showInfluenceTrace
+    ),
+    selectedInfluenceSquare: sanitizeSquare(value.selectedInfluenceSquare),
+    showArrows: sanitizeBoolean(value.showArrows, initialUIState.showArrows),
+    guessMode: sanitizeBoolean(value.guessMode, initialUIState.guessMode),
+    boardFlipped: sanitizeBoolean(
+      value.boardFlipped,
+      initialUIState.boardFlipped
+    ),
+    showEvalChart: sanitizeBoolean(
+      value.showEvalChart,
+      initialUIState.showEvalChart
+    ),
+    engineEnabled: sanitizeBoolean(
+      value.engineEnabled,
+      initialUIState.engineEnabled
+    ),
+  }
+}
+
+function uiNeedsRepair(stored: unknown, sanitized: UIState): boolean {
+  if (!isObject(stored)) return true
+  return (Object.keys(sanitized) as (keyof UIState)[]).some(
+    (key) => stored[key] !== sanitized[key]
   )
 }
 
@@ -88,17 +152,13 @@ function migrateLegacySession(value: unknown): PersistedSessionV3 | null {
   if (!isObject(value)) return null
 
   const legacy = value as LegacyPersistedSession
-  if (
-    !isObject(legacy.game) ||
-    !isObject(legacy.ui) ||
-    !isObject(legacy.engine)
-  ) {
+  if (!isObject(legacy.game) || !isObject(legacy.engine)) {
     return null
   }
 
   return dropStaleAnalysis(
     legacy.game as GameState,
-    legacy.ui as UIState,
+    sanitizeUIState(legacy.ui),
     legacy.engine as PersistableEngineState
   )
 }
@@ -106,16 +166,31 @@ function migrateLegacySession(value: unknown): PersistedSessionV3 | null {
 export function migratePersistedSession(
   value: unknown
 ): PersistedSession | null {
-  if (isPersistedSessionOfVersion(value, 3)) {
-    return value
+  if (isPersistedEnvelope(value, 3)) {
+    return {
+      schemaVersion: 3,
+      savedAt: value.savedAt,
+      game: value.game,
+      ui: sanitizeUIState(value.ui),
+      engine: value.engine,
+    }
   }
 
-  if (isPersistedSessionOfVersion(value, 2)) {
-    return dropStaleAnalysis(value.game, value.ui, value.engine, true)
+  if (isPersistedEnvelope(value, 2)) {
+    return dropStaleAnalysis(
+      value.game,
+      sanitizeUIState(value.ui),
+      value.engine,
+      true
+    )
   }
 
-  if (isPersistedSessionOfVersion(value, 1)) {
-    return dropStaleAnalysis(value.game, value.ui, value.engine)
+  if (isPersistedEnvelope(value, 1)) {
+    return dropStaleAnalysis(
+      value.game,
+      sanitizeUIState(value.ui),
+      value.engine
+    )
   }
 
   if (isObject(value) && "schemaVersion" in value) {
@@ -150,6 +225,19 @@ export function readPersistedSession(): PersistedSession | null {
     if (!migrated) {
       window.localStorage.removeItem(SESSION_STORAGE_KEY)
       return null
+    }
+
+    // Write the repaired session back so the next refresh does not read the
+    // bad value again. A game that cannot be read never reaches this branch.
+    if (uiNeedsRepair(isObject(parsed) ? parsed.ui : undefined, migrated.ui)) {
+      try {
+        window.localStorage.setItem(
+          SESSION_STORAGE_KEY,
+          JSON.stringify(migrated)
+        )
+      } catch {
+        // The in-memory session is already safe. Ignore quota errors.
+      }
     }
 
     return migrated
