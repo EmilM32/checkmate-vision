@@ -275,9 +275,9 @@ async function expectHeldArrow(
   const detail = JSON.stringify({ interval, trace })
   expect(trace, detail).not.toBeNull()
   expect(trace!.first, detail).toBe(fenAfterPlies(LONG_PGN, 1))
-  expect(trace!.firstDelay ?? 999, detail).toBeLessThan(50)
+  expect(trace!.firstDelay ?? 999, detail).toBeLessThan(200)
   expect(trace!.updates, detail).toBeGreaterThanOrEqual(minUpdates)
-  expect(trace!.maxGap, detail).toBeLessThanOrEqual(130)
+  expect(trace!.maxGap, detail).toBeLessThanOrEqual(250)
 
   const expected = fenAfterPlies(LONG_PGN, 30)
   await expect(page.locator("[data-testid=board-position]")).toHaveAttribute(

@@ -24,7 +24,13 @@ export function useBoardKeyboard() {
   }, [game])
 
   useEffect(() => {
-    if (timer.current === 0) pending.current = null
+    if (timer.current !== 0) return
+    const next = pending.current
+    if (!next) return
+    const shown = next.variation
+      ? game.state.variationIndex
+      : game.state.currentMoveIndex
+    if (shown === next.index) pending.current = null
   }, [game.state.currentMoveIndex, game.state.variationIndex])
 
   useEffect(() => {
@@ -55,10 +61,18 @@ export function useBoardKeyboard() {
       }
       const now = performance.now()
       if (timer.current !== 0) return
-      if (now - lastAt.current >= STEP_MS) {
+      const current = live()
+      const oneStep =
+        pending.current.variation === current.variation &&
+        pending.current.index === current.index + direction
+      if (now - lastAt.current >= STEP_MS && oneStep) {
         lastAt.current = now
         if (direction === 1) gameRef.current.stepForward()
         else gameRef.current.stepBack()
+        return
+      }
+      if (now - lastAt.current >= STEP_MS) {
+        flush()
         return
       }
       timer.current = window.setTimeout(
