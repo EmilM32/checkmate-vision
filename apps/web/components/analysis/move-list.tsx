@@ -212,10 +212,13 @@ export function MoveList() {
   const reduceMotion = usePrefersReducedMotion()
 
   useEffect(() => {
-    activeRef.current?.scrollIntoView({
-      block: "nearest",
-      behavior: reduceMotion ? "auto" : "smooth",
-    })
+    const id = window.setTimeout(() => {
+      activeRef.current?.scrollIntoView({
+        block: "nearest",
+        behavior: reduceMotion ? "auto" : "smooth",
+      })
+    }, 50)
+    return () => window.clearTimeout(id)
   }, [state.currentMoveIndex, state.variationIndex, reduceMotion])
 
   if (state.history.length === 0) {

@@ -8,10 +8,16 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
-- Reduced motion no longer hydrates a different tree than the server. The
-  preference is applied after hydration, so the first render matches and React
-  does not rebuild the page on load (that rebuild could exceed the update
-  depth).
+- Stepping quickly through a game with the engine on no longer hits React's
+  update limit ("Maximum update depth exceeded", error #185). Each arrow key
+  committed a discrete update while the board, the move list, or an engine
+  line still had a normal update waiting, and after about 50 steps React
+  refused the next one. The board and the move list now wait out a burst of
+  keys, pieces do not animate when motion is reduced, and engine lines update
+  as a transition.
+- With reduced motion the page shell is visible on the first paint and does
+  not fade or shift. When motion is allowed, only the content inside the
+  shell fades in, after hydration (180 ms, ease-out).
 - After a game analysis the live view no longer flashes two engine lines and
   then three. Cached results are stored per position and per number of lines,
   so a two-line game analysis does not replace the three live lines.

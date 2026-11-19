@@ -594,6 +594,9 @@ test.describe("mobile layout", () => {
 
     // The board stays within the first screen.
     const board = page.locator("main section").first()
+    await expect
+      .poll(async () => (await board.boundingBox())?.height ?? 0)
+      .toBeGreaterThan(10)
     const boardBox = await board.boundingBox()
     expect(boardBox).not.toBeNull()
     expect(boardBox!.y + boardBox!.height).toBeLessThanOrEqual(844)

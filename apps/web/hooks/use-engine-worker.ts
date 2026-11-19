@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  startTransition,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -170,7 +171,9 @@ export function useEngineWorker() {
       move: linesRef.current.get(1)?.pv[0] ?? null,
       ponder: null,
     }
-    dispatch({ type: "ENGINE_BESTMOVE", bestMove })
+    startTransition(() => {
+      dispatch({ type: "ENGINE_BESTMOVE", bestMove })
+    })
 
     const next = pendingFenRef.current
     pendingFenRef.current = null
@@ -193,7 +196,9 @@ export function useEngineWorker() {
     linesRef.current = new Map()
     depthRef.current = 0
     cachedDepthRef.current = 0
-    dispatch({ type: "ENGINE_START_ANALYSIS" })
+    startTransition(() => {
+      dispatch({ type: "ENGINE_START_ANALYSIS" })
+    })
 
     const cached = analysisCache.get(fen, LIVE_MULTIPV)
     if (cached) {
@@ -204,11 +209,13 @@ export function useEngineWorker() {
       }
       depthRef.current = cached.depth
       cachedDepthRef.current = cached.depth
-      dispatch({
-        type: "ENGINE_SHOW_CACHED",
-        depth: cached.depth,
-        lines: cached.lines,
-        final,
+      startTransition(() => {
+        dispatch({
+          type: "ENGINE_SHOW_CACHED",
+          depth: cached.depth,
+          lines: cached.lines,
+          final,
+        })
       })
       if (final) {
         completeSearch(fen, true)
@@ -223,12 +230,16 @@ export function useEngineWorker() {
           if (!errorRef.current || lifeRef.current !== life) return
           errorRef.current = null
           failedRef.current = false
-          dispatch({ type: "ENGINE_READY" })
+          startTransition(() => {
+            dispatch({ type: "ENGINE_READY" })
+          })
         },
         onInfo: (info) => {
           if (lifeRef.current !== life) return
           if (searchFenRef.current !== fenRef.current) return
-          dispatch({ type: "ENGINE_OUTPUT", info })
+          startTransition(() => {
+            dispatch({ type: "ENGINE_OUTPUT", info })
+          })
           if (info.depth < cachedDepthRef.current) return
           pvScoresRef.current[info.multipv] = info.score
           linesRef.current.set(info.multipv, {
@@ -263,7 +274,9 @@ export function useEngineWorker() {
     const terminal = getTerminalScore(fen)
     if (terminal) {
       pvScoresRef.current[1] = terminal
-      dispatch({ type: "ENGINE_TERMINAL_POSITION", score: terminal })
+      startTransition(() => {
+        dispatch({ type: "ENGINE_TERMINAL_POSITION", score: terminal })
+      })
       return
     }
     if (stopRequestedRef.current || result.lines.length === 0) return
@@ -331,13 +344,17 @@ export function useEngineWorker() {
             if (!errorRef.current) return
             errorRef.current = null
             failedRef.current = false
-            dispatch({ type: "ENGINE_READY" })
+            startTransition(() => {
+              dispatch({ type: "ENGINE_READY" })
+            })
             return
           }
           engineRef.current = engine
           errorRef.current = null
           failedRef.current = false
-          dispatch({ type: "ENGINE_READY" })
+          startTransition(() => {
+            dispatch({ type: "ENGINE_READY" })
+          })
           setEngineStatus("ready")
           void runSearchRef.current(fenRef.current)
         },

@@ -82,6 +82,13 @@ const COORDINATE_ON_LIGHT_STYLE: React.CSSProperties = {
 export function InteractiveChessboard() {
   const reduceMotion = usePrefersReducedMotion()
   const { state, makeMove } = useGame()
+  const [shownFen, setShownFen] = useState(state.fen)
+  useEffect(() => {
+    // A burst of arrow keys must not leave a board render pending on every
+    // step; that is what tripped React's update limit. Catch up after the burst.
+    const id = window.setTimeout(() => setShownFen(state.fen), 50)
+    return () => window.clearTimeout(id)
+  }, [state.fen])
   const { state: uiState, dispatch: uiDispatch } = useUI()
   const { state: engineState } = useEngine()
   const analysisVisible = !uiState.guessMode || engineState.guessRevealed
@@ -255,7 +262,7 @@ export function InteractiveChessboard() {
     <div className="relative aspect-square w-full overflow-hidden rounded-r-lg bg-background/60">
       <Chessboard
         options={{
-          position: state.fen,
+          position: shownFen,
           boardOrientation: uiState.boardFlipped ? "black" : "white",
           squareStyles,
           lightSquareStyle: LIGHT_SQUARE_STYLE,
@@ -265,6 +272,7 @@ export function InteractiveChessboard() {
           onSquareMouseDown: handleSquareMouseDown,
           onSquareClick: handleSquareClick,
           animationDurationInMs: reduceMotion ? 0 : 200,
+          showAnimations: !reduceMotion,
           // Bolder coordinates than the library default, so they stay
           // legible under the heatmap tint.
           darkSquareNotationStyle: COORDINATE_ON_DARK_STYLE,
