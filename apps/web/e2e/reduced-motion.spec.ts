@@ -105,6 +105,26 @@ test.describe("reduced motion layout", () => {
     await installShellProbe(page)
   })
 
+  test("logs no maximum update depth in the first 5 seconds", async ({
+    page,
+  }) => {
+    const errors: string[] = []
+    page.on("console", (message) => {
+      if (message.type() === "error") errors.push(message.text())
+    })
+    page.on("pageerror", (error) => {
+      errors.push(error.message)
+    })
+
+    await page.goto("/")
+    await page.waitForTimeout(5_000)
+
+    const blob = errors.join("\n")
+    expect(blob, blob).not.toMatch(/Maximum update depth/)
+    expect(blob, blob).not.toMatch(/Minified React error #185/)
+    expect(blob, blob).not.toMatch(/hydrat/i)
+  })
+
   test.describe("390px", () => {
     test.use({ viewport: { width: 390, height: 844 } })
 

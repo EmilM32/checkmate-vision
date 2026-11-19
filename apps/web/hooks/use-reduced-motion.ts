@@ -1,23 +1,24 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useReducedMotion } from "framer-motion"
+import { useSyncExternalStore } from "react"
 
-// framer-motion 12 stores the preference in useState on the first render.
-// During SSR that render has no `window`, the stored value stays null, and
-// the hook never reads the media query again. Keep a live matchMedia
-// subscription so reduced motion still applies after hydration.
+const QUERY = "(prefers-reduced-motion: reduce)"
+
+function subscribe(onChange: () => void) {
+  const query = window.matchMedia(QUERY)
+  query.addEventListener("change", onChange)
+  return () => query.removeEventListener("change", onChange)
+}
+
+function getSnapshot() {
+  return window.matchMedia(QUERY).matches
+}
+
+// Same value the server rendered. The client snapshot is applied after hydration.
+function getServerSnapshot() {
+  return false
+}
+
 export function usePrefersReducedMotion(): boolean {
-  const fromLibrary = useReducedMotion() === true
-  const [fromMedia, setFromMedia] = useState(false)
-
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)")
-    const apply = () => setFromMedia(query.matches)
-    apply()
-    query.addEventListener("change", apply)
-    return () => query.removeEventListener("change", apply)
-  }, [])
-
-  return fromLibrary || fromMedia
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }

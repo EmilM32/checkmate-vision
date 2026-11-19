@@ -8,6 +8,10 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
+- Reduced motion no longer hydrates a different tree than the server. The
+  preference is applied after hydration, so the first render matches and React
+  does not rebuild the page on load (that rebuild could exceed the update
+  depth).
 - After a game analysis the live view no longer flashes two engine lines and
   then three. Cached results are stored per position and per number of lines,
   so a two-line game analysis does not replace the three live lines.
