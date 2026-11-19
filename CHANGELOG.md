@@ -8,6 +8,18 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
 
 ### Fixed
 
+- Stepping quickly through a game with the engine on no longer hits React's
+  update limit ("Maximum update depth exceeded", error #185). Each arrow key
+  committed a discrete update while the board, the move list, or an engine
+  line still had a normal update waiting, and after about 50 steps React
+  refused the next one. The first arrow applies at once. During a repeat the
+  position refreshes at most every 100 ms, and the last position is applied
+  when the repeat ends. One keyboard listener on the layout owns that rhythm.
+  The board and the move list follow the same commits. Pieces do not animate
+  when motion is reduced, and engine lines update as a transition.
+- The page shell and the content inside it stay fully visible, with reduced
+  motion and without it. Nothing fades in after hydration, and the shell is
+  the same node as on the first paint.
 - After a game analysis the live view no longer flashes two engine lines and
   then three. Cached results are stored per position and per number of lines,
   so a two-line game analysis does not replace the three live lines.

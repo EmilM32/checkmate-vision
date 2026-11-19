@@ -252,7 +252,11 @@ export function InteractiveChessboard() {
   )
 
   return (
-    <div className="relative aspect-square w-full overflow-hidden rounded-r-lg bg-background/60">
+    <div
+      className="relative aspect-square w-full overflow-hidden rounded-r-lg bg-background/60"
+      data-testid="board-position"
+      data-fen={state.fen}
+    >
       <Chessboard
         options={{
           position: state.fen,
@@ -265,6 +269,7 @@ export function InteractiveChessboard() {
           onSquareMouseDown: handleSquareMouseDown,
           onSquareClick: handleSquareClick,
           animationDurationInMs: reduceMotion ? 0 : 200,
+          showAnimations: !reduceMotion,
           // Bolder coordinates than the library default, so they stay
           // legible under the heatmap tint.
           darkSquareNotationStyle: COORDINATE_ON_DARK_STYLE,

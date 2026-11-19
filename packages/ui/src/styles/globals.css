@@ -164,7 +164,10 @@
     }
 
     [data-reduced-motion-flat] {
+      opacity: 1 !important;
       transform: none !important;
+      animation: none !important;
+      transition: none !important;
     }
   }
 }

@@ -253,7 +253,11 @@ export function MoveList() {
 
   return (
     <ScrollArea className="h-full">
-      <ol className="grid grid-cols-[2.5rem_1fr_1fr] gap-y-0.5 font-mono text-sm">
+      <ol
+        data-testid="move-list"
+        data-ply={state.currentMoveIndex}
+        className="grid grid-cols-[2.5rem_1fr_1fr] gap-y-0.5 font-mono text-sm"
+      >
         {rows.map((row) => (
           <Fragment key={row.moveNumber}>
             <li className="col-span-3 grid grid-cols-subgrid">

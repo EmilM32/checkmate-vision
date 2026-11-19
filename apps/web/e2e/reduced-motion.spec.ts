@@ -1,4 +1,17 @@
+import { Chess } from "chess.js"
 import { expect, test, type Page } from "@playwright/test"
+
+// Long enough that 60 arrow steps stay inside the game.
+const LONG_PGN = [
+  "1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. Be3 Bg7 5. Qd2 c6 6. f3 b5 7. Nge2 Nbd7",
+  "8. Bh6 Bxh6 9. Qxh6 Bb7 10. a3 e5 11. O-O-O Qe7 12. Kb1 a6 13. Nc1 O-O-O",
+  "14. Nb3 exd4 15. Rxd4 c5 16. Rd1 Nb6 17. g3 Kb8 18. Na5 Ba8 19. Bh3 d5",
+  "20. Qf4+ Ka7 21. Rhe1 d4 22. Nd5 Nbxd5 23. exd5 Qd6 24. Rxd4 cxd4",
+  "25. Re7+ Kb6 26. Qxd4+ Kxa5 27. b4+ Ka4 28. Qc3 Qxd5 29. Ra7 Bb7 30. Rxb7 Qc4",
+  "31. Qxf6 Kxa3 32. Qxa6+ Kxb4 33. c3+ Kxc3 34. Qa1+ Kd2 35. Qb2+ Kd1",
+  "36. Bf1 Rd2 37. Rd7 Rxd7 38. Bxc4 bxc4 39. Qxh8 Rd3 40. Qa8 c3 41. Qa4+ Ke1",
+  "42. f4 f5 43. Kc1 Rd2 44. Qa7",
+].join(" ")
 
 type Sample = {
   top: number
@@ -99,10 +112,251 @@ async function shellSamples(page: Page) {
   })
 }
 
+function fenAfterPlies(pgn: string, plies: number) {
+  const game = new Chess()
+  game.loadPgn(pgn)
+  const moves = game.history()
+  const replay = new Chess()
+  for (let index = 0; index < plies; index++) {
+    const san = moves[index]
+    if (!san) throw new Error(`PGN has no ply ${index + 1}`)
+    replay.move(san)
+  }
+  return replay.fen()
+}
+
+async function expectOpaqueStableShell(page: Page) {
+  const client = await page.context().newCDPSession(page)
+  await client.send("Emulation.setCPUThrottlingRate", { rate: 4 })
+  await page.addInitScript(() => {
+    const probe: {
+      shell: number[]
+      content: number[]
+      shellNode: Element | null
+      contentNode: Element | null
+    } = {
+      shell: [],
+      content: [],
+      shellNode: null,
+      contentNode: null,
+    }
+    ;(
+      window as Window & {
+        __opacityProbe?: typeof probe
+      }
+    ).__opacityProbe = probe
+    const remember = () => {
+      const shell = document.querySelector("[data-testid=layout-shell]")
+      if (!shell) return
+      if (!probe.shellNode) probe.shellNode = shell
+      if (!probe.contentNode && shell.firstElementChild) {
+        probe.contentNode = shell.firstElementChild
+      }
+    }
+    const read = () => {
+      remember()
+      if (probe.shellNode) {
+        probe.shell.push(Number(getComputedStyle(probe.shellNode).opacity))
+      }
+      if (probe.contentNode) {
+        probe.content.push(Number(getComputedStyle(probe.contentNode).opacity))
+      }
+      requestAnimationFrame(read)
+    }
+    const boot = () => {
+      const root = document.documentElement
+      if (!root) return
+      const observer = new MutationObserver(remember)
+      observer.observe(root, { childList: true, subtree: true })
+      remember()
+    }
+    if (document.documentElement) boot()
+    else document.addEventListener("DOMContentLoaded", boot)
+    requestAnimationFrame(read)
+  })
+
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto("/")
+  await page.waitForTimeout(500)
+  const result = await page.evaluate(() => {
+    const probe = (
+      window as Window & {
+        __opacityProbe?: {
+          shell: number[]
+          content: number[]
+          shellNode: Element | null
+          contentNode: Element | null
+        }
+      }
+    ).__opacityProbe
+    const shell = document.querySelector("[data-testid=layout-shell]")
+    return {
+      shell: probe?.shell ?? [],
+      content: probe?.content ?? [],
+      sameShell: shell !== null && shell === probe?.shellNode,
+      sameContent:
+        shell?.firstElementChild != null &&
+        shell.firstElementChild === probe?.contentNode,
+    }
+  })
+  const shellBelow = result.shell.filter((opacity) => opacity < 1)
+  const contentBelow = result.content.filter((opacity) => opacity < 1)
+  expect(shellBelow, JSON.stringify(result.shell.slice(0, 12))).toEqual([])
+  expect(contentBelow, JSON.stringify(result.content.slice(0, 12))).toEqual([])
+  expect(result.shell.length).toBeGreaterThan(5)
+  expect(result.content.length).toBeGreaterThan(5)
+  expect(result.sameShell).toBe(true)
+  expect(result.sameContent).toBe(true)
+}
+
+async function loadLongGame(page: Page) {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto("/")
+  await page.getByRole("button", { name: "Silnik", exact: true }).click()
+  await page
+    .locator("[data-testid=pv-score]:visible")
+    .first()
+    .waitFor({ timeout: 30_000 })
+
+  const toggle = page.getByRole("button", { name: "Importuj partię" })
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+    await toggle.click()
+  }
+  await page.locator('textarea[placeholder="Wklej PGN..."]:visible').fill(LONG_PGN)
+  await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+  await page
+    .locator("ol:visible button", { hasText: /^e4$/ })
+    .first()
+    .waitFor()
+}
+
+async function expectHeldArrow(
+  page: Page,
+  interval: number,
+  minUpdates: number
+) {
+  await page.keyboard.press("Home")
+  const trace = await page.evaluate(async (gap: number) => {
+    const board = document.querySelector("[data-testid=board-position]")
+    if (!board) return null
+    const fens: string[] = []
+    const times: number[] = []
+    const started = performance.now()
+    const observer = new MutationObserver(() => {
+      const fen = board.getAttribute("data-fen")
+      if (!fen || fen === fens.at(-1)) return
+      fens.push(fen)
+      times.push(performance.now())
+    })
+    observer.observe(board, {
+      attributes: true,
+      attributeFilter: ["data-fen"],
+    })
+    for (let step = 0; step < 30; step++) {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })
+      )
+      await new Promise((resolve) => setTimeout(resolve, gap))
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    observer.disconnect()
+    let maxGap = 0
+    for (let index = 1; index < times.length; index++) {
+      maxGap = Math.max(maxGap, times[index]! - times[index - 1]!)
+    }
+    return {
+      updates: fens.length,
+      first: fens[0] ?? null,
+      firstDelay: times[0] === undefined ? null : times[0] - started,
+      maxGap,
+    }
+  }, interval)
+
+  const detail = JSON.stringify({ interval, trace })
+  expect(trace, detail).not.toBeNull()
+  expect(trace!.first, detail).toBe(fenAfterPlies(LONG_PGN, 1))
+  expect(trace!.firstDelay ?? 999, detail).toBeLessThan(200)
+  expect(trace!.updates, detail).toBeGreaterThanOrEqual(minUpdates)
+  expect(trace!.maxGap, detail).toBeLessThanOrEqual(250)
+
+  const expected = fenAfterPlies(LONG_PGN, 30)
+  await expect(page.locator("[data-testid=board-position]")).toHaveAttribute(
+    "data-fen",
+    expected
+  )
+  await expect(
+    page.locator("[data-testid=move-list]:visible").first()
+  ).toHaveAttribute("data-ply", "30")
+  await expect(
+    page.locator("[data-testid=engine-position]:visible").first()
+  ).toHaveAttribute("data-fen", expected)
+  await page
+    .locator("[data-testid=pv-score]:visible")
+    .first()
+    .waitFor({ timeout: 15_000 })
+}
+
 test.describe("reduced motion layout", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await installShellProbe(page)
+  })
+
+  test("stays within the update limit while stepping a long game", async ({
+    page,
+  }) => {
+    const errors: string[] = []
+    page.on("console", (message) => {
+      if (message.type() === "error") errors.push(message.text())
+    })
+    page.on("pageerror", (error) => {
+      errors.push(`${error.name}: ${error.message}`)
+    })
+
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto("/")
+    await page.getByRole("button", { name: "Silnik", exact: true }).click()
+    await page
+      .locator("[data-testid=pv-score]:visible")
+      .first()
+      .waitFor({ timeout: 30_000 })
+
+    const toggle = page.getByRole("button", { name: "Importuj partię" })
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+      await toggle.click()
+    }
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill(LONG_PGN)
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+    await page
+      .locator("ol:visible button", { hasText: /^e4$/ })
+      .first()
+      .waitFor()
+
+    await page.keyboard.press("Home")
+    for (let step = 0; step < 60; step++) {
+      await page.keyboard.press("ArrowRight")
+    }
+    await page.waitForTimeout(3_500)
+
+    const blob = errors.join("\n")
+    expect(blob, blob).not.toMatch(/Maximum update depth/)
+    expect(blob, blob).not.toMatch(/Minified React error #185/)
+  })
+
+  test("keeps the shell fully visible for the first 500ms", async ({
+    page,
+  }) => {
+    await expectOpaqueStableShell(page)
+  })
+
+  test("keeps the board with the move list while the arrow repeats", async ({
+    page,
+  }) => {
+    await loadLongGame(page)
+    await expectHeldArrow(page, 33, 10)
+    await expectHeldArrow(page, 16, 5)
   })
 
   test.describe("390px", () => {
@@ -178,5 +432,16 @@ test.describe("reduced motion layout", () => {
       })
       console.log(`shell 1440 ${JSON.stringify(stats)}`)
     })
+  })
+})
+
+test.describe("full motion layout", () => {
+  test("keeps the shell and its content fully visible", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" })
+    await expectOpaqueStableShell(page)
+    const reduced = await page.evaluate(
+      () => window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+    expect(reduced).toBe(false)
   })
 })
