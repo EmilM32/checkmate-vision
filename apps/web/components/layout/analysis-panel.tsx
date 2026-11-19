@@ -150,7 +150,11 @@ export function AnalysisPanel() {
         </div>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden p-0">
-        <div className="border-b border-border/50 px-4 py-3">
+        <div
+          className="border-b border-border/50 px-4 py-3"
+          data-testid="engine-position"
+          data-fen={state.fen}
+        >
           <PVLines />
         </div>
 

@@ -127,6 +127,50 @@ describe("NavigationControls", () => {
     expect(goToEnd).toHaveBeenCalledTimes(1)
   })
 
+  it("steps once immediately and lands on the last index of a repeat", () => {
+    vi.useFakeTimers()
+    try {
+      gameState = {
+        ...gameState,
+        currentMoveIndex: 0,
+        history: Array.from({ length: 20 }, (_, index) => ({
+          san: "e4",
+          fen: `fen-${index}`,
+        })),
+      }
+
+      render(<NavigationControls />)
+
+      fireEvent.keyDown(document, { key: "ArrowRight" })
+      expect(stepForward).toHaveBeenCalledTimes(1)
+      expect(goToMove).not.toHaveBeenCalled()
+
+      for (let step = 0; step < 5; step++) {
+        fireEvent.keyDown(document, { key: "ArrowRight" })
+      }
+      expect(stepForward).toHaveBeenCalledTimes(1)
+      expect(goToMove).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(100)
+      expect(goToMove).toHaveBeenCalledTimes(1)
+      expect(goToMove).toHaveBeenCalledWith(6)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("counts one arrow once when two controls are mounted", () => {
+    render(
+      <>
+        <NavigationControls />
+        <NavigationControls />
+      </>
+    )
+
+    fireEvent.keyDown(document, { key: "ArrowRight" })
+    expect(stepForward).toHaveBeenCalledTimes(1)
+  })
+
   it("ignores keyboard shortcuts while typing in form fields", () => {
     render(
       <div>

@@ -1,3 +1,4 @@
+import { Chess } from "chess.js"
 import { expect, test, type Page } from "@playwright/test"
 
 // Long enough that 60 arrow steps stay inside the game.
@@ -111,6 +112,103 @@ async function shellSamples(page: Page) {
   })
 }
 
+function fenAfterPlies(pgn: string, plies: number) {
+  const game = new Chess()
+  game.loadPgn(pgn)
+  const moves = game.history()
+  const replay = new Chess()
+  for (let index = 0; index < plies; index++) {
+    const san = moves[index]
+    if (!san) throw new Error(`PGN has no ply ${index + 1}`)
+    replay.move(san)
+  }
+  return replay.fen()
+}
+
+async function expectOpaqueStableShell(page: Page) {
+  const client = await page.context().newCDPSession(page)
+  await client.send("Emulation.setCPUThrottlingRate", { rate: 4 })
+  await page.addInitScript(() => {
+    const probe: {
+      shell: number[]
+      content: number[]
+      shellNode: Element | null
+      contentNode: Element | null
+    } = {
+      shell: [],
+      content: [],
+      shellNode: null,
+      contentNode: null,
+    }
+    ;(
+      window as Window & {
+        __opacityProbe?: typeof probe
+      }
+    ).__opacityProbe = probe
+    const remember = () => {
+      const shell = document.querySelector("[data-testid=layout-shell]")
+      if (!shell) return
+      if (!probe.shellNode) probe.shellNode = shell
+      if (!probe.contentNode && shell.firstElementChild) {
+        probe.contentNode = shell.firstElementChild
+      }
+    }
+    const read = () => {
+      remember()
+      if (probe.shellNode) {
+        probe.shell.push(Number(getComputedStyle(probe.shellNode).opacity))
+      }
+      if (probe.contentNode) {
+        probe.content.push(Number(getComputedStyle(probe.contentNode).opacity))
+      }
+      requestAnimationFrame(read)
+    }
+    const boot = () => {
+      const root = document.documentElement
+      if (!root) return
+      const observer = new MutationObserver(remember)
+      observer.observe(root, { childList: true, subtree: true })
+      remember()
+    }
+    if (document.documentElement) boot()
+    else document.addEventListener("DOMContentLoaded", boot)
+    requestAnimationFrame(read)
+  })
+
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto("/")
+  await page.waitForTimeout(500)
+  const result = await page.evaluate(() => {
+    const probe = (
+      window as Window & {
+        __opacityProbe?: {
+          shell: number[]
+          content: number[]
+          shellNode: Element | null
+          contentNode: Element | null
+        }
+      }
+    ).__opacityProbe
+    const shell = document.querySelector("[data-testid=layout-shell]")
+    return {
+      shell: probe?.shell ?? [],
+      content: probe?.content ?? [],
+      sameShell: shell !== null && shell === probe?.shellNode,
+      sameContent:
+        shell?.firstElementChild != null &&
+        shell.firstElementChild === probe?.contentNode,
+    }
+  })
+  const shellBelow = result.shell.filter((opacity) => opacity < 1)
+  const contentBelow = result.content.filter((opacity) => opacity < 1)
+  expect(shellBelow, JSON.stringify(result.shell.slice(0, 12))).toEqual([])
+  expect(contentBelow, JSON.stringify(result.content.slice(0, 12))).toEqual([])
+  expect(result.shell.length).toBeGreaterThan(5)
+  expect(result.content.length).toBeGreaterThan(5)
+  expect(result.sameShell).toBe(true)
+  expect(result.sameContent).toBe(true)
+}
+
 test.describe("reduced motion layout", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
@@ -163,31 +261,75 @@ test.describe("reduced motion layout", () => {
   test("keeps the shell fully visible for the first 500ms", async ({
     page,
   }) => {
-    const client = await page.context().newCDPSession(page)
-    await client.send("Emulation.setCPUThrottlingRate", { rate: 4 })
-    await page.addInitScript(() => {
-      const samples: number[] = []
-      ;(window as Window & { __shellOpacity?: number[] }).__shellOpacity =
-        samples
-      const read = () => {
-        const shell = document.querySelector("[data-testid=layout-shell]")
-        if (shell) {
-          samples.push(Number(getComputedStyle(shell).opacity))
-        }
-        requestAnimationFrame(read)
+    await expectOpaqueStableShell(page)
+  })
+
+  test("keeps the board with the move list while the arrow repeats", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto("/")
+    await page.getByRole("button", { name: "Silnik", exact: true }).click()
+    await page
+      .locator("[data-testid=pv-score]:visible")
+      .first()
+      .waitFor({ timeout: 30_000 })
+
+    const toggle = page.getByRole("button", { name: "Importuj partię" })
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+      await toggle.click()
+    }
+    await page
+      .locator('textarea[placeholder="Wklej PGN..."]:visible')
+      .fill(LONG_PGN)
+    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+    await page
+      .locator("ol:visible button", { hasText: /^e4$/ })
+      .first()
+      .waitFor()
+
+    await page.keyboard.press("Home")
+    const changes = await page.evaluate(async () => {
+      const board = document.querySelector("[data-testid=board-position]")
+      if (!board) return -1
+      let updates = 0
+      const observer = new MutationObserver(() => {
+        updates += 1
+      })
+      observer.observe(board, {
+        attributes: true,
+        attributeFilter: ["data-fen"],
+      })
+      for (let step = 0; step < 30; step++) {
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "ArrowRight",
+            bubbles: true,
+          })
+        )
+        await new Promise((resolve) => setTimeout(resolve, 33))
       }
-      requestAnimationFrame(read)
+      await new Promise((resolve) => setTimeout(resolve, 250))
+      observer.disconnect()
+      return updates
     })
 
-    await page.goto("/")
-    await page.waitForTimeout(500)
-    const samples = await page.evaluate(() => {
-      const target = window as Window & { __shellOpacity?: number[] }
-      return target.__shellOpacity ?? []
-    })
-    const below = samples.filter((opacity) => opacity < 1)
-    expect(below, JSON.stringify(samples.slice(0, 12))).toEqual([])
-    expect(samples.length).toBeGreaterThan(5)
+    const expected = fenAfterPlies(LONG_PGN, 30)
+    await expect(page.locator("[data-testid=board-position]")).toHaveAttribute(
+      "data-fen",
+      expected
+    )
+    await expect(
+      page.locator("[data-testid=move-list]:visible").first()
+    ).toHaveAttribute("data-ply", "30")
+    await expect(
+      page.locator("[data-testid=engine-position]:visible").first()
+    ).toHaveAttribute("data-fen", expected)
+    await page
+      .locator("[data-testid=pv-score]:visible")
+      .first()
+      .waitFor({ timeout: 15_000 })
+    expect(changes).toBeGreaterThanOrEqual(10)
   })
 
   test.describe("390px", () => {
@@ -263,5 +405,16 @@ test.describe("reduced motion layout", () => {
       })
       console.log(`shell 1440 ${JSON.stringify(stats)}`)
     })
+  })
+})
+
+test.describe("full motion layout", () => {
+  test("keeps the shell and its content fully visible", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" })
+    await expectOpaqueStableShell(page)
+    const reduced = await page.evaluate(
+      () => window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+    expect(reduced).toBe(false)
   })
 })

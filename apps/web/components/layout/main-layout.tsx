@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  useCallback,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-} from "react"
+import { useCallback, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   Card,
@@ -34,40 +28,6 @@ import { exportBoardToPng } from "@/lib/export/board-export"
 import { clearPersistedSession } from "@/lib/persistence/session-storage"
 
 type MobileTab = "analysis" | "moves" | "chart"
-
-const emptySubscribe = () => () => {}
-
-function useHydrated() {
-  return useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  )
-}
-
-function ShellContent({
-  className,
-  children,
-}: {
-  className: string
-  children: ReactNode
-}) {
-  const hydrated = useHydrated()
-  const reduceMotion = usePrefersReducedMotion()
-  if (!hydrated || reduceMotion) {
-    return <div className={className}>{children}</div>
-  }
-  return (
-    <motion.div
-      className={className}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
-    >
-      {children}
-    </motion.div>
-  )
-}
 
 function MobileTabContent({ activeTab }: { activeTab: MobileTab }) {
   const { t } = useI18n()
@@ -127,9 +87,8 @@ export function MainLayout() {
       <div
         data-testid="layout-shell"
         data-reduced-motion-flat=""
-        className="w-full lg:h-full"
+        className="flex w-full flex-col gap-3 lg:h-full lg:flex-row lg:items-stretch lg:justify-center lg:gap-4"
       >
-        <ShellContent className="flex w-full flex-col gap-3 lg:h-full lg:flex-row lg:items-stretch lg:justify-center lg:gap-4">
           {/* Wide screens: chart and moves left of the board. */}
           <div className="hidden w-64 shrink-0 min-[1800px]:w-96 xl:block 2xl:w-80">
             <GamePanel />
@@ -246,7 +205,6 @@ export function MainLayout() {
               <AnalysisPanel />
             </div>
           </div>
-        </ShellContent>
       </div>
     </main>
   )

@@ -964,6 +964,9 @@ test.describe("variations", () => {
     await page.keyboard.press("Home")
     await page.keyboard.press("ArrowRight")
     await page.keyboard.press("ArrowRight")
+    await expect(
+      page.locator('ol:visible button[aria-current="step"]')
+    ).toHaveText(/e5/)
     await dragPiece(page, "d2", "d4", "wP")
 
     const variation = page.locator("[data-testid=variation]:visible")
