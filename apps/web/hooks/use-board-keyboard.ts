@@ -8,6 +8,16 @@ import { getMoveNumbering } from "@/lib/chess/move-numbering"
 
 const STEP_MS = 100
 
+function typingTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false
+  const tag = target.tagName
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true
+  if (target instanceof HTMLElement && target.isContentEditable) return true
+  return Boolean(
+    target.closest("[role=dialog], [role=alertdialog], dialog[open]")
+  )
+}
+
 // One listener for the page. The first arrow applies at once. Later arrows
 // only remember the latest index, and one timer publishes it at most every
 // 100 ms and once more when the repeat ends.
@@ -54,11 +64,16 @@ export function useBoardKeyboard() {
     }
 
     const step = (direction: 1 | -1) => {
+      const { state } = gameRef.current
       const base = pending.current ?? live()
-      pending.current = {
-        index: base.index + direction,
-        variation: base.variation,
-      }
+      // Same bounds as goToMove / goToVariationMove: the main line is
+      // [0, history.length], a variation is [0, variation.moves.length].
+      const max = base.variation
+        ? (state.variation?.moves.length ?? 0)
+        : state.history.length
+      const index = Math.max(0, Math.min(base.index + direction, max))
+      if (index === base.index) return
+      pending.current = { index, variation: base.variation }
       const now = performance.now()
       if (timer.current !== 0) return
       const current = live()
@@ -88,8 +103,7 @@ export function useBoardKeyboard() {
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      const tag = (event.target as HTMLElement | null)?.tagName
-      if (tag === "INPUT" || tag === "TEXTAREA") return
+      if (event.defaultPrevented || typingTarget(event.target)) return
       const { state, goToMove, goToEnd } = gameRef.current
 
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {

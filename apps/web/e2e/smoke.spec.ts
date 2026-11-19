@@ -95,6 +95,36 @@ test.describe("AI-10 smoke", () => {
     ).toBeVisible()
   })
 
+  test("keeps arrow keys inside the PGN field", async ({ page }) => {
+    await page.goto("/")
+    await openImportInputs(page)
+
+    const field = page.locator('textarea[placeholder="Wklej PGN..."]:visible')
+    const text = "e4 e5 Nf3"
+    await field.fill(text)
+    const fen = await page
+      .locator("[data-testid=board-position]")
+      .getAttribute("data-fen")
+
+    await field.press("ArrowLeft")
+    await expect
+      .poll(() => field.evaluate((el: HTMLTextAreaElement) => el.selectionStart))
+      .toBe(text.length - 1)
+    await field.press("Home")
+    await expect
+      .poll(() => field.evaluate((el: HTMLTextAreaElement) => el.selectionStart))
+      .toBe(0)
+    await field.press("End")
+    await expect
+      .poll(() => field.evaluate((el: HTMLTextAreaElement) => el.selectionStart))
+      .toBe(text.length)
+
+    await expect(page.locator("[data-testid=board-position]")).toHaveAttribute(
+      "data-fen",
+      fen ?? ""
+    )
+  })
+
   test("accepts FEN input and keeps UI interactive", async ({ page }) => {
     await page.goto("/")
     await openImportInputs(page)
