@@ -19,6 +19,7 @@ import { BoardPanel } from "@/components/layout/board-panel"
 import { GamePanel } from "@/components/layout/game-panel"
 import { Toolbar } from "@/components/layout/toolbar"
 import { NavigationControls } from "@/components/navigation/navigation-controls"
+import { useBoardKeyboard } from "@/hooks/use-board-keyboard"
 import { useEngine } from "@/hooks/use-engine"
 import { useGame } from "@/hooks/use-game"
 import { useI18n } from "@/hooks/use-i18n"
@@ -58,6 +59,7 @@ export function MainLayout() {
   const boardExportRef = useRef<HTMLElement>(null)
 
   const { newGame } = useGame()
+  useBoardKeyboard()
   const { resetEngine } = useEngine()
   const { state: uiState, dispatch: uiDispatch } = useUI()
   const reduceMotion = usePrefersReducedMotion()

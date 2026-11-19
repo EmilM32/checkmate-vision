@@ -209,6 +209,93 @@ async function expectOpaqueStableShell(page: Page) {
   expect(result.sameContent).toBe(true)
 }
 
+async function loadLongGame(page: Page) {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto("/")
+  await page.getByRole("button", { name: "Silnik", exact: true }).click()
+  await page
+    .locator("[data-testid=pv-score]:visible")
+    .first()
+    .waitFor({ timeout: 30_000 })
+
+  const toggle = page.getByRole("button", { name: "Importuj partię" })
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+    await toggle.click()
+  }
+  await page.locator('textarea[placeholder="Wklej PGN..."]:visible').fill(LONG_PGN)
+  await page.getByRole("button", { name: "Wczytaj PGN" }).click()
+  await page
+    .locator("ol:visible button", { hasText: /^e4$/ })
+    .first()
+    .waitFor()
+}
+
+async function expectHeldArrow(
+  page: Page,
+  interval: number,
+  minUpdates: number
+) {
+  await page.keyboard.press("Home")
+  const trace = await page.evaluate(async (gap: number) => {
+    const board = document.querySelector("[data-testid=board-position]")
+    if (!board) return null
+    const fens: string[] = []
+    const times: number[] = []
+    const started = performance.now()
+    const observer = new MutationObserver(() => {
+      const fen = board.getAttribute("data-fen")
+      if (!fen || fen === fens.at(-1)) return
+      fens.push(fen)
+      times.push(performance.now())
+    })
+    observer.observe(board, {
+      attributes: true,
+      attributeFilter: ["data-fen"],
+    })
+    for (let step = 0; step < 30; step++) {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })
+      )
+      await new Promise((resolve) => setTimeout(resolve, gap))
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    observer.disconnect()
+    let maxGap = 0
+    for (let index = 1; index < times.length; index++) {
+      maxGap = Math.max(maxGap, times[index]! - times[index - 1]!)
+    }
+    return {
+      updates: fens.length,
+      first: fens[0] ?? null,
+      firstDelay: times[0] === undefined ? null : times[0] - started,
+      maxGap,
+    }
+  }, interval)
+
+  const detail = JSON.stringify({ interval, trace })
+  expect(trace, detail).not.toBeNull()
+  expect(trace!.first, detail).toBe(fenAfterPlies(LONG_PGN, 1))
+  expect(trace!.firstDelay ?? 999, detail).toBeLessThan(50)
+  expect(trace!.updates, detail).toBeGreaterThanOrEqual(minUpdates)
+  expect(trace!.maxGap, detail).toBeLessThanOrEqual(130)
+
+  const expected = fenAfterPlies(LONG_PGN, 30)
+  await expect(page.locator("[data-testid=board-position]")).toHaveAttribute(
+    "data-fen",
+    expected
+  )
+  await expect(
+    page.locator("[data-testid=move-list]:visible").first()
+  ).toHaveAttribute("data-ply", "30")
+  await expect(
+    page.locator("[data-testid=engine-position]:visible").first()
+  ).toHaveAttribute("data-fen", expected)
+  await page
+    .locator("[data-testid=pv-score]:visible")
+    .first()
+    .waitFor({ timeout: 15_000 })
+}
+
 test.describe("reduced motion layout", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
@@ -267,69 +354,9 @@ test.describe("reduced motion layout", () => {
   test("keeps the board with the move list while the arrow repeats", async ({
     page,
   }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto("/")
-    await page.getByRole("button", { name: "Silnik", exact: true }).click()
-    await page
-      .locator("[data-testid=pv-score]:visible")
-      .first()
-      .waitFor({ timeout: 30_000 })
-
-    const toggle = page.getByRole("button", { name: "Importuj partię" })
-    if ((await toggle.getAttribute("aria-expanded")) !== "true") {
-      await toggle.click()
-    }
-    await page
-      .locator('textarea[placeholder="Wklej PGN..."]:visible')
-      .fill(LONG_PGN)
-    await page.getByRole("button", { name: "Wczytaj PGN" }).click()
-    await page
-      .locator("ol:visible button", { hasText: /^e4$/ })
-      .first()
-      .waitFor()
-
-    await page.keyboard.press("Home")
-    const changes = await page.evaluate(async () => {
-      const board = document.querySelector("[data-testid=board-position]")
-      if (!board) return -1
-      let updates = 0
-      const observer = new MutationObserver(() => {
-        updates += 1
-      })
-      observer.observe(board, {
-        attributes: true,
-        attributeFilter: ["data-fen"],
-      })
-      for (let step = 0; step < 30; step++) {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            key: "ArrowRight",
-            bubbles: true,
-          })
-        )
-        await new Promise((resolve) => setTimeout(resolve, 33))
-      }
-      await new Promise((resolve) => setTimeout(resolve, 250))
-      observer.disconnect()
-      return updates
-    })
-
-    const expected = fenAfterPlies(LONG_PGN, 30)
-    await expect(page.locator("[data-testid=board-position]")).toHaveAttribute(
-      "data-fen",
-      expected
-    )
-    await expect(
-      page.locator("[data-testid=move-list]:visible").first()
-    ).toHaveAttribute("data-ply", "30")
-    await expect(
-      page.locator("[data-testid=engine-position]:visible").first()
-    ).toHaveAttribute("data-fen", expected)
-    await page
-      .locator("[data-testid=pv-score]:visible")
-      .first()
-      .waitFor({ timeout: 15_000 })
-    expect(changes).toBeGreaterThanOrEqual(10)
+    await loadLongGame(page)
+    await expectHeldArrow(page, 33, 10)
+    await expectHeldArrow(page, 16, 5)
   })
 
   test.describe("390px", () => {

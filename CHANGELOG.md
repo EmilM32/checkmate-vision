@@ -14,9 +14,9 @@ The format is inspired by Keep a Changelog, and this project follows semantic ve
   line still had a normal update waiting, and after about 50 steps React
   refused the next one. The first arrow applies at once. During a repeat the
   position refreshes at most every 100 ms, and the last position is applied
-  when the repeat ends. The board and the move list follow that same rhythm.
-  Pieces do not animate when motion is reduced, and engine lines update as a
-  transition.
+  when the repeat ends. One keyboard listener on the layout owns that rhythm.
+  The board and the move list follow the same commits. Pieces do not animate
+  when motion is reduced, and engine lines update as a transition.
 - The page shell and the content inside it stay fully visible, with reduced
   motion and without it. Nothing fades in after hydration, and the shell is
   the same node as on the first paint.
